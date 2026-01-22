@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import './Signup.css';
 
 const Signup = () => {
   const navigate = useNavigate();
+  const { registerWithEmail, loginWithGoogle } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -15,6 +17,7 @@ const Signup = () => {
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
 
   const validateForm = () => {
     const newErrors = {};
@@ -63,7 +66,7 @@ const Signup = () => {
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error for this field when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -71,9 +74,10 @@ const Signup = () => {
         [name]: ''
       }));
     }
+    setServerError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -81,121 +85,164 @@ const Signup = () => {
     }
 
     setLoading(true);
+    setServerError('');
 
-    // Simulate signup - just store mock data and navigate
-    setTimeout(() => {
-      const mockUser = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        id: '123'
-      };
-      
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      localStorage.setItem('token', 'demo-token');
-      
+    try {
+      await registerWithEmail(formData.email, formData.password);
+      // Note: User profile update (name, phone) can be handled here if needed
+      // using updateProfile(auth.currentUser, { displayName: formData.name })
+      navigate('/home');
+    } catch (error) {
+      console.error("Signup error:", error);
+      let msg = "Failed to create account.";
+      if (error.code === 'auth/email-already-in-use') {
+        msg = "Email is already in use.";
+      } else if (error.code === 'auth/invalid-email') {
+        msg = "Invalid email address.";
+      } else if (error.code === 'auth/weak-password') {
+        msg = "Password is too weak.";
+      }
+      setServerError(msg);
+    } finally {
       setLoading(false);
-      navigate('/');
-    }, 1000);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setServerError('');
+    try {
+      await loginWithGoogle();
+      navigate('/home');
+    } catch (error) {
+      console.error("Google login error:", error);
+      setServerError("Failed to login with Google.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="signup-container">
-      <div className="signup-card">
-        <div className="signup-header">
-          <h1>Create Account</h1>
-          <p>Join BazarSe and start shopping from local stores</p>
+      <div className="signup-wrapper">
+        {/* Left Side - Image (Desktop Only) */}
+        <div className="signup-image-section">
+          <div className="signup-image-content">
+            <h2>Join BazarSe Today</h2>
+            <p>create an account and start ordering from your favorite local shops.</p>
+          </div>
+          <img src="/formimage.png" alt="Shopping" className="signup-side-image" />
         </div>
 
-        <form onSubmit={handleSubmit} className="signup-form">
-          <div className="form-group">
-            <label htmlFor="name">Full Name *</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className={errors.name ? 'error' : ''}
-              placeholder="Enter your full name"
-              disabled={loading}
-            />
-            {errors.name && <span className="error-text">{errors.name}</span>}
+        {/* Right Side - Form */}
+        <div className="signup-card">
+          <div className="signup-header">
+            <h1>Create Account</h1>
+            <p>Join BazarSe and start shopping from local stores</p>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="email">Email Address *</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className={errors.email ? 'error' : ''}
-              placeholder="Enter your email"
+          {serverError && <div className="error-message" style={{ color: 'red', marginBottom: '10px', textAlign: 'center' }}>{serverError}</div>}
+
+          <form onSubmit={handleSubmit} className="signup-form">
+            <div className="form-group">
+              <label htmlFor="name">Full Name *</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className={errors.name ? 'error' : ''}
+                placeholder="Enter your full name"
+                disabled={loading}
+              />
+              {errors.name && <span className="error-text">{errors.name}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="email">Email Address *</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className={errors.email ? 'error' : ''}
+                placeholder="Enter your email"
+                disabled={loading}
+              />
+              {errors.email && <span className="error-text">{errors.email}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="phone">Phone Number (Optional)</label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className={errors.phone ? 'error' : ''}
+                placeholder="Enter your phone number"
+                disabled={loading}
+              />
+              {errors.phone && <span className="error-text">{errors.phone}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="password">Password *</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className={errors.password ? 'error' : ''}
+                placeholder="Create a password (min. 6 characters)"
+                disabled={loading}
+              />
+              {errors.password && <span className="error-text">{errors.password}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm Password *</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className={errors.confirmPassword ? 'error' : ''}
+                placeholder="Re-enter your password"
+                disabled={loading}
+              />
+              {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
+            </div>
+
+            <button
+              type="submit"
+              className="signup-button"
               disabled={loading}
-            />
-            {errors.email && <span className="error-text">{errors.email}</span>}
-          </div>
+            >
+              {loading ? 'Creating Account...' : 'Sign Up'}
+            </button>
 
-          <div className="form-group">
-            <label htmlFor="phone">Phone Number (Optional)</label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              className={errors.phone ? 'error' : ''}
-              placeholder="Enter your phone number"
+            <button
+              type="button"
+              className="google-login-button"
+              onClick={handleGoogleLogin}
               disabled={loading}
-            />
-            {errors.phone && <span className="error-text">{errors.phone}</span>}
+            >
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
+              Sign in with Google
+            </button>
+          </form>
+
+          <div className="signup-footer">
+            <p>
+              Already have an account? <Link to="/login">Login</Link>
+            </p>
           </div>
-
-          <div className="form-group">
-            <label htmlFor="password">Password *</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className={errors.password ? 'error' : ''}
-              placeholder="Create a password (min. 6 characters)"
-              disabled={loading}
-            />
-            {errors.password && <span className="error-text">{errors.password}</span>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password *</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className={errors.confirmPassword ? 'error' : ''}
-              placeholder="Re-enter your password"
-              disabled={loading}
-            />
-            {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
-          </div>
-
-          <button 
-            type="submit" 
-            className="signup-button"
-            disabled={loading}
-          >
-            {loading ? 'Creating Account...' : 'Sign Up'}
-          </button>
-        </form>
-
-        <div className="signup-footer">
-          <p>
-            Already have an account? <Link to="/login">Login</Link>
-          </p>
         </div>
       </div>
     </div>
