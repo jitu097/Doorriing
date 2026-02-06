@@ -23,3 +23,16 @@
 .grocery-content p {
   font-size: 1.2rem;
 }
+
+.grocery-shops-container {
+  max-width: 1200px;
+  margin: 3rem auto;
+  padding: 0 2rem;
+}
+
+.grocery-shops-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  justify-items: center;
+}

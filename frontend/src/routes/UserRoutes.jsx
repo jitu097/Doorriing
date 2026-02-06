@@ -14,6 +14,9 @@ import ProtectedRoute from './ProtectedRoute';
 import PageLayout from '../components/layout/PageLayout';
 import Grocery from '../pages/Grocery/Grocery';
 import Restaurant from '../pages/Restaurant/Restaurant';
+import ItemCategory from '../pages/Grocery/itemcategory';
+import CategoryItem from '../pages/Restaurant/categoryitem';
+import SubCategory from '../pages/Restaurant/subcategory';
 
 const UserRoutes = () => {
   return (
@@ -30,7 +33,10 @@ const UserRoutes = () => {
         <Route element={<PageLayout />}>
           <Route path="/home" element={<Home />} />
           <Route path="/grocery" element={<Grocery />} />
+          <Route path="/grocery/shop/:shopId" element={<ItemCategory />} />
           <Route path="/restaurant" element={<Restaurant />} />
+          <Route path="/restaurant/shop/:restaurantId" element={<CategoryItem />} />
+          <Route path="/restaurant/shop/:restaurantId/category/:categoryId" element={<SubCategory />} />
           <Route path="/shops" element={<ShopsList />} />
           <Route path="/shop/:shopId" element={<ShopDetails />} />
           <Route path="/cart" element={<Cart />} />
