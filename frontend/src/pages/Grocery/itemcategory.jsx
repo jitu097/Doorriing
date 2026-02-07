@@ -34,6 +34,12 @@ const ItemCategory = () => {
     { id: 14, name: 'Ice creams & more', icon: '🍦', color: '#FFF0F5' }
   ];
 
+  const handleCategoryClick = (category) => {
+    navigate(`/grocery/shop/${shopId}/category/${category.id}`, {
+      state: { categoryName: category.name }
+    });
+  };
+
   return (
     <div className="item-category-page">
       {/* Header */}
@@ -99,7 +105,12 @@ const ItemCategory = () => {
         <h2 className="menu-title">MENU</h2>
         <div className="categories-grid">
           {categories.map((category) => (
-            <div key={category.id} className="category-card" style={{ backgroundColor: category.color }}>
+            <div 
+              key={category.id} 
+              className="category-card" 
+              style={{ backgroundColor: category.color }}
+              onClick={() => handleCategoryClick(category)}
+            >
               <div className="category-icon">{category.icon}</div>
               <p className="category-name">{category.name}</p>
             </div>

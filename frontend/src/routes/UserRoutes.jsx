@@ -17,6 +17,7 @@ import Restaurant from '../pages/Restaurant/Restaurant';
 import ItemCategory from '../pages/Grocery/itemcategory';
 import CategoryItem from '../pages/Restaurant/categoryitem';
 import SubCategory from '../pages/Restaurant/subcategory';
+import SubCategoryItem from '../pages/Grocery/subcategoryitem';
 
 const UserRoutes = () => {
   return (
@@ -34,6 +35,7 @@ const UserRoutes = () => {
           <Route path="/home" element={<Home />} />
           <Route path="/grocery" element={<Grocery />} />
           <Route path="/grocery/shop/:shopId" element={<ItemCategory />} />
+          <Route path="/grocery/shop/:shopId/category/:categoryId" element={<SubCategoryItem />} />
           <Route path="/restaurant" element={<Restaurant />} />
           <Route path="/restaurant/shop/:restaurantId" element={<CategoryItem />} />
           <Route path="/restaurant/shop/:restaurantId/category/:categoryId" element={<SubCategory />} />
