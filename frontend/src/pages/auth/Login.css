@@ -31,7 +31,7 @@
 
 /* Top Section with Image */
 .login-top-section {
-  background: linear-gradient(135deg, #26bfbf 0%, #1da1a1 100%);
+  background: linear-gradient(135deg, #dc5e1a 0%, #da5a4c 100%);
   height: 280px;
   position: relative;
   display: flex;
@@ -77,10 +77,11 @@
 .login-boy-image {
   position: relative;
   z-index: 2;
-  height: 240px;
+  height: 340px;
   width: auto;
   object-fit: contain;
   margin-bottom: -20px;
+  margin-left: 250px;
 }
 
 .login-logo-badge {
@@ -151,7 +152,7 @@
 
 .input-icon {
   font-size: 1.2rem;
-  color: #26bfbf;
+  color: #3eabab;
 }
 
 .form-group input {
@@ -198,7 +199,7 @@
 
 .login-button {
   padding: 0.95rem;
-  background: linear-gradient(135deg, #26bfbf 0%, #1da1a1 100%);
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
   color: white;
   border: none;
   border-radius: 10px;
@@ -207,13 +208,13 @@
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: 0.5rem;
-  box-shadow: 0 4px 15px rgba(38, 191, 191, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
 }
 
 .login-button:hover {
-  background: linear-gradient(135deg, #1da1a1 0%, #26bfbf 100%);
+  background: linear-gradient(135deg, #f57c00 0%, #ff9800 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(38, 191, 191, 0.4);
+  box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
 }
 
 .login-button:disabled {
@@ -294,7 +295,8 @@
   }
 
   .login-boy-image {
-    height: 200px;
+    height: 320px;
+    margin-right: 40px;
   }
 
   .login-form-section {

@@ -1,0 +1,81 @@
+/* Grocery Landing Page - Mobile Optimized */
+.grocery-landing-page {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F5A623;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.grocery-landing-image {
+  max-width: 95%;
+  max-height: 95vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  animation: fadeInScale 0.6s ease-out;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Desktop View */
+@media (min-width: 1024px) {
+  .grocery-landing-image {
+    max-width: 85%;
+    max-height: 90vh;
+  }
+}
+
+/* Tablet View */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .grocery-landing-image {
+    max-width: 90%;
+    max-height: 90vh;
+  }
+}
+
+/* Mobile View - Priority */
+@media (max-width: 767px) {
+  .grocery-landing-page {
+    background: #F5A623;
+  }
+
+  .grocery-landing-image {
+    max-width: 95%;
+    max-height: 85vh;
+    object-fit: contain;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .grocery-landing-image {
+    max-width: 98%;
+    max-height: 80vh;
+  }
+}
+
+/* Landscape Mobile */
+@media (max-height: 600px) and (orientation: landscape) {
+  .grocery-landing-image {
+    max-height: 90vh;
+    max-width: 80%;
+  }
+}

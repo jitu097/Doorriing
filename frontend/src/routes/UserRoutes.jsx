@@ -13,7 +13,9 @@ import ShopDetails from '../pages/shop/ShopDetails';
 import ProtectedRoute from './ProtectedRoute';
 import PageLayout from '../components/layout/PageLayout';
 import Grocery from '../pages/Grocery/Grocery';
+import GroceryLanding from '../pages/Grocery/GroceryLanding';
 import Restaurant from '../pages/Restaurant/Restaurant';
+import RestaurantLanding from '../pages/Restaurant/RestaurantLanding';
 import ItemCategory from '../pages/Grocery/itemcategory';
 import CategoryItem from '../pages/Restaurant/categoryitem';
 import SubCategory from '../pages/Restaurant/subcategory';
@@ -31,12 +33,17 @@ const UserRoutes = () => {
 
       {/* Protected Routes with Layout */}
       <Route element={<ProtectedRoute />}>
+        {/* Landing pages without navbar */}
+        <Route path="/grocery" element={<GroceryLanding />} />
+        <Route path="/restaurant" element={<RestaurantLanding />} />
+        
+        {/* Routes with Layout (includes navbar) */}
         <Route element={<PageLayout />}>
           <Route path="/home" element={<Home />} />
-          <Route path="/grocery" element={<Grocery />} />
+          <Route path="/grocery/browse" element={<Grocery />} />
           <Route path="/grocery/shop/:shopId" element={<ItemCategory />} />
           <Route path="/grocery/shop/:shopId/category/:categoryId" element={<SubCategoryItem />} />
-          <Route path="/restaurant" element={<Restaurant />} />
+          <Route path="/restaurant/browse" element={<Restaurant />} />
           <Route path="/restaurant/shop/:restaurantId" element={<CategoryItem />} />
           <Route path="/restaurant/shop/:restaurantId/category/:categoryId" element={<SubCategory />} />
           <Route path="/shops" element={<ShopsList />} />

@@ -1,0 +1,83 @@
+/* Restaurant Landing Page - Mobile Optimized */
+.restaurant-landing-page {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #fff5e6 0%, #ffe0b2 100%);
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.restaurant-landing-image {
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  display: block;
+  animation: fadeInScale 0.6s ease-out;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Desktop View */
+@media (min-width: 1024px) {
+  .restaurant-landing-image {
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+  }
+}
+
+/* Tablet View */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .restaurant-landing-image {
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+  }
+}
+
+/* Mobile View - Priority */
+@media (max-width: 767px) {
+  .restaurant-landing-page {
+    background: #F5A623;
+  }
+
+  .restaurant-landing-image {
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .restaurant-landing-image {
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+  }
+}
+
+/* Landscape Mobile */
+@media (max-height: 600px) and (orientation: landscape) {
+  .restaurant-landing-image {
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+  }
+}
