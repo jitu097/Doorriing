@@ -1,40 +1,77 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import GroceryItemCard from './itemcard';
+import EmptyState from '../../components/common/EmptyState';
 import './subcategoryitem.css';
+import { getCategoryWithDetails } from '../../services/category.service.js';
+
+const getGroupKey = (group) => (group?.subcategory_id ?? 'no-subcategory');
 
 const SubCategoryItem = () => {
   const { shopId, categoryId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const categoryName = location.state?.categoryName || 'Items';
+  const fallbackCategoryName = location.state?.categoryName || 'Items';
 
-  // Dummy subcategories data
-  const subcategories = [
-    { id: 1, name: 'RICE', icon: '🌾', count: 8 },
-    { id: 2, name: 'ATTA', icon: '🌾', count: 12 },
-    { id: 3, name: 'DALS', icon: '🫘', count: 10 },
-    { id: 4, name: 'OIL', icon: '🫗', count: 15 },
-    { id: 5, name: 'TEA', icon: '☕', count: 8 },
-    { id: 6, name: 'COFFEE', icon: '☕', count: 6 },
-    { id: 7, name: 'BISCUITS', icon: '🍪', count: 20 },
-    { id: 8, name: 'SNACKS', icon: '🍿', count: 18 },
-    { id: 9, name: 'SPICES', icon: '🌶️', count: 15 }
-  ];
+  const [categoryDetails, setCategoryDetails] = useState(null);
+  const [selectedGroupKey, setSelectedGroupKey] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  // Dummy grocery items
-  const groceryItems = [
-    { id: 1, name: 'Tata Tea Gold', price: 285, weight: '1 kg', image: 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=200' },
-    { id: 2, name: 'Red Label Tea', price: 250, weight: '1 kg', image: 'https://images.unsplash.com/photo-1597318120209-a1cd903920a5?w=200' },
-    { id: 3, name: 'Brooke Bond Tea', price: 240, weight: '1 kg', image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=200' },
-    { id: 4, name: 'Lipton Green Tea', price: 320, weight: '500 g', image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=200' },
-    { id: 5, name: 'Taj Mahal Tea', price: 295, weight: '1 kg', image: 'https://images.unsplash.com/photo-1597318120209-a1cd903920a5?w=200' },
-    { id: 6, name: 'Society Tea', price: 275, weight: '1 kg', image: 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=200' },
-    { id: 7, name: 'Wagh Bakri Tea', price: 260, weight: '1 kg', image: 'https://images.unsplash.com/photo-1597318120209-a1cd903920a5?w=200' },
-    { id: 8, name: 'Organic India Tea', price: 350, weight: '500 g', image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=200' }
-  ];
+  useEffect(() => {
+    let isMounted = true;
 
-  const [selectedSubcategory, setSelectedSubcategory] = React.useState(subcategories[4]);
+    const loadCategoryDetails = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const details = await getCategoryWithDetails(categoryId, shopId);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setCategoryDetails(details);
+      } catch (fetchError) {
+        console.error('Failed to load category items', fetchError);
+        if (isMounted) {
+          setError(fetchError.message || 'Unable to fetch items right now.');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadCategoryDetails();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [categoryId, shopId, reloadKey]);
+
+  const groups = useMemo(() => categoryDetails?.grouped_items || [], [categoryDetails]);
+
+  useEffect(() => {
+    if (!groups.length) {
+      setSelectedGroupKey(null);
+      return;
+    }
+
+    const defaultGroup = groups.find((group) => (group.items?.length || 0) > 0) || groups[0];
+    setSelectedGroupKey(getGroupKey(defaultGroup));
+  }, [groups]);
+
+  const selectedGroup = groups.find((group) => getGroupKey(group) === selectedGroupKey);
+  const items = selectedGroup?.items || [];
+
+  const showSidebar = groups.length > 1 || groups.some((group) => group.subcategory_id !== null);
+  const displayName = selectedGroup?.subcategory_name || categoryDetails?.category?.name || fallbackCategoryName;
+  const displayInitial = displayName?.charAt(0)?.toUpperCase() || '#';
+  const displayCount = selectedGroup ? selectedGroup.items?.length || 0 : categoryDetails?.total_items || 0;
 
   return (
     <div className="subcategory-item-page">
@@ -46,43 +83,71 @@ const SubCategoryItem = () => {
           </svg>
         </button>
         <div className="header-info">
-          <div className="category-icon-header">{selectedSubcategory.icon}</div>
+          <div className="category-icon-header">{displayInitial}</div>
           <div>
-            <h1 className="category-title">{selectedSubcategory.name}</h1>
-            <p className="category-subtitle">Multiple items</p>
+            <h1 className="category-title">{displayName}</h1>
+            <p className="category-subtitle">{displayCount} items</p>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="subcategory-item-content">
-        {/* Sidebar with subcategories */}
-        <div className="subcategory-item-sidebar">
-          {subcategories.map((subcat) => (
-            <div
-              key={subcat.id}
-              className={`subcategory-item ${selectedSubcategory.id === subcat.id ? 'active' : ''}`}
-              onClick={() => setSelectedSubcategory(subcat)}
-            >
-              <div className="subcategory-icon">{subcat.icon}</div>
-              <div className="subcategory-name">{subcat.name}</div>
-            </div>
-          ))}
-        </div>
+        {showSidebar && (
+          <div className="subcategory-item-sidebar">
+            {groups.map((group) => {
+              const key = getGroupKey(group);
+              const name = group.subcategory_name || 'Other Items';
+              const icon = group.subcategory_name?.charAt(0)?.toUpperCase() || '#';
+              const isActive = key === selectedGroupKey;
+
+              return (
+                <div
+                  key={key}
+                  className={`subcategory-item ${isActive ? 'active' : ''}`}
+                  onClick={() => setSelectedGroupKey(key)}
+                >
+                  <div className="subcategory-icon">{icon}</div>
+                  <div className="subcategory-name">{name}</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Items Grid */}
         <div className="items-container">
-          <div className="items-grid">
-            {groceryItems.map((item) => (
-              <GroceryItemCard
-                key={item.id}
-                name={item.name}
-                price={item.price}
-                weight={item.weight}
-                image={item.image}
-              />
-            ))}
-          </div>
+          {loading && <p>Loading items...</p>}
+
+          {!loading && error && (
+            <EmptyState
+              title="We couldn't load items"
+              description={error}
+              actionLabel="Retry"
+              onAction={() => setReloadKey((prev) => prev + 1)}
+            />
+          )}
+
+          {!loading && !error && items.length === 0 && (
+            <EmptyState
+              title="No items found"
+              description="This category does not have any items yet."
+            />
+          )}
+
+          {!loading && !error && items.length > 0 && (
+            <div className="items-grid">
+              {items.map((item) => (
+                <GroceryItemCard
+                  key={item.id}
+                  name={item.name}
+                  price={item.price}
+                  subtitle={item.description || (item.stock_quantity != null ? `${item.stock_quantity} in stock` : undefined)}
+                  image={item.image_url}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -64,6 +64,13 @@
   line-height: 1.4;
 }
 
+.item-description {
+  font-size: 0.85rem;
+  color: #777;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.5;
+}
+
 .item-price {
   font-size: 0.95rem;
   color: #666;
@@ -89,6 +96,12 @@
 
 .item-add-btn:active {
   transform: scale(0.98);
+}
+
+.item-add-btn:disabled {
+  background: #cbd5f5;
+  color: #4a5568;
+  cursor: not-allowed;
 }
 
 .item-card-image {

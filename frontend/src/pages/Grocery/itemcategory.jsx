@@ -1,44 +1,71 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './itemcategory.css';
+import EmptyState from '../../components/common/EmptyState';
+import { getShopById } from '../../services/shop.service.js';
+import { getCategoriesByShop } from '../../services/category.service.js';
 
 const ItemCategory = () => {
   const { shopId } = useParams();
   const navigate = useNavigate();
 
-  // Dummy shop data
-  const shops = {
-    1: { name: 'Govind General Store', location: 'Railway Colony', rating: 0, deliveryTime: '0, 20 mins' },
-    2: { name: 'Fresh Market', location: 'Main Street', rating: 4.5, deliveryTime: '15, 30 mins' },
-    3: { name: 'Daily Needs Store', location: 'Market Road', rating: 4.2, deliveryTime: '10, 25 mins' },
-    4: { name: 'Organic Store', location: 'Green Valley', rating: 4.8, deliveryTime: '20, 35 mins' }
-  };
+  const [shop, setShop] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  const shop = shops[shopId] || shops[1];
+  useEffect(() => {
+    let isMounted = true;
 
-  // Dummy categories
-  const categories = [
-    { id: 1, name: 'Atta, Rice, Oil & Dals', icon: '🌾', color: '#FFF9E6' },
-    { id: 2, name: 'Tea, Coffee & More', icon: '☕', color: '#FFE6E6' },
-    { id: 3, name: 'Biscuits & Cookies', icon: '🍪', color: '#FFF0E6' },
-    { id: 4, name: 'Sugar, Salt & Jaggery', icon: '🧂', color: '#E6F7E6' },
-    { id: 5, name: 'Masala & Spices', icon: '🌶️', color: '#FFE6F0' },
-    { id: 6, name: 'Dairy, Bread & Eggs', icon: '🥛', color: '#E6F3FF' },
-    { id: 7, name: 'Packaged food', icon: '📦', color: '#FFF5E6' },
-    { id: 8, name: 'Bath & Body', icon: '🧴', color: '#F0E6FF' },
-    { id: 9, name: 'Hair care', icon: '💆', color: '#FFE6EB' },
-    { id: 10, name: 'Cold Drinks & Juices', icon: '🥤', color: '#FFE6E6' },
-    { id: 11, name: 'Cleaning Essentials', icon: '🧹', color: '#E6F9FF' },
-    { id: 12, name: 'Grooming Essentials', icon: '💈', color: '#F5E6FF' },
-    { id: 13, name: 'Fruits & Vegetables', icon: '🥬', color: '#E8F5E8' },
-    { id: 14, name: 'Ice creams & more', icon: '🍦', color: '#FFF0F5' }
-  ];
+    const loadShopData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const [shopDetails, categoryList] = await Promise.all([
+          getShopById(shopId),
+          getCategoriesByShop(shopId),
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setShop(shopDetails);
+        setCategories(categoryList || []);
+      } catch (fetchError) {
+        console.error('Failed to load shop categories', fetchError);
+        if (isMounted) {
+          setError(fetchError.message || 'Unable to fetch categories right now.');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadShopData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [shopId, reloadKey]);
+
+  const cardColors = useMemo(
+    () => ['#FFF9E6', '#FFE6E6', '#FFF0E6', '#E6F7E6', '#FFE6F0', '#E6F3FF', '#FFF5E6', '#F0E6FF'],
+    []
+  );
 
   const handleCategoryClick = (category) => {
     navigate(`/grocery/shop/${shopId}/category/${category.id}`, {
-      state: { categoryName: category.name }
+      state: { categoryName: category.name },
     });
   };
+
+  const infoLocation = shop?.address || shop?.city;
+  const isActive = shop?.is_active !== false;
 
   return (
     <div className="item-category-page">
@@ -49,14 +76,14 @@ const ItemCategory = () => {
             <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
-        <h1 className="shop-name">{shop.name}</h1>
+        <h1 className="shop-name">{shop?.name || 'Shop'}</h1>
         <div className="header-actions">
-          <button className="icon-button">
+          <button className="icon-button" type="button">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M4 12H20M12 4L12 20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
             </svg>
           </button>
-          <button className="icon-button">
+          <button className="icon-button" type="button">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -66,56 +93,80 @@ const ItemCategory = () => {
 
       {/* Shop Info */}
       <div className="shop-info">
-        <div className="info-row">
-          <span className="rating">
-            <span className="star">⭐</span>
-            {shop.rating} (0+ ratings)
-            <span className="info-icon">ℹ️</span>
-          </span>
-        </div>
+        {shop?.description && (
+          <div className="info-row">
+            <span className="delivery-info">{shop.description}</span>
+          </div>
+        )}
         <div className="info-row">
           <span className="delivery-info">
             <span className="icon">🕐</span>
-            Approx. {shop.deliveryTime}
+            Approx. {shop?.estimated_delivery_time || 'Delivery time not available'}
           </span>
           <span className="delivery-location">Delivery to Home</span>
         </div>
-        <div className="info-row">
-          <span className="location">
-            <span className="icon">📍</span>
-            {shop.location}
-          </span>
-        </div>
+        {infoLocation && (
+          <div className="info-row">
+            <span className="location">
+              <span className="icon">📍</span>
+              {infoLocation}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Status Banner */}
       <div className="status-banner">
         <div className="banner-content">
-          <span className="banner-icon">🔒</span>
+          <span className="banner-icon">{isActive ? '✅' : '🔒'}</span>
           <div className="banner-text">
-            <strong>SHUTTER IS DOWN</strong>
-            <p>The outlet will open in next available slot</p>
+            <strong>{isActive ? 'OPEN FOR ORDERS' : 'SHUTTER IS DOWN'}</strong>
+            <p>{isActive ? 'The shop is accepting orders right now.' : 'The outlet will open in the next available slot.'}</p>
           </div>
-          <button className="see-slots-btn">SEE SLOTS</button>
+          <button className="see-slots-btn" type="button" disabled>
+            SEE SLOTS
+          </button>
         </div>
       </div>
 
       {/* Menu Section */}
       <div className="menu-section">
         <h2 className="menu-title">MENU</h2>
-        <div className="categories-grid">
-          {categories.map((category) => (
-            <div 
-              key={category.id} 
-              className="category-card" 
-              style={{ backgroundColor: category.color }}
-              onClick={() => handleCategoryClick(category)}
-            >
-              <div className="category-icon">{category.icon}</div>
-              <p className="category-name">{category.name}</p>
-            </div>
-          ))}
-        </div>
+        {loading && <p>Loading categories...</p>}
+
+        {!loading && error && (
+          <EmptyState
+            title="We couldn't load categories"
+            description={error}
+            actionLabel="Retry"
+            onAction={() => setReloadKey((prev) => prev + 1)}
+          />
+        )}
+
+        {!loading && !error && categories.length === 0 && (
+          <EmptyState
+            title="No categories available"
+            description="This shop has not published any categories yet."
+          />
+        )}
+
+        {!loading && !error && categories.length > 0 && (
+          <div className="categories-grid">
+            {categories.map((category, index) => (
+              <div
+                key={category.id}
+                className="category-card"
+                style={{ backgroundColor: cardColors[index % cardColors.length] }}
+                onClick={() => handleCategoryClick(category)}
+              >
+                <div className="category-icon">
+                  {category.name?.charAt(0)?.toUpperCase() || '#'}
+                </div>
+                <p className="category-name">{category.name}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Footer Note */}

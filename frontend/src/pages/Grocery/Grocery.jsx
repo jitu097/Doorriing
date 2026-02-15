@@ -1,73 +1,124 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import './Grocery.css';
 import ShopCard from '../shopcard/shopcard';
+import EmptyState from '../../components/common/EmptyState';
+import { getShopsByBusinessType } from '../../services/shop.service.js';
+
+const parseShopSubcategories = (value) => {
+  if (!value) {
+    return [];
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => {
+        if (typeof entry === 'string') {
+          return entry.trim();
+        }
+
+        if (entry == null) {
+          return '';
+        }
+
+        return String(entry).trim();
+      })
+      .filter((entry) => entry.length > 0);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0);
+  }
+
+  return [];
+};
+
+const collectUniqueSubcategories = (shops) => {
+  const unique = new Map();
+
+  (shops || []).forEach((shop) => {
+    const rawSource = shop?.subcategories ?? shop?.shop_subcategories ?? shop?.subcategory;
+    parseShopSubcategories(rawSource).forEach((subcategory) => {
+      const key = subcategory.toLowerCase();
+
+      if (!unique.has(key)) {
+        unique.set(key, subcategory);
+      }
+    });
+  });
+
+  return Array.from(unique.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+};
 
 const Grocery = () => {
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [shops, setShops] = useState([]);
+  const [filters, setFilters] = useState(['All']);
+  const [selectedFilter, setSelectedFilter] = useState('All');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  // Categories
-  const categories = [
-    'All',
-    'Hotels',
-    'Restaurant',
-    'Sweet Store',
-    'Dhaba',
-    'Fast Food',
-    'Cafe',
-    'Bakery',
-    'Others'
-  ];
+  useEffect(() => {
+    let isMounted = true;
 
-  // Dummy data for shop cards
-  const dummyShops = [
-    {
-      id: 1,
-      image: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=400',
-      title: 'Govind General Store',
-      description: 'Serving items across 15 categories',
-      category: 'Hotels'
-    },
-    {
-      id: 2,
-      image: 'https://images.unsplash.com/photo-1583258292688-d0213dc5a3a8?w=400',
-      title: 'Fresh Market',
-      description: 'Serving items across 20 categories',
-      category: 'Restaurant'
-    },
-    {
-      id: 3,
-      image: 'https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=400',
-      title: 'Daily Needs Store',
-      description: 'Serving items across 18 categories',
-      category: 'Cafe'
-    },
-    {
-      id: 4,
-      image: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=400',
-      title: 'Organic Store',
-      description: 'Serving items across 12 categories',
-      category: 'Fast Food'
-    },
-    {
-      id: 5,
-      image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400',
-      title: 'Sweet Paradise',
-      description: 'Serving items across 10 categories',
-      category: 'Sweet Store'
-    },
-    {
-      id: 6,
-      image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=400',
-      title: 'Dhaba Delight',
-      description: 'Serving items across 14 categories',
-      category: 'Dhaba'
+    const fetchShops = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await getShopsByBusinessType('grocery');
+        if (!isMounted) {
+          return;
+        }
+
+        const fetchedShops = result.shops || [];
+        setShops(fetchedShops);
+
+        const uniqueSubcategories = collectUniqueSubcategories(fetchedShops);
+
+        setFilters(['All', ...uniqueSubcategories]);
+
+        setSelectedFilter((previous) => {
+          if (previous === 'All') {
+            return previous;
+          }
+
+          const normalizedPrevious = previous.toLowerCase();
+          return uniqueSubcategories.some((subcategory) => subcategory.toLowerCase() === normalizedPrevious) ? previous : 'All';
+        });
+      } catch (fetchError) {
+        console.error('Failed to load grocery shops', fetchError);
+        if (isMounted) {
+          setError(fetchError.message || 'Unable to fetch shops right now.');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchShops();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [reloadKey]);
+
+  const filteredShops = useMemo(() => {
+    if (selectedFilter === 'All') {
+      return shops;
     }
-  ];
 
-  // Filter shops based on selected category
-  const filteredShops = selectedCategory === 'All'
-    ? dummyShops
-    : dummyShops.filter(shop => shop.category === selectedCategory);
+    const selectedNormalized = selectedFilter.toLowerCase();
+
+    return shops.filter((shop) => {
+      const rawSource = shop?.subcategories ?? shop?.shop_subcategories ?? shop?.subcategory;
+      return parseShopSubcategories(rawSource).some((subcategory) => subcategory.toLowerCase() === selectedNormalized);
+    });
+  }, [shops, selectedFilter]);
 
   return (
     <div>
@@ -81,11 +132,11 @@ const Grocery = () => {
       {/* Category Scroller */}
       <div className="category-scroller-container">
         <div className="category-scroller">
-          {categories.map((category) => (
+          {filters.map((category) => (
             <button
               key={category}
-              className={`category-btn ${selectedCategory === category ? 'active' : ''}`}
-              onClick={() => setSelectedCategory(category)}
+              className={`category-btn ${selectedFilter === category ? 'active' : ''}`}
+              onClick={() => setSelectedFilter(category)}
             >
               {category}
             </button>
@@ -94,21 +145,39 @@ const Grocery = () => {
       </div>
       
       <div className="grocery-shops-container">
-        {filteredShops.length > 0 ? (
+        {loading && <p>Loading shops...</p>}
+
+        {!loading && error && (
+          <EmptyState
+            title="We couldn't load shops"
+            description={error}
+            actionLabel="Retry"
+            onAction={() => {
+              setSelectedFilter('All');
+              setReloadKey((prev) => prev + 1);
+            }}
+          />
+        )}
+
+        {!loading && !error && filteredShops.length === 0 && (
+          <EmptyState
+            title="No shops found"
+            description={selectedFilter === 'All' ? 'No grocery shops are available right now.' : `No shops found in ${selectedFilter}.`}
+          />
+        )}
+
+        {!loading && !error && filteredShops.length > 0 && (
           <div className="grocery-shops-grid">
             {filteredShops.map((shop) => (
               <ShopCard
                 key={shop.id}
                 id={shop.id}
-                image={shop.image}
-                title={shop.title}
-                description={shop.description}
+                image={shop.image_url}
+                title={shop.name}
+                description={shop.category_count ? `${shop.category_count} categories available` : shop.description}
+                city={shop.city}
               />
             ))}
-          </div>
-        ) : (
-          <div className="no-results">
-            <p>No shops found in this category</p>
           </div>
         )}
       </div>

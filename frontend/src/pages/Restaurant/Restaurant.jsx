@@ -1,72 +1,125 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import './Restaurant.css';
 import RestaurantCard from '../Restaurantcard/card';
+import EmptyState from '../../components/common/EmptyState';
+import { getShopsByBusinessType } from '../../services/shop.service.js';
+
+const parseShopSubcategories = (value) => {
+  if (!value) {
+    return [];
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => {
+        if (typeof entry === 'string') {
+          return entry.trim();
+        }
+
+        if (entry == null) {
+          return '';
+        }
+
+        return String(entry).trim();
+      })
+      .filter((entry) => entry.length > 0);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0);
+  }
+
+  return [];
+};
+
+const collectUniqueSubcategories = (shops) => {
+  const unique = new Map();
+
+  (shops || []).forEach((shop) => {
+    const rawSource = shop?.subcategories ?? shop?.shop_subcategories ?? shop?.subcategory;
+    parseShopSubcategories(rawSource).forEach((subcategory) => {
+      const key = subcategory.toLowerCase();
+
+      if (!unique.has(key)) {
+        unique.set(key, subcategory);
+      }
+    });
+  });
+
+  return Array.from(unique.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+};
 
 const Restaurant = () => {
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [restaurants, setRestaurants] = useState([]);
+  const [filters, setFilters] = useState(['All']);
+  const [selectedFilter, setSelectedFilter] = useState('All');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  // Categories
-  const categories = [
-    'All',
-    'Vegetable Shop',
-    'General Store',
-    'Fruit Shop',
-    'Electronics Groceries',
-    'Cosmetics',
-    'Dairy Products',
-    'Others'
-  ];
+  useEffect(() => {
+    let isMounted = true;
 
-  // Dummy data for restaurant cards
-  const dummyRestaurants = [
-    {
-      id: 1,
-      image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400',
-      title: 'The Spice Kitchen',
-      description: 'Serving items across 25 categories',
-      category: 'General Store'
-    },
-    {
-      id: 2,
-      image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=400',
-      title: 'Pizza Paradise',
-      description: 'Serving items across 15 categories',
-      category: 'Vegetable Shop'
-    },
-    {
-      id: 3,
-      image: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=400',
-      title: 'Cafe Delight',
-      description: 'Serving items across 18 categories',
-      category: 'Fruit Shop'
-    },
-    {
-      id: 4,
-      image: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=400',
-      title: 'Fresh Mart',
-      description: 'Serving items across 20 categories',
-      category: 'General Store'
-    },
-    {
-      id: 5,
-      image: 'https://images.unsplash.com/photo-1583258292688-d0213dc5a3a8?w=400',
-      title: 'Electronics Hub',
-      description: 'Serving items across 12 categories',
-      category: 'Electronics Groceries'
-    },
-    {
-      id: 6,
-      image: 'https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=400',
-      title: 'Beauty Store',
-      description: 'Serving items across 15 categories',
-      category: 'Cosmetics'
+    const fetchRestaurants = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await getShopsByBusinessType('restaurant');
+
+        if (!isMounted) {
+          return;
+        }
+
+        const fetchedRestaurants = result.shops || [];
+        setRestaurants(fetchedRestaurants);
+
+        const uniqueSubcategories = collectUniqueSubcategories(fetchedRestaurants);
+
+        setFilters(['All', ...uniqueSubcategories]);
+
+        setSelectedFilter((previous) => {
+          if (previous === 'All') {
+            return previous;
+          }
+
+          const normalizedPrevious = previous.toLowerCase();
+          return uniqueSubcategories.some((subcategory) => subcategory.toLowerCase() === normalizedPrevious) ? previous : 'All';
+        });
+      } catch (fetchError) {
+        console.error('Failed to load restaurant shops', fetchError);
+        if (isMounted) {
+          setError(fetchError.message || 'Unable to fetch restaurants right now.');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchRestaurants();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [reloadKey]);
+
+  const filteredRestaurants = useMemo(() => {
+    if (selectedFilter === 'All') {
+      return restaurants;
     }
-  ];
 
-  // Filter restaurants based on selected category
-  const filteredRestaurants = selectedCategory === 'All'
-    ? dummyRestaurants
-    : dummyRestaurants.filter(restaurant => restaurant.category === selectedCategory);
+    const selectedNormalized = selectedFilter.toLowerCase();
+
+    return restaurants.filter((restaurant) => {
+      const rawSource = restaurant?.subcategories ?? restaurant?.shop_subcategories ?? restaurant?.subcategory;
+      return parseShopSubcategories(rawSource).some((subcategory) => subcategory.toLowerCase() === selectedNormalized);
+    });
+  }, [restaurants, selectedFilter]);
 
   return (
     <div>
@@ -80,11 +133,11 @@ const Restaurant = () => {
       {/* Category Scroller */}
       <div className="category-scroller-container">
         <div className="category-scroller">
-          {categories.map((category) => (
+          {filters.map((category) => (
             <button
               key={category}
-              className={`category-btn ${selectedCategory === category ? 'active' : ''}`}
-              onClick={() => setSelectedCategory(category)}
+              className={`category-btn ${selectedFilter === category ? 'active' : ''}`}
+              onClick={() => setSelectedFilter(category)}
             >
               {category}
             </button>
@@ -93,21 +146,39 @@ const Restaurant = () => {
       </div>
       
       <div className="restaurant-cards-container">
-        {filteredRestaurants.length > 0 ? (
+        {loading && <p>Loading restaurants...</p>}
+
+        {!loading && error && (
+          <EmptyState
+            title="We couldn't load restaurants"
+            description={error}
+            actionLabel="Retry"
+            onAction={() => {
+              setSelectedFilter('All');
+              setReloadKey((prev) => prev + 1);
+            }}
+          />
+        )}
+
+        {!loading && !error && filteredRestaurants.length === 0 && (
+          <EmptyState
+            title="No restaurants found"
+            description={selectedFilter === 'All' ? 'No restaurants are available right now.' : `No restaurants found in ${selectedFilter}.`}
+          />
+        )}
+
+        {!loading && !error && filteredRestaurants.length > 0 && (
           <div className="restaurant-cards-grid">
             {filteredRestaurants.map((restaurant) => (
               <RestaurantCard
                 key={restaurant.id}
                 id={restaurant.id}
-                image={restaurant.image}
-                title={restaurant.title}
-                description={restaurant.description}
+                image={restaurant.image_url}
+                title={restaurant.name}
+                description={restaurant.category_count ? `${restaurant.category_count} categories available` : restaurant.description}
+                city={restaurant.city}
               />
             ))}
-          </div>
-        ) : (
-          <div className="no-results">
-            <p>No shops found in this category</p>
           </div>
         )}
       </div>
