@@ -1,11 +1,13 @@
 
 import { Link, useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
+import { useCart } from '../../context/CartContext';
 import Modal from '../common/Modal';
 import './Navbar.css';
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const { getCartCount } = useCart();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [showAccount, setShowAccount] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
@@ -19,9 +21,9 @@ const Navbar = () => {
     phone: user.phone || ''
   });
   const [search, setSearch] = useState('');
-  // TODO: Replace with real cart count and total
-  const cartCount = 3;
-  const cartTotal = 737;
+
+  const cartCount = getCartCount();
+
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -92,8 +94,8 @@ const Navbar = () => {
           <span className="cart-svg">
             {/* Bag icon SVG */}
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#222" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="5" y="7" width="14" height="12" rx="3"/>
-              <path d="M9 7V6a3 3 0 0 1 6 0v1"/>
+              <rect x="5" y="7" width="14" height="12" rx="3" />
+              <path d="M9 7V6a3 3 0 0 1 6 0v1" />
             </svg>
           </span>
           <span className="cart-ui-label">Cart</span>

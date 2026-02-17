@@ -1,4 +1,5 @@
 import React from 'react';
+import { useCart } from '../../context/CartContext';
 import './itemcard.css';
 
 const formatPrice = (price) => {
@@ -14,8 +15,26 @@ const formatPrice = (price) => {
   return numericPrice.toFixed(2);
 };
 
-const GroceryItemCard = ({ name, price, subtitle, image }) => {
+const GroceryItemCard = ({ id, name, price, subtitle, image }) => {
+  const { addToCart, getCartItem, increaseQty, decreaseQty } = useCart();
   const formattedPrice = formatPrice(price);
+
+  // Generate unique ID from name and price if no ID provided
+  const itemId = id || `${name}-${price}`.toLowerCase().replace(/\s+/g, '-');
+
+  // Check if item is in cart
+  const cartItem = getCartItem(itemId);
+  const isInCart = !!cartItem;
+
+  const handleAddToCart = () => {
+    addToCart({
+      id: itemId,
+      name,
+      price,
+      image,
+      subtitle
+    });
+  };
 
   return (
     <div className="grocery-item-card">
@@ -25,9 +44,34 @@ const GroceryItemCard = ({ name, price, subtitle, image }) => {
         <div className="grocery-item-price">
           {formattedPrice ? `₹${formattedPrice}` : 'Price unavailable'}
         </div>
-        <button className="grocery-item-add-btn" type="button">
-          ADD TO CART
-        </button>
+
+        {!isInCart ? (
+          <button
+            className="grocery-item-add-btn"
+            type="button"
+            onClick={handleAddToCart}
+          >
+            ADD TO CART
+          </button>
+        ) : (
+          <div className="grocery-item-qty-controls">
+            <button
+              className="qty-btn-small"
+              onClick={() => decreaseQty(itemId)}
+              aria-label="Decrease quantity"
+            >
+              -
+            </button>
+            <span className="qty-display-small">{cartItem.quantity}</span>
+            <button
+              className="qty-btn-small"
+              onClick={() => increaseQty(itemId)}
+              aria-label="Increase quantity"
+            >
+              +
+            </button>
+          </div>
+        )}
       </div>
       {image && (
         <div className="grocery-item-card-image">

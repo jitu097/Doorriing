@@ -104,6 +104,17 @@
   cursor: not-allowed;
 }
 
+.item-qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f5f5f5;
+  border-radius: 6px;
+  padding: 4px;
+  align-self: flex-start;
+}
+
+
 .item-card-image {
   width: 100px;
   height: 100px;
@@ -123,12 +134,12 @@
   .item-card {
     padding: 0.875rem;
   }
-  
+
   .item-card-image {
     width: 80px;
     height: 80px;
   }
-  
+
   .item-name {
     font-size: 0.95rem;
   }

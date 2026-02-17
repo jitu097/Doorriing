@@ -1,0 +1,263 @@
+.checkout-page {
+    min-height: calc(100vh - 80px);
+    background: #f8f8f8;
+    padding: 24px 0;
+}
+
+.checkout-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.checkout-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 24px;
+}
+
+.checkout-sections {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 24px;
+    align-items: start;
+}
+
+.checkout-main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.checkout-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.section-heading {
+    font-size: 18px;
+    font-weight: 600;
+    color: #222;
+    margin: 0 0 20px 0;
+}
+
+/* Address Type Selector */
+.address-type-selector {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.address-type-btn {
+    padding: 10px 20px;
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.2s;
+}
+
+.address-type-btn.active {
+    background: #0c831f;
+    color: #fff;
+    border-color: #0c831f;
+}
+
+/* Form Grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-input {
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: border-color 0.2s;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #0c831f;
+}
+
+.form-input.full-width {
+    grid-column: 1 / -1;
+}
+
+/* Payment Options */
+.payment-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.payment-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.payment-option:hover {
+    border-color: #0c831f;
+    background: #f9fdf9;
+}
+
+.payment-option input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.payment-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.payment-info strong {
+    font-size: 15px;
+    color: #222;
+}
+
+.payment-info span {
+    font-size: 13px;
+    color: #666;
+}
+
+/* Order Summary Sidebar */
+.checkout-sidebar {
+    position: sticky;
+    top: 100px;
+}
+
+.order-summary {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.summary-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+
+.summary-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.summary-item-name {
+    color: #222;
+    font-weight: 500;
+}
+
+.summary-item-qty {
+    color: #666;
+    font-size: 13px;
+}
+
+.summary-item-price {
+    font-weight: 600;
+    color: #222;
+}
+
+.summary-divider {
+    height: 1px;
+    background: #f0f0f0;
+    margin: 16px 0;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 15px;
+    color: #666;
+}
+
+.summary-row.total {
+    font-size: 20px;
+    font-weight: 700;
+    color: #222;
+    margin-top: 8px;
+}
+
+.summary-row.total span:last-child {
+    color: #0c831f;
+}
+
+.place-order-btn {
+    width: 100%;
+    padding: 16px;
+    background: #0c831f;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background 0.2s;
+}
+
+.place-order-btn:hover {
+    background: #0a6b19;
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+    .checkout-sections {
+        grid-template-columns: 1fr;
+    }
+
+    .checkout-sidebar {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .checkout-title {
+        font-size: 24px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-input.full-width {
+        grid-column: 1;
+    }
+
+    .address-type-selector {
+        flex-wrap: wrap;
+    }
+
+    .address-type-btn {
+        flex: 1;
+        min-width: 70px;
+    }
+}

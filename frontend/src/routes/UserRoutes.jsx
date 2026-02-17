@@ -4,6 +4,8 @@ import Signup from '../pages/auth/Signup';
 import Landingpage from '../pages/orders/Landingpage/Landingpage';
 import Home from '../pages/home/Home';
 import Cart from '../pages/cart/Cart';
+import Checkout from '../pages/cart/Checkout';
+import OrderSuccess from '../pages/cart/OrderSuccess';
 import OrdersList from '../pages/orders/OrdersList';
 import OrderDetails from '../pages/orders/OrderDetails';
 import Profile from '../pages/profile/Profile';
@@ -26,7 +28,7 @@ const UserRoutes = () => {
     <Routes>
       {/* Landing Page */}
       <Route path="/" element={<Landingpage />} />
-      
+
       {/* Public Routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
@@ -36,7 +38,7 @@ const UserRoutes = () => {
         {/* Landing pages without navbar */}
         <Route path="/grocery" element={<GroceryLanding />} />
         <Route path="/restaurant" element={<RestaurantLanding />} />
-        
+
         {/* Routes with Layout (includes navbar) */}
         <Route element={<PageLayout />}>
           <Route path="/home" element={<Home />} />
@@ -49,6 +51,8 @@ const UserRoutes = () => {
           <Route path="/shops" element={<ShopsList />} />
           <Route path="/shop/:shopId" element={<ShopDetails />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/orders" element={<OrdersList />} />
           <Route path="/orders/:orderId" element={<OrderDetails />} />
           <Route path="/profile" element={<Profile />} />

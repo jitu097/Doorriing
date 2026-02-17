@@ -1,4 +1,5 @@
 import React from 'react';
+import { useCart } from '../../context/CartContext';
 import './itemcard.css';
 
 const formatPrice = (price) => {
@@ -14,9 +15,30 @@ const formatPrice = (price) => {
   return numericPrice.toFixed(2);
 };
 
-const ItemCard = ({ name, price, isVeg, image, isAvailable = true, description }) => {
+const ItemCard = ({ id, name, price, isVeg, image, isAvailable = true, description }) => {
+  const { addToCart, getCartItem, increaseQty, decreaseQty } = useCart();
   const formattedPrice = formatPrice(price);
   const showVegIndicator = typeof isVeg === 'boolean';
+
+  // Generate unique ID from name and price if no ID provided
+  const itemId = id || `${name}-${price}`.toLowerCase().replace(/\s+/g, '-');
+
+  // Check if item is in cart
+  const cartItem = getCartItem(itemId);
+  const isInCart = !!cartItem;
+
+  const handleAddToCart = () => {
+    if (!isAvailable) return;
+
+    addToCart({
+      id: itemId,
+      name,
+      price,
+      image,
+      isVeg,
+      description
+    });
+  };
 
   return (
     <div className="item-card">
@@ -33,9 +55,35 @@ const ItemCard = ({ name, price, isVeg, image, isAvailable = true, description }
         <div className="item-price">
           {formattedPrice ? `₹${formattedPrice}` : 'Price unavailable'}
         </div>
-        <button className="item-add-btn" type="button" disabled={!isAvailable}>
-          {isAvailable ? 'ADD TO CART' : 'UNAVAILABLE'}
-        </button>
+
+        {!isInCart ? (
+          <button
+            className="item-add-btn"
+            type="button"
+            disabled={!isAvailable}
+            onClick={handleAddToCart}
+          >
+            {isAvailable ? 'ADD TO CART' : 'UNAVAILABLE'}
+          </button>
+        ) : (
+          <div className="item-qty-controls">
+            <button
+              className="qty-btn-small"
+              onClick={() => decreaseQty(itemId)}
+              aria-label="Decrease quantity"
+            >
+              -
+            </button>
+            <span className="qty-display-small">{cartItem.quantity}</span>
+            <button
+              className="qty-btn-small"
+              onClick={() => increaseQty(itemId)}
+              aria-label="Increase quantity"
+            >
+              +
+            </button>
+          </div>
+        )}
       </div>
       {image && (
         <div className="item-card-image">
