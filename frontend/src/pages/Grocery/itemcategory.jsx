@@ -98,13 +98,6 @@ const ItemCategory = () => {
             <span className="delivery-info">{shop.description}</span>
           </div>
         )}
-        <div className="info-row">
-          <span className="delivery-info">
-            <span className="icon">🕐</span>
-            Approx. {shop?.estimated_delivery_time || 'Delivery time not available'}
-          </span>
-          <span className="delivery-location">Delivery to Home</span>
-        </div>
         {infoLocation && (
           <div className="info-row">
             <span className="location">
@@ -113,19 +106,19 @@ const ItemCategory = () => {
             </span>
           </div>
         )}
-      </div>
 
-      {/* Status Banner */}
-      <div className="status-banner">
-        <div className="banner-content">
-          <span className="banner-icon">{isActive ? '✅' : '🔒'}</span>
-          <div className="banner-text">
-            <strong>{isActive ? 'OPEN FOR ORDERS' : 'SHUTTER IS DOWN'}</strong>
-            <p>{isActive ? 'The shop is accepting orders right now.' : 'The outlet will open in the next available slot.'}</p>
+        {/* Status Banner */}
+        <div className="status-banner">
+          <div className="banner-content">
+            <span className="banner-icon">{isActive ? '✅' : '🔒'}</span>
+            <div className="banner-text">
+              <strong>{isActive ? 'OPEN FOR ORDERS' : 'SHUTTER IS DOWN'}</strong>
+              <p>{isActive ? 'The shop is accepting orders right now.' : 'The outlet will open in the next available slot.'}</p>
+            </div>
+            <button className="see-slots-btn" type="button" disabled>
+              SEE SLOTS
+            </button>
           </div>
-          <button className="see-slots-btn" type="button" disabled>
-            SEE SLOTS
-          </button>
         </div>
       </div>
 
