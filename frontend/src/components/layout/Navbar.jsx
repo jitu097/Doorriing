@@ -11,6 +11,7 @@ const Navbar = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [showAccount, setShowAccount] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [address, setAddress] = useState({
     type: 'Home',
     building: '',
@@ -42,29 +43,60 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-container">
         {/* Logo */}
-        <div className="navbar-logo">
-          <span className="logo-blink">blink</span><span className="logo-it">it</span>
-        </div>
+        <Link to="/home" className="navbar-logo">
+          <img src="/logobox.png" alt="BazarSe" className="logo-image" />
+        </Link>
 
         {/* Location */}
         <div className="navbar-location" onClick={handleLocationClick}>
-          <div className="location-title">Delivery in 10 minutes</div>
-          <div className="location-address">{address.area || 'Enter your address'}</div>
+          
+          <div className="location-address">{address.area || 'Location'} <span className="account-caret">▼</span></div>
         </div>
 
-        {/* Search */}
-        <form className="navbar-searchbar" onSubmit={e => e.preventDefault()}>
+        {/* Search - Desktop */}
+        <div className="navbar-searchbar navbar-searchbar-desktop">
+          <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
           <input
             type="text"
             className="searchbar-input"
-            placeholder="Search food..."
+            placeholder='Search "chocolate"'
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
-          <button className="searchbar-btn" type="submit">
-            <span className="searchbar-icon">🔍</span>
-          </button>
-        </form>
+        </div>
+
+        {/* Search - Mobile Icon */}
+        <button 
+          className="searchbar-icon-btn searchbar-mobile-icon" 
+          type="button"
+          onClick={() => setShowSearch(true)}
+        >
+          <span className="searchbar-icon">🔍</span>
+        </button>
+
+        {/* Search - Mobile Overlay */}
+        {showSearch && (
+          <div className="navbar-searchbar-overlay">
+            <input
+              type="text"
+              className="searchbar-input-overlay"
+              placeholder="Search food..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              autoFocus
+            />
+            <button 
+              className="searchbar-close-btn" 
+              type="button"
+              onClick={() => setShowSearch(false)}
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {/* Account Dropdown */}
         <div className="navbar-account-wrapper">

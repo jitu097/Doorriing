@@ -15,9 +15,17 @@ const formatPrice = (price) => {
   return numericPrice.toFixed(2);
 };
 
-const GroceryItemCard = ({ id, name, price, subtitle, image }) => {
+const GroceryItemCard = ({ 
+  id, 
+  name, 
+  price, 
+  originalPrice, 
+  subtitle, 
+  image
+}) => {
   const { addToCart, getCartItem, increaseQty, decreaseQty } = useCart();
   const formattedPrice = formatPrice(price);
+  const formattedOriginalPrice = formatPrice(originalPrice);
 
   // Generate unique ID from name and price if no ID provided
   const itemId = id || `${name}-${price}`.toLowerCase().replace(/\s+/g, '-');
@@ -38,11 +46,25 @@ const GroceryItemCard = ({ id, name, price, subtitle, image }) => {
 
   return (
     <div className="grocery-item-card">
+      {/* Image Section */}
+      {image && (
+        <div className="grocery-item-card-image">
+          <img src={image} alt={name} />
+        </div>
+      )}
+
+      {/* Content Section */}
       <div className="grocery-item-card-content">
         <h3 className="grocery-item-name">{name}</h3>
         {subtitle && <div className="grocery-item-weight">{subtitle}</div>}
-        <div className="grocery-item-price">
-          {formattedPrice ? `₹${formattedPrice}` : 'Price unavailable'}
+        
+        <div className="grocery-item-price-section">
+          {formattedOriginalPrice && originalPrice > price && (
+            <span className="grocery-item-price-original">₹{formattedOriginalPrice}</span>
+          )}
+          <span className="grocery-item-price">
+            {formattedPrice ? `₹${formattedPrice}` : 'Price unavailable'}
+          </span>
         </div>
 
         {!isInCart ? (
@@ -51,7 +73,7 @@ const GroceryItemCard = ({ id, name, price, subtitle, image }) => {
             type="button"
             onClick={handleAddToCart}
           >
-            ADD TO CART
+            ADD
           </button>
         ) : (
           <div className="grocery-item-qty-controls">
@@ -73,11 +95,6 @@ const GroceryItemCard = ({ id, name, price, subtitle, image }) => {
           </div>
         )}
       </div>
-      {image && (
-        <div className="grocery-item-card-image">
-          <img src={image} alt={name} />
-        </div>
-      )}
     </div>
   );
 };

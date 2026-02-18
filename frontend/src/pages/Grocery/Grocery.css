@@ -1,13 +1,18 @@
+
+
 .grocery-curve-bg {
-  min-height: 6vh;
-  background: linear-gradient(135deg, #ffb347 60%, #ffcc33 100%);
+  min-height: 30vh;
+  background: #E95322;
   border-bottom-left-radius: 80px 40px;
   border-bottom-right-radius: 80px 40px;
-  box-shadow: 0 4px 24px rgba(255, 140, 0, 0.10);
+  box-shadow: 0 4px 24px rgba(74, 144, 226, 0.10);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  margin-left: 0px;
 }
 
 .grocery-content {
@@ -27,77 +32,117 @@
   font-size: 1.2rem;
 }
 
-/* Category Scroller */
-.category-scroller-container {
-  background: white;
-  padding: 1rem 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  margin-bottom: 1rem;
-}
-
-.category-scroller {
+/* Grocery Main Container with Sidebar */
+.grocery-main-wrapper {
   display: flex;
-  gap: 0.75rem;
-  overflow-x: auto;
-  padding: 0.5rem 2rem;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
+  gap: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
-.category-scroller::-webkit-scrollbar {
-  height: 4px;
+/* Category Sidebar */
+.category-sidebar {
+  width: 100px;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0.5rem 0;
+  height: fit-content;
+  position: sticky;
+  top: 80px;
+  flex-shrink: 0;
+  border-right: none;
 }
 
-.category-scroller::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
+.category-sidebar-title {
+  display: none;
 }
 
-.category-scroller::-webkit-scrollbar-thumb {
-  background: #ffb347;
-  border-radius: 10px;
-}
-
-.category-scroller::-webkit-scrollbar-thumb:hover {
-  background: #ff9e2c;
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-left: -18px;
 }
 
 .category-btn {
-  padding: 0.65rem 1.5rem;
-  border: 2px solid #e0e0e0;
-  background: white;
-  border-radius: 25px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #666;
+  padding: 0.75rem 1.25rem;
+  margin: 0.25rem;
+  border: none;
+  background: transparent;
+  text-align: center;
   cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
+  transition: all 0.2s ease;
+  position: relative;
+  width: calc(100% - 2px);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  height: 80px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.category-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+  letter-spacing: 0.3px;
+  text-align: center;
+  line-height: 1.2;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.category-btn.all-btn {
+  background: #FFB800;
+}
+
+.category-btn.all-btn .category-name {
+  color: #333;
 }
 
 .category-btn:hover {
-  border-color: #ffb347;
-  color: #ff9e2c;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 179, 71, 0.2);
+  background: #E95322;
+}
+
+.category-btn:hover .category-name {
+  color: white;
+}
+
+.category-btn.all-btn:hover {
+  background: #FFA500;
 }
 
 .category-btn.active {
-  background: linear-gradient(135deg, #ffb347 0%, #ffcc33 100%);
-  border-color: #ffb347;
-  color: white;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(255, 179, 71, 0.3);
+  background: #E95322;
 }
 
+.category-btn.active .category-name {
+  color: white;
+}
+
+.category-btn.all-btn.active {
+  background: #FFB800;
+  border-color: #FFB800;
+}
+
+.category-btn.all-btn.active .category-name {
+  color: #333;
+}
+
+.category-btn.all-btn.active .category-name {
+  color: #333;
+}
+
+/* Main Content Area */
 .grocery-shops-container {
-  max-width: 1200px;
-  margin: 2rem auto 3rem;
-  padding: 0 2rem;
+  flex: 1;
+  max-width: 100%;
   width: 100%;
 }
 
@@ -118,8 +163,36 @@
 
 /* Responsive Design for Mobile and All Screens */
 
+/* Large Desktop (1400px+) */
+@media (min-width: 1400px) {
+  .grocery-shops-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2.5rem;
+  }
+}
+
+/* Desktop (1024px to 1400px) */
+@media (min-width: 1024px) and (max-width: 1399px) {
+  .grocery-shops-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+  }
+}
+
 /* Tablet (768px to 1024px) */
 @media (max-width: 1024px) {
+  .grocery-curve-bg {
+    padding: 1.75rem 1rem;
+  }
+
+  .grocery-content h2 {
+    font-size: 2rem;
+  }
+
+  .grocery-content p {
+    font-size: 1.1rem;
+  }
+
   .grocery-shops-grid {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1.5rem;
@@ -131,8 +204,9 @@
   .grocery-curve-bg {
     min-height: 8vh;
     padding: 1.5rem 1rem;
-    border-bottom-left-radius: 60px 30px;
-    border-bottom-right-radius: 60px 30px;
+    border-bottom-left-radius: 30px 15px;
+    border-bottom-right-radius: 30px 15px;
+    width: 100%;
   }
 
   .grocery-content h2 {
@@ -144,28 +218,55 @@
     font-size: 1rem;
   }
 
-  .category-scroller-container {
-    padding: 0.75rem 0;
+  /* Keep sidebar layout on mobile */
+  .grocery-main-wrapper {
+    flex-direction: row;
+    gap: 0.75rem;
+    padding: 0.75rem;
   }
 
-  .category-scroller {
-    padding: 0.5rem 1rem;
-    gap: 0.5rem;
+  .category-sidebar {
+    width: 100px;
+    border-radius: 0;
+    padding: 0.5rem 0;
+    position: sticky;
+    top: 55px;
+    border-right: none;
   }
-  
+
+  .category-sidebar-title {
+    display: none;
+  }
+
+  .category-list {
+    flex-direction: column;
+    gap: 0;
+  }
+
   .category-btn {
-    padding: 0.55rem 1.25rem;
-    font-size: 0.9rem;
+    padding: 0.65rem 1rem;
+    margin: 0.2rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    border-radius: 0;
+  }
+
+  .category-name {
+    font-size: 0.75rem;
   }
   
   .grocery-shops-container {
-    padding: 0 1rem;
-    margin: 1.5rem auto 2rem;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    flex: 1;
   }
 
   .grocery-shops-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
   }
 }
 
@@ -174,6 +275,7 @@
   .grocery-curve-bg {
     min-height: 10vh;
     padding: 1.25rem 0.75rem;
+    width: 100%;
   }
 
   .grocery-content h2 {
@@ -182,6 +284,26 @@
   
   .grocery-content p {
     font-size: 0.95rem;
+  }
+
+  .grocery-main-wrapper {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .category-sidebar {
+    width: 85px;
+    top: 55px;
+  }
+
+  .category-btn {
+    padding: 0.6rem 0.9rem;
+    margin: 0.15rem;
+    border-radius: 0;
+  }
+
+  .category-name {
+    font-size: 0.7rem;
   }
 
   .grocery-shops-grid {
@@ -195,8 +317,9 @@
   .grocery-curve-bg {
     min-height: 12vh;
     padding: 1rem 0.75rem;
-    border-bottom-left-radius: 50px 25px;
-    border-bottom-right-radius: 50px 25px;
+    border-bottom-left-radius: 25px 12px;
+    border-bottom-right-radius: 25px 12px;
+    width: 100%;
   }
 
   .grocery-content h2 {
@@ -208,24 +331,30 @@
     font-size: 0.85rem;
   }
 
-  .category-scroller-container {
-    padding: 0.6rem 0;
+  .grocery-main-wrapper {
+    padding: 0.5rem;
+    gap: 0.5rem;
   }
 
-  .category-scroller {
-    padding: 0.4rem 0.75rem;
-    gap: 0.4rem;
+  .category-sidebar {
+    width: 75px;
+    padding: 0.4rem 0;
+    top: 50px;
   }
-  
+
   .category-btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
-    border-width: 1.5px;
+    padding: 0.55rem 0.85rem;
+    margin: 0.15rem;
+    border-radius: 0;
+  }
+
+  .category-name {
+    font-size: 0.65rem;
   }
   
   .grocery-shops-container {
-    padding: 0 0.75rem;
-    margin: 1rem auto 1.5rem;
+    padding: 0;
+    margin: 0;
   }
 
   .grocery-shops-grid {
@@ -242,8 +371,9 @@
 /* Mobile - Extra Small (max-width: 360px) */
 @media (max-width: 360px) {
   .grocery-curve-bg {
-    min-height: 14vh;
+    min-height: 35vh;
     padding: 0.875rem 0.5rem;
+    width: 100%;
   }
 
   .grocery-content h2 {
@@ -254,18 +384,30 @@
     font-size: 0.8rem;
   }
 
-  .category-scroller {
-    padding: 0.4rem 0.5rem;
+  .grocery-main-wrapper {
+    padding: 0.4rem;
+    gap: 0.4rem;
+  }
+
+  .category-sidebar {
+    width: 70px;
+    padding: 0.3rem 0;
+    top: 50px;
   }
 
   .category-btn {
-    padding: 0.45rem 0.85rem;
-    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+    margin: 0.1rem;
+    border-radius: 0;
+  }
+
+  .category-name {
+    font-size: 0.6rem;
   }
 
   .grocery-shops-container {
-    padding: 0 0.5rem;
-    margin: 0.75rem auto 1.25rem;
+    padding: 0;
+    margin: 0;
   }
 
   .grocery-shops-grid {

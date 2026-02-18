@@ -49,32 +49,53 @@
 	box-shadow: 0 1px 4px rgba(245,86,92,0.10);
 	margin-left: -0.3rem;
 }
-.navbar-searchbar {
+
+/* Search Bar Styles - Desktop */
+.navbar-searchbar-desktop {
 	display: flex;
 	align-items: center;
-	background: #f7f8fa;
-	border-radius: 2rem;
-	padding: 0.2rem 0.5rem 0.2rem 1.2rem;
+	background: #f8f9fa;
+	border-radius: 12px;
+	padding: 0.75rem 1.2rem;
 	width: 100%;
-	max-width: 420px;
-	border: 1.5px solid #f3dede;
+	max-width: 600px;
+	border: 1px solid #e8e9eb;
 	box-sizing: border-box;
 	margin: 0 2rem;
+	transition: all 0.2s ease;
 }
+
+.navbar-searchbar-desktop:focus-within {
+	background: #fff;
+	border-color: #d0d1d3;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.search-icon {
+	color: #686b78;
+	flex-shrink: 0;
+	margin-right: 0.8rem;
+	width: 20px;
+	height: 20px;
+}
+
 .searchbar-input {
 	flex: 1;
 	border: none;
 	background: transparent;
-	font-size: 1.1rem;
-	color: #7d8592;
+	font-size: 1rem;
+	color: #3d4152;
 	outline: none;
-	padding: 0.7rem 0;
+	font-weight: 400;
 }
+
 .searchbar-input::placeholder {
-	color: #a0a4ad;
-	font-size: 1.1rem;
+	color: #93959f;
+	font-size: 1rem;
+	font-weight: 400;
 }
-.searchbar-btn {
+
+.searchbar-icon-btn {
 	background: #f5565c;
 	border: none;
 	border-radius: 50%;
@@ -83,27 +104,109 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	margin-left: 0.5rem;
 	cursor: pointer;
 	box-shadow: 0 1px 4px rgba(245,86,92,0.08);
 	transition: background 0.15s;
+	margin: 0 2rem;
+	flex-shrink: 0;
 }
-.searchbar-btn:hover {
+
+.searchbar-icon-btn:hover {
 	background: #e13c42;
 }
+
+/* Mobile Search Icon Button - Hidden on Desktop */
+.searchbar-mobile-icon {
+	display: none !important;
+}
+
 .searchbar-icon {
 	color: #fff;
 	font-size: 1.3rem;
 }
 
+/* Mobile Search Overlay */
+.navbar-searchbar-overlay {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	background: #fff;
+	display: flex;
+	align-items: center;
+	padding: 0 2rem;
+	z-index: 100;
+	animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+	from {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.searchbar-input-overlay {
+	flex: 1;
+	border: 2px solid #f5565c;
+	background: #f7f8fa;
+	font-size: 1.1rem;
+	color: #222;
+	outline: none;
+	padding: 0.8rem 1.5rem;
+	border-radius: 2rem;
+	transition: all 0.15s;
+}
+
+.searchbar-input-overlay::placeholder {
+	color: #a0a4ad;
+	font-size: 1.1rem;
+}
+
+.searchbar-input-overlay:focus {
+	background: #fff;
+	border-color: #e13c42;
+}
+
+.searchbar-close-btn {
+	background: #f5565c;
+	border: none;
+	border-radius: 50%;
+	width: 2.5rem;
+	height: 2.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-left: 1rem;
+	cursor: pointer;
+	color: #fff;
+	font-size: 1.5rem;
+	font-weight: 300;
+	box-shadow: 0 1px 4px rgba(245,86,92,0.08);
+	transition: background 0.15s;
+}
+
+.searchbar-close-btn:hover {
+	background: #e13c42;
+}
+
 .navbar {
 	background: #fff;
 	border-bottom: 1px solid #eee;
-	padding: 0.5rem 0;
+	padding: 0.3rem 0;
 	font-family: 'Inter', Arial, sans-serif;
 	position: sticky;
 	top: 0;
 	z-index: 100;
+	margin-top: -8px;
+	margin-left: 8px;
+	
+	width: 100%;
 }
 .navbar-container {
 	display: flex;
@@ -112,24 +215,29 @@
 	max-width: 1400px;
 	margin: 0 auto;
 	padding: 0 2rem;
+	position: relative;
+	min-height: 60px;
 }
 .navbar-logo {
-	font-size: 2rem;
-	font-weight: bold;
 	display: flex;
 	align-items: center;
 	margin-right: 2rem;
+	flex-shrink: 0;
+	text-decoration: none;
+	cursor: pointer;
 }
-.logo-blink {
-	color: #ffc83d;
-}
-.logo-it {
-	color: #6cc24a;
+.logo-image {
+	height: 60px;
+	width: 50px;
+	object-fit: contain;
 }
 .navbar-location {
 	cursor: pointer;
-	margin-right: 2rem;
+	margin-right: 2rerm;
 	min-width: 220px;
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
 }
 .location-title {
 	font-weight: 600;
@@ -168,6 +276,9 @@
 .navbar-account-wrapper {
 	position: relative;
 	margin-right: 1.5rem;
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
 }
 .navbar-account {
 	cursor: pointer;
@@ -316,11 +427,15 @@
 
 /* Tablet and below (max-width: 1024px) */
 @media (max-width: 1024px) {
+	.navbar {
+		padding: 0.4rem 0;
+		width: 100%;
+	}
 	.navbar-container {
 		padding: 0 1.5rem;
 	}
 
-	.navbar-searchbar {
+	.navbar-searchbar-desktop {
 		max-width: 350px;
 		margin: 0 1rem;
 	}
@@ -337,6 +452,10 @@
 
 /* Tablet (max-width: 768px) */
 @media (max-width: 768px) {
+	.navbar {
+		padding: 0.4rem 0;
+		width: 100%;
+	}
 	.navbar-container {
 		padding: 0 1rem;
 		flex-wrap: wrap;
@@ -361,12 +480,13 @@
 		max-width: 130px;
 	}
 
-	.navbar-searchbar {
-		order: 3;
-		width: 100%;
-		max-width: 100%;
-		margin: 0.75rem 0 0;
-		padding: 0.15rem 0.5rem 0.15rem 1rem;
+	/* Hide desktop search, show mobile icon */
+	.navbar-searchbar-desktop {
+		display: none;
+	}
+
+	.searchbar-mobile-icon {
+		display: flex !important;
 	}
 
 	.searchbar-input {
@@ -413,10 +533,18 @@
 	}
 }
 
+/* Mobile (max-width: 768px) - Hide cart */
+@media (max-width: 768px) {
+	.navbar-cart-ui {
+		display: none !important;
+	}
+}
+
 /* Mobile (max-width: 600px) */
 @media (max-width: 600px) {
 	.navbar {
 		padding: 0.4rem 0;
+		width: 100%;
 	}
 
 	.navbar-container {
@@ -440,25 +568,6 @@
 	.location-address {
 		font-size: 0.8rem;
 		max-width: 110px;
-	}
-
-	.navbar-searchbar {
-		padding: 0.12rem 0.4rem 0.12rem 0.9rem;
-		margin: 0.6rem 0 0;
-	}
-
-	.searchbar-input {
-		font-size: 0.95rem;
-		padding: 0.55rem 0;
-	}
-
-	.searchbar-input::placeholder {
-		font-size: 0.95rem;
-	}
-
-	.searchbar-btn {
-		width: 2rem;
-		height: 2rem;
 	}
 
 	.searchbar-icon {
@@ -537,30 +646,6 @@
 	.location-address {
 		font-size: 0.75rem;
 		max-width: 100px;
-	}
-
-	.navbar-searchbar {
-		padding: 0.1rem 0.35rem 0.1rem 0.8rem;
-		margin: 0.5rem 0 0;
-		border-radius: 1.5rem;
-	}
-
-	.searchbar-input {
-		font-size: 0.9rem;
-		padding: 0.5rem 0;
-	}
-
-	.searchbar-input::placeholder {
-		font-size: 0.9rem;
-	}
-
-	.searchbar-btn {
-		width: 1.9rem;
-		height: 1.9rem;
-	}
-
-	.searchbar-icon {
-		font-size: 1rem;
 	}
 
 	.navbar-account-wrapper {
@@ -670,29 +755,6 @@
 		max-width: 85px;
 	}
 
-	.navbar-searchbar {
-		padding: 0.08rem 0.3rem 0.08rem 0.7rem;
-		margin: 0.45rem 0 0;
-	}
-
-	.searchbar-input {
-		font-size: 0.85rem;
-		padding: 0.45rem 0;
-	}
-
-	.searchbar-input::placeholder {
-		font-size: 0.85rem;
-	}
-
-	.searchbar-btn {
-		width: 1.75rem;
-		height: 1.75rem;
-	}
-
-	.searchbar-icon {
-		font-size: 0.95rem;
-	}
-
 	.navbar-account-wrapper {
 		margin-right: 0.4rem;
 	}
@@ -776,22 +838,8 @@
 		font-size: 0.8rem;
 	}
 
-	.location-address {
-		font-size: 0.75rem;
+		.location-address {
+			font-size: 0.75rem;
+		}
 	}
 
-	.navbar-searchbar {
-		margin: 0.4rem 0 0;
-		padding: 0.08rem 0.4rem 0.08rem 0.8rem;
-	}
-
-	.searchbar-input {
-		padding: 0.4rem 0;
-		font-size: 0.9rem;
-	}
-
-	.searchbar-btn {
-		width: 1.8rem;
-		height: 1.8rem;
-	}
-}

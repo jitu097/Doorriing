@@ -123,28 +123,29 @@ const Grocery = () => {
   return (
     <div>
       <div className="grocery-curve-bg">
-        <div className="grocery-content">
-          <h2>Grocery Section</h2>
-          <p>All your daily needs in one place!</p>
-        </div>
+        
       </div>
 
-      {/* Category Scroller */}
-      <div className="category-scroller-container">
-        <div className="category-scroller">
-          {filters.map((category) => (
-            <button
-              key={category}
-              className={`category-btn ${selectedFilter === category ? 'active' : ''}`}
-              onClick={() => setSelectedFilter(category)}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-      </div>
-      
-      <div className="grocery-shops-container">
+      {/* Main Wrapper with Sidebar */}
+      <div className="grocery-main-wrapper">
+        {/* Category Sidebar */}
+        <aside className="category-sidebar">
+          <h3 className="category-sidebar-title">Categories</h3>
+          <div className="category-list">
+            {filters.map((category) => (
+              <button
+                key={category}
+                className={`category-btn ${selectedFilter === category ? 'active' : ''} ${category === 'All' ? 'all-btn' : ''}`}
+                onClick={() => setSelectedFilter(category)}
+              >
+                <span className="category-name">{category === 'All' ? 'ALL' : category}</span>
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <div className="grocery-shops-container">
         {loading && <p>Loading shops...</p>}
 
         {!loading && error && (
@@ -180,6 +181,7 @@ const Grocery = () => {
             ))}
           </div>
         )}
+        </div>
       </div>
     </div>
   );

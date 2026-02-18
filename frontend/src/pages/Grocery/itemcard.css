@@ -1,61 +1,102 @@
 .grocery-item-card {
   background: white;
   border-radius: 12px;
-  padding: 1rem;
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
+  overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  margin-bottom: 1rem;
-  transition: box-shadow 0.2s ease;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid #f0f0f0;
+  max-width: 320px;
+  width: 100%;
 }
 
 .grocery-item-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.grocery-item-card-image {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  background: #f8f8f8;
+  overflow: visible;
+}
+
+.grocery-item-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .grocery-item-card-content {
-  flex: 1;
+  padding: 12px;
   display: flex;
   flex-direction: column;
+  gap: -9px;
+  flex: 1;
 }
 
 .grocery-item-name {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: #333;
-  margin: 0 0 0.5rem 0;
+  color: #1a1a1a;
+  margin: 0;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.8em;
 }
 
 .grocery-item-weight {
   font-size: 0.85rem;
-  color: #999;
-  margin-bottom: 0.5rem;
+  color: #666;
+  margin: 0;
+}
+
+.grocery-item-price-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  margin-bottom: 6px;
 }
 
 .grocery-item-price {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #333;
-  margin-bottom: 0.75rem;
+  color: #1a1a1a;
+}
+
+.grocery-item-price-original {
+  font-size: 0.9rem;
+  color: #999;
+  text-decoration: line-through;
 }
 
 .grocery-item-add-btn {
-  background: #ff6b6b;
+  background: #22c55e;
   color: white;
-  border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 6px;
+  border: 2px solid #22c55e;
+  padding: 8px 20px;
+  border-radius: 8px;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
-  align-self: flex-start;
-  transition: background 0.2s ease;
+  align-self: flex-end;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .grocery-item-add-btn:hover {
-  background: #ff5252;
+  background: #16a34a;
+  border-color: #16a34a;
 }
 
 .grocery-item-add-btn:active {
@@ -65,23 +106,24 @@
 .grocery-item-qty-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: #f5f5f5;
-  border-radius: 6px;
+  justify-content: space-between;
+  background: #22c55e;
+  border-radius: 8px;
   padding: 4px;
-  align-self: flex-start;
+  align-self: flex-end;
+  min-width: 100px;
 }
 
 .qty-btn-small {
   width: 32px;
   height: 32px;
   border: none;
-  background: #fff;
-  border-radius: 4px;
+  background: white;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  color: #ff6b6b;
+  font-size: 18px;
+  font-weight: 700;
+  color: #22c55e;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -89,44 +131,118 @@
 }
 
 .qty-btn-small:hover {
-  background: #ff6b6b;
-  color: #fff;
+  background: #f0fdf4;
+  transform: scale(1.05);
 }
 
 .qty-display-small {
-  min-width: 32px;
+  flex: 1;
   text-align: center;
-  font-weight: 600;
-  color: #333;
-}
-
-
-.grocery-item-card-image {
-  width: 100px;
-  height: 100px;
-  border-radius: 8px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.grocery-item-card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  font-weight: 700;
+  color: white;
+  font-size: 1rem;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .grocery-item-card {
-    padding: 0.875rem;
+    border-radius: 8px;
+    max-width: 100%;
   }
 
   .grocery-item-card-image {
-    width: 80px;
-    height: 80px;
+    height: 130px;
+  }
+
+  .grocery-item-card-content {
+    padding: 8px;
+    gap: 3px;
   }
 
   .grocery-item-name {
-    font-size: 0.95rem;
+    font-size: 0.8rem;
+    min-height: 2.4em;
+    line-height: 1.3;
+  }
+
+  .grocery-item-weight {
+    font-size: 0.7rem;
+  }
+
+  .grocery-item-price {
+    font-size: 0.9rem;
+  }
+
+  .grocery-item-price-original {
+    font-size: 0.75rem;
+  }
+
+  .grocery-item-price-section {
+    margin-top: 2px;
+    margin-bottom: 4px;
+    gap: 6px;
+  }
+
+  .grocery-item-add-btn {
+    padding: 6px 10px;
+    font-size: 0.7rem;
+    border-radius: 6px;
+  }
+
+  .grocery-item-qty-controls {
+    min-width: 85px;
+    border-radius: 6px;
+  }
+
+  .qty-btn-small {
+    width: 26px;
+    height: 26px;
+    font-size: 15px;
+  }
+
+  .qty-display-small {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .grocery-item-card-image {
+    height: 115px;
+  }
+
+  .grocery-item-card-content {
+    padding: 6px;
+  }
+
+  .grocery-item-name {
+    font-size: 0.75rem;
+    min-height: 2.2em;
+  }
+
+  .grocery-item-weight {
+    font-size: 0.65rem;
+  }
+
+  .grocery-item-price {
+    font-size: 0.85rem;
+  }
+
+  .grocery-item-add-btn {
+    padding: 5px 8px;
+    font-size: 0.65rem;
+  }
+
+  .grocery-item-qty-controls {
+    min-width: 75px;
+  }
+
+  .qty-btn-small {
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+  }
+
+  .qty-display-small {
+    font-size: 0.85rem;
   }
 }
