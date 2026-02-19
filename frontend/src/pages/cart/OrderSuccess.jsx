@@ -10,7 +10,7 @@ const OrderSuccess = () => {
     // Redirect if no orderId
     useEffect(() => {
         if (!searchParams.get('orderId')) {
-            navigate('/cart');
+            navigate('/home');
         }
     }, [searchParams, navigate]);
 

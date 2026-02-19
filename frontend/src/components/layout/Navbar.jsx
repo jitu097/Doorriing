@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { useCart } from '../../context/CartContext';
 import Modal from '../common/Modal';
+import CartDrawer from '../common/CartDrawer';
 import './Navbar.css';
 
 const Navbar = () => {
@@ -12,6 +13,7 @@ const Navbar = () => {
   const [showAccount, setShowAccount] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showCart, setShowCart] = useState(false);
   const [address, setAddress] = useState({
     type: 'Home',
     building: '',
@@ -35,6 +37,8 @@ const Navbar = () => {
   const handleAccountClick = () => setShowAccount((v) => !v);
   const handleLocationClick = () => setShowLocation(true);
   const handleLocationClose = () => setShowLocation(false);
+  const handleCartClick = () => setShowCart(true);
+  const handleCartClose = () => setShowCart(false);
   const handleAddressChange = (e) => {
     setAddress({ ...address, [e.target.name]: e.target.value });
   };
@@ -74,7 +78,7 @@ const Navbar = () => {
           type="button"
           onClick={() => setShowSearch(true)}
         >
-          <span className="searchbar-icon">🔍</span>
+          <img src="/search.png" alt="Search" className="searchbar-icon" />
         </button>
 
         {/* Search - Mobile Overlay */}
@@ -101,28 +105,22 @@ const Navbar = () => {
         {/* Account Dropdown */}
         <div className="navbar-account-wrapper">
           <div className="navbar-account" onClick={handleAccountClick} tabIndex={0}>
-            Account <span className="account-caret">▼</span>
+            <img src="/account.png" alt="Account" className="account-icon" />
           </div>
           {showAccount && (
             <div className="account-dropdown">
-              <div className="account-info">
-                <div className="account-phone">{user.phone || '6205315518'}</div>
-              </div>
               <ul>
                 <li><Link to="/orders">My Orders</Link></li>
-                <li><span>Saved Addresses</span></li>
-                <li><span>My Prescriptions</span></li>
-                <li><span>E-Gift Cards</span></li>
-                <li><span>FAQ's</span></li>
-                <li><span>Account Privacy</span></li>
-                <li><button onClick={handleLogout} className="logout-btn">Log Out</button></li>
+                <li><span>Address</span></li>
+                <li><span>Profile</span></li>
+                <li><button onClick={handleLogout} className="logout-btn">Logout</button></li>
               </ul>
             </div>
           )}
         </div>
 
         {/* Cart Icon */}
-        <Link to="/cart" className="navbar-cart-ui">
+        <button onClick={handleCartClick} className="navbar-cart-ui">
           <span className="cart-svg">
             {/* Bag icon SVG */}
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#222" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -132,7 +130,7 @@ const Navbar = () => {
           </span>
           <span className="cart-ui-label">Cart</span>
           <span className="cart-ui-badge">{cartCount}</span>
-        </Link>
+        </button>
       </div>
 
       {/* Location Modal */}
@@ -162,6 +160,9 @@ const Navbar = () => {
           </form>
         </div>
       </Modal>
+
+      {/* Cart Drawer */}
+      <CartDrawer isOpen={showCart} onClose={handleCartClose} />
     </nav>
   );
 };

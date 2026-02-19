@@ -3,7 +3,6 @@ import Login from '../pages/auth/Login';
 import Signup from '../pages/auth/Signup';
 import Landingpage from '../pages/orders/Landingpage/Landingpage';
 import Home from '../pages/home/Home';
-import Cart from '../pages/cart/Cart';
 import Checkout from '../pages/cart/Checkout';
 import OrderSuccess from '../pages/cart/OrderSuccess';
 import OrdersList from '../pages/orders/OrdersList';
@@ -50,7 +49,7 @@ const UserRoutes = () => {
           <Route path="/restaurant/shop/:restaurantId/category/:categoryId" element={<SubCategory />} />
           <Route path="/shops" element={<ShopsList />} />
           <Route path="/shop/:shopId" element={<ShopDetails />} />
-          <Route path="/cart" element={<Cart />} />
+          <Route path="/cart" element={<Navigate to="/home" replace />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/orders" element={<OrdersList />} />

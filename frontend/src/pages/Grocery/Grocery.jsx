@@ -4,6 +4,12 @@ import ShopCard from '../shopcard/shopcard';
 import EmptyState from '../../components/common/EmptyState';
 import { getShopsByBusinessType } from '../../services/shop.service.js';
 
+const carouselImages = [
+  '/vegetables.jpg',
+  '/fruit.png',
+  '/third.png'
+];
+
 const parseShopSubcategories = (value) => {
   if (!value) {
     return [];
@@ -59,6 +65,16 @@ const Grocery = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Auto-scroll carousel effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % carouselImages.length);
+    }, 3000); // Change image every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -123,7 +139,24 @@ const Grocery = () => {
   return (
     <div>
       <div className="grocery-curve-bg">
-        
+        <div className="carousel-container">
+          <div className="carousel-track" style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}>
+            {carouselImages.map((image, index) => (
+              <div key={index} className="carousel-slide">
+                <img src={image} alt={`Slide ${index + 1}`} className="carousel-image" />
+              </div>
+            ))}
+          </div>
+          <div className="carousel-dots">
+            {carouselImages.map((_, index) => (
+              <span
+                key={index}
+                className={`dot ${index === currentImageIndex ? 'active' : ''}`}
+                onClick={() => setCurrentImageIndex(index)}
+              ></span>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Main Wrapper with Sidebar */}
@@ -134,14 +167,12 @@ const Grocery = () => {
           <div className="category-list">
             {filters.map((category) => {
               const displayText = category === 'All' ? 'ALL' : category;
-              const icon = displayText.charAt(0).toUpperCase();
               return (
                 <button
                   key={category}
                   className={`category-btn ${selectedFilter === category ? 'active' : ''} ${category === 'All' ? 'all-btn' : ''}`}
                   onClick={() => setSelectedFilter(category)}
                 >
-                  <div className="category-icon">{icon}</div>
                   <span className="category-name">{displayText}</span>
                 </button>
               );

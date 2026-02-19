@@ -6,7 +6,7 @@ button {
 }
 
 .grocery-curve-bg {
-  min-height: 30vh;
+  min-height: 45vh;
   background: #E95322;
   border-bottom-left-radius: 80px 40px;
   border-bottom-right-radius: 80px 40px;
@@ -18,6 +18,65 @@ button {
   width: 100%;
   box-sizing: border-box;
   margin-left: 0px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Carousel Styles */
+.carousel-container {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.carousel-track {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+  height: 100%;
+}
+
+.carousel-slide {
+  min-width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+.carousel-dots {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 20;
+}
+
+.carousel-dots .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.carousel-dots .dot.active {
+  background-color: #fff;
+  transform: scale(1.3);
 }
 
 .grocery-content {
@@ -43,7 +102,7 @@ button {
   gap: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 1rem 1rem 1rem 0;
   box-sizing: border-box;
 }
 
@@ -64,6 +123,7 @@ button {
   border-radius: 0 !important;
   -webkit-border-radius: 0 !important;
   -moz-border-radius: 0 !important;
+  margin-left: -1rem;
 }
 
 .category-sidebar-title {
@@ -112,8 +172,8 @@ button {
 }
 
 .category-btn.active {
-  background-color: #fff5f5;
-  border-right: 3px solid #ff6b6b;
+  background-color: white !important;
+  border-right: 4px solid #fceca7;
 }
 
 
@@ -124,8 +184,8 @@ button {
 }
 
 .category-sidebar .category-name {
-  font-size: 0.6rem;
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 600;
   color: #555;
   text-transform: uppercase;
   line-height: 1.15;
@@ -142,12 +202,12 @@ button {
 }
 
 .category-btn.active .category-name {
-  color: #ff6b6b;
+  color: #333;
   font-weight: 600;
 }
 
 .category-btn.all-btn {
-  background: white;
+  background: white !important;
   border-radius: 0 !important;
   -webkit-border-radius: 0 !important;
   -moz-border-radius: 0 !important;
@@ -163,12 +223,12 @@ button {
 }
 
 .category-btn.all-btn:hover {
-  background-color: #f9f9f9;
+  background-color: #f9f9f9 !important;
 }
 
 .category-btn.all-btn.active {
-  background-color: #FFB800;
-  border-right: 3px solid #FFB800;
+  background-color: white !important;
+  border-right: 4px solid #f6d597;
 }
 
 .category-btn.all-btn.active .category-name {
@@ -178,6 +238,21 @@ button {
 
 .category-btn.all-btn.active .category-icon {
   color: #333;
+}
+
+/* Force white background on all active buttons - override cache */
+.category-sidebar .category-btn.active,
+.category-sidebar button.category-btn.active,
+.category-list .category-btn.active {
+  background-color: white !important;
+  background: white !important;
+}
+
+.category-sidebar .category-btn.all-btn.active,
+.category-sidebar button.category-btn.all-btn.active,
+.category-list .category-btn.all-btn.active {
+  background-color: white !important;
+  background: white !important;
 }
 
 /* Main Content Area */
@@ -223,7 +298,13 @@ button {
 /* Tablet (768px to 1024px) */
 @media (max-width: 1024px) {
   .grocery-curve-bg {
+    min-height: 35vh;
     padding: 1.75rem 1rem;
+  }
+
+  .carousel-dots .dot {
+    width: 10px;
+    height: 10px;
   }
 
   .grocery-content h2 {
@@ -243,11 +324,20 @@ button {
 /* Mobile - Tablet Portrait (max-width: 768px) */
 @media (max-width: 768px) {
   .grocery-curve-bg {
-    min-height: 8vh;
+    min-height: 12vh;
     padding: 1.5rem 1rem;
     border-bottom-left-radius: 30px 15px;
     border-bottom-right-radius: 30px 15px;
     width: 100%;
+  }
+
+  .carousel-dots .dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .carousel-dots {
+    bottom: 12px;
   }
 
   .grocery-content h2 {
@@ -263,7 +353,7 @@ button {
   .grocery-main-wrapper {
     flex-direction: row;
     gap: 0.75rem;
-    padding: 0.75rem;
+    padding: 0.75rem 0.75rem 0.75rem 0;
   }
 
   .category-sidebar {
@@ -277,6 +367,7 @@ button {
     border-right: 1px solid #e0e0e0;
     flex-shrink: 0;
     flex-grow: 0;
+    margin-left: -0.75rem;
   }
 
   .category-btn {
@@ -301,7 +392,7 @@ button {
   }
 
   .category-sidebar .category-name {
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     max-width: 70px;
   }
   
@@ -321,9 +412,19 @@ button {
 /* Mobile - Large (max-width: 600px) */
 @media (max-width: 600px) {
   .grocery-curve-bg {
-    min-height: 10vh;
+    min-height: 14vh;
     padding: 1.25rem 0.75rem;
     width: 100%;
+  }
+
+  .carousel-dots .dot {
+    width: 7px;
+    height: 7px;
+  }
+
+  .carousel-dots {
+    bottom: 8px;
+    gap: 6px;
   }
 
   .grocery-content h2 {
@@ -335,7 +436,7 @@ button {
   }
 
   .grocery-main-wrapper {
-    padding: 0.5rem;
+    padding: 0.5rem 0.5rem 0.5rem 0;
     gap: 0.5rem;
   }
 
@@ -347,6 +448,7 @@ button {
     border-right: 1px solid #e0e0e0;
     flex-shrink: 0;
     flex-grow: 0;
+    margin-left: -0.5rem;
   }
 
   .category-btn {
@@ -367,7 +469,7 @@ button {
   }
 
   .category-sidebar .category-name {
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     max-width: 60px;
   }
 
@@ -380,11 +482,21 @@ button {
 /* Mobile - Small (max-width: 480px) */
 @media (max-width: 480px) {
   .grocery-curve-bg {
-    min-height: 12vh;
+    min-height: 16vh;
     padding: 1rem 0.75rem;
     border-bottom-left-radius: 25px 12px;
     border-bottom-right-radius: 25px 12px;
     width: 100%;
+  }
+
+  .carousel-dots .dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .carousel-dots {
+    bottom: 8px;
+    gap: 5px;
   }
 
   .grocery-content h2 {
@@ -397,7 +509,7 @@ button {
   }
 
   .grocery-main-wrapper {
-    padding: 0.5rem;
+    padding: 0.5rem 0.5rem 0.5rem 0;
     gap: 0.5rem;
   }
 
@@ -410,6 +522,7 @@ button {
     border-right: 1px solid #e0e0e0;
     flex-shrink: 0;
     flex-grow: 0;
+    margin-left: -0.5rem;
   }
 
   .category-btn {
@@ -430,7 +543,7 @@ button {
   }
 
   .category-sidebar .category-name {
-    font-size: 0.5rem;
+    font-size: 0.6rem;
     max-width: 55px;
   }
   
@@ -453,9 +566,19 @@ button {
 /* Mobile - Extra Small (max-width: 360px) */
 @media (max-width: 360px) {
   .grocery-curve-bg {
-    min-height: 35vh;
+    min-height: 38vh;
     padding: 0.875rem 0.5rem;
     width: 100%;
+  }
+
+  .carousel-dots .dot {
+    width: 5px;
+    height: 5px;
+  }
+
+  .carousel-dots {
+    bottom: 8px;
+    gap: 4px;
   }
 
   .grocery-content h2 {
@@ -467,7 +590,7 @@ button {
   }
 
   .grocery-main-wrapper {
-    padding: 0.4rem;
+    padding: 0.4rem 0.4rem 0.4rem 0;
     gap: 0.4rem;
   }
 
@@ -480,6 +603,7 @@ button {
     border-right: 1px solid #e0e0e0;
     flex-shrink: 0;
     flex-grow: 0;
+    margin-left: -0.4rem;
   }
 
   .category-btn {
@@ -500,7 +624,7 @@ button {
   }
 
   .category-sidebar .category-name {
-    font-size: 0.5rem;
+    font-size: 0.6rem;
     max-width: 50px;
   }
 
@@ -518,8 +642,17 @@ button {
 /* Landscape Mobile Optimization */
 @media (max-height: 500px) and (orientation: landscape) {
   .grocery-curve-bg {
-    min-height: 20vh;
+    min-height: 24vh;
     padding: 1rem 0.75rem;
+  }
+
+  .carousel-dots .dot {
+    width: 7px;
+    height: 7px;
+  }
+
+  .carousel-dots {
+    bottom: 10px;
   }
   
   .grocery-content h2 {

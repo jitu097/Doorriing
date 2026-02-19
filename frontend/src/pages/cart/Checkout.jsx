@@ -65,7 +65,7 @@ const Checkout = () => {
     };
 
     if (cartItems.length === 0) {
-        navigate('/cart');
+        navigate('/home');
         return null;
     }
 

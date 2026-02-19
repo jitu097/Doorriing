@@ -130,9 +130,9 @@
 }
 
 .item-card-add-btn {
-  background: #22c55e;
+  background: #E95322;
   color: #ffffff;
-  border: 2px solid #22c55e;
+  border: 2px solid #E95322;
   padding: 8px 20px;
   border-radius: 8px;
   font-weight: 600;
@@ -144,8 +144,8 @@
 }
 
 .item-card-add-btn:hover {
-  background: #16a34a;
-  border-color: #16a34a;
+  background: #c74219;
+  border-color: #c74219;
 }
 
 .item-card-add-btn:active {
@@ -163,7 +163,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #22c55e;
+  background: #E95322;
   border-radius: 8px;
   padding: 4px;
   min-width: 100px;
@@ -178,7 +178,7 @@
   cursor: pointer;
   font-size: 18px;
   font-weight: 700;
-  color: #22c55e;
+  color: #E95322;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -186,7 +186,7 @@
 }
 
 .qty-btn-small:hover {
-  background: #f0fdf4;
+  background: #fef2ee;
   transform: scale(1.05);
 }
 

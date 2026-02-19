@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  background: #48a760;
+  background: #F5CB58;
   box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.2);
   padding: 14px 20px;
   display: none;
@@ -96,7 +96,7 @@
 }
 
 .view-cart-btn {
-  background: #2d7a3e;
+  background: #E95322;
   color: white;
   border: none;
   padding: 12px 24px;
@@ -113,7 +113,7 @@
 }
 
 .view-cart-btn:hover {
-  background: #246030;
+  background: #E95322;
   transform: translateX(2px);
 }
 

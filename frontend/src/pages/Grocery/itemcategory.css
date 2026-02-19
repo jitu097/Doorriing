@@ -32,9 +32,11 @@
 
 /* Shop Info */
 .shop-info {
-  background: linear-gradient(135deg, #8B4367 0%, #6B3355 100%);
-  padding: 1rem;
+  background:  #E95322;
   color: white;
+  position: sticky;
+  top: 75px;
+  z-index: 90;
 }
 
 .info-row {
@@ -74,7 +76,7 @@
 
 /* Status Banner */
 .status-banner {
-  background: #C8A960;
+  background: #F5CB58!important;
   padding: 0.5rem 0.75rem;
   margin: 0.1rem -1rem;
   border-radius: 0;
