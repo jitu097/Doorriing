@@ -132,15 +132,20 @@ const Grocery = () => {
         <aside className="category-sidebar">
           <h3 className="category-sidebar-title">Categories</h3>
           <div className="category-list">
-            {filters.map((category) => (
-              <button
-                key={category}
-                className={`category-btn ${selectedFilter === category ? 'active' : ''} ${category === 'All' ? 'all-btn' : ''}`}
-                onClick={() => setSelectedFilter(category)}
-              >
-                <span className="category-name">{category === 'All' ? 'ALL' : category}</span>
-              </button>
-            ))}
+            {filters.map((category) => {
+              const displayText = category === 'All' ? 'ALL' : category;
+              const icon = displayText.charAt(0).toUpperCase();
+              return (
+                <button
+                  key={category}
+                  className={`category-btn ${selectedFilter === category ? 'active' : ''} ${category === 'All' ? 'all-btn' : ''}`}
+                  onClick={() => setSelectedFilter(category)}
+                >
+                  <div className="category-icon">{icon}</div>
+                  <span className="category-name">{displayText}</span>
+                </button>
+              );
+            })}
           </div>
         </aside>
 
