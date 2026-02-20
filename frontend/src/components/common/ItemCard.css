@@ -102,6 +102,19 @@
   min-height: 1.2em;
 }
 
+.item-card-quantity {
+  font-size: 0.78rem;
+  color: #0f8a1e;
+  font-weight: 600;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.item-card-quantity.low {
+  color: #c05621;
+}
+
 .item-card-footer {
   display: flex;
   align-items: center;

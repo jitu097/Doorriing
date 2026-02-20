@@ -38,8 +38,12 @@ class ShopController {
   async getShopById(req, res) {
     try {
       const { id } = req.params;
+      const { include_categories, include_inventory } = req.query;
 
-      const shop = await shopService.getShopById(id);
+      const shop = await shopService.getShopById(id, {
+        includeCategories: include_categories === 'true',
+        includeInventory: include_inventory !== 'false',
+      });
 
       if (!shop) {
         return res.status(404).json({

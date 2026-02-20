@@ -209,11 +209,7 @@ const Restaurant = () => {
             {filteredRestaurants.map((restaurant) => (
               <RestaurantCard
                 key={restaurant.id}
-                id={restaurant.id}
-                image={restaurant.image_url}
-                title={restaurant.name}
-                description={restaurant.category_count ? `${restaurant.category_count} categories available` : restaurant.description}
-                city={restaurant.city}
+                shop={restaurant}
               />
             ))}
           </div>

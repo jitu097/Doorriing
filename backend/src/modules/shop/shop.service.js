@@ -2,6 +2,143 @@ import { supabase } from '../../config/supabaseClient.js';
 import { logger } from '../../utils/logger.js';
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../../utils/constants.js';
 
+const SHOP_IMAGE_KEYS = [
+  'image_url',
+  'image',
+  'logo_url',
+  'banner_url',
+  'thumbnail_url',
+  'cover_image',
+  'profile_image',
+  'shop_image',
+  'shop_image_url',
+  'shop_logo',
+  'photo_url',
+  'display_image',
+];
+
+const STOCK_SUMMARY_LIMIT = 200;
+
+const normalizeImage = (shop = {}) => {
+  for (const key of SHOP_IMAGE_KEYS) {
+    const rawValue = shop[key];
+    if (typeof rawValue === 'string') {
+      const trimmed = rawValue.trim();
+      if (trimmed.length > 0) {
+        return trimmed;
+      }
+    }
+  }
+
+  return null;
+};
+
+const formatStatusMeta = (shop = {}) => {
+  const derivedIsOpen = typeof shop.is_open === 'boolean'
+    ? shop.is_open
+    : (typeof shop.is_active === 'boolean' ? shop.is_active : true);
+
+  const rawStatus = shop.status_label || shop.shop_status || shop.status;
+  const normalized = typeof rawStatus === 'string' && rawStatus.trim().length > 0
+    ? rawStatus.trim().toLowerCase()
+    : (derivedIsOpen ? 'open' : 'closed');
+
+  const label = normalized.charAt(0).toUpperCase() + normalized.slice(1);
+
+  return {
+    isOpen: derivedIsOpen,
+    code: normalized,
+    label,
+  };
+};
+
+const formatShopRecord = (shop, extra = {}) => {
+  if (!shop) {
+    return null;
+  }
+
+  const statusMeta = formatStatusMeta(shop);
+
+  return {
+    ...shop,
+    image_url: normalizeImage(shop),
+    is_open: statusMeta.isOpen,
+    shop_status: statusMeta.code,
+    status_label: statusMeta.label,
+    ...extra,
+  };
+};
+
+const getInventorySummaryByShop = async (shopIds = []) => {
+  const sanitized = (shopIds || []).filter(Boolean);
+
+  if (sanitized.length === 0 || sanitized.length > STOCK_SUMMARY_LIMIT) {
+    if (sanitized.length > STOCK_SUMMARY_LIMIT) {
+      logger.warn('Skipping inventory summary aggregation due to large shop set', {
+        shopCount: sanitized.length,
+      });
+    }
+
+    return {
+      itemCountByShop: new Map(),
+      stockTotalByShop: new Map(),
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('items')
+    .select('shop_id, stock_quantity')
+    .in('shop_id', sanitized)
+    .eq('is_active', true)
+    .eq('is_available', true);
+
+  if (error) {
+    logger.warn('Failed to fetch inventory summary for shops', { error: error.message });
+    return {
+      itemCountByShop: new Map(),
+      stockTotalByShop: new Map(),
+    };
+  }
+
+  const itemCountByShop = new Map();
+  const stockTotalByShop = new Map();
+
+  (data || []).forEach((item) => {
+    const shopId = item?.shop_id;
+    if (!shopId) {
+      return;
+    }
+
+    itemCountByShop.set(shopId, (itemCountByShop.get(shopId) || 0) + 1);
+
+    const numericQty = Number(item?.stock_quantity);
+    if (Number.isFinite(numericQty)) {
+      stockTotalByShop.set(shopId, (stockTotalByShop.get(shopId) || 0) + numericQty);
+    }
+  });
+
+  return { itemCountByShop, stockTotalByShop };
+};
+
+const enrichShopsWithInventory = async (shops = []) => {
+  if (!Array.isArray(shops) || shops.length === 0) {
+    return [];
+  }
+
+  const shopIds = shops.map((shop) => shop?.id).filter(Boolean);
+  const { itemCountByShop, stockTotalByShop } = await getInventorySummaryByShop(shopIds);
+
+  return shops.map((shop) => {
+    const shopId = shop?.id;
+    const extras = {
+      item_count: shop?.item_count ?? itemCountByShop.get(shopId) ?? null,
+      total_stock_quantity: shop?.total_stock_quantity ?? stockTotalByShop.get(shopId) ?? null,
+    };
+
+    return formatShopRecord(shop, extras);
+  });
+};
+
 class ShopService {
   /**
    * Get all active shops with filtering and pagination
@@ -41,8 +178,10 @@ class ShopService {
         throw new Error('Failed to fetch shops');
       }
 
+      const formattedShops = await enrichShopsWithInventory(data || []);
+
       return {
-        shops: data,
+        shops: formattedShops,
         pagination: {
           page,
           pageSize: limit,
@@ -59,7 +198,7 @@ class ShopService {
   /**
    * Get shop by ID
    */
-  async getShopById(shopId) {
+  async getShopById(shopId, { includeCategories = false, includeInventory = true } = {}) {
     try {
       if (!shopId) {
         throw new Error('Shop ID is required');
@@ -79,13 +218,44 @@ class ShopService {
       if (!data) {
         return null;
       }
+      const [categoryCount, inventorySummary] = await Promise.all([
+        includeCategories ? this.getActiveCategoryCount(shopId) : Promise.resolve(null),
+        includeInventory ? getInventorySummaryByShop([shopId]) : Promise.resolve({
+          itemCountByShop: new Map(),
+          stockTotalByShop: new Map(),
+        }),
+      ]);
 
-      return data;
+      const extras = {
+        category_count: includeCategories ? categoryCount : data?.category_count ?? null,
+      };
+
+      if (includeInventory) {
+        extras.item_count = data?.item_count ?? inventorySummary.itemCountByShop.get(shopId) ?? null;
+        extras.total_stock_quantity = data?.total_stock_quantity ?? inventorySummary.stockTotalByShop.get(shopId) ?? null;
+      }
+
+      return formatShopRecord(data, extras);
 
     } catch (err) {
       console.error('getShopById service error:', err);
       throw err;
     }
+  }
+
+  async getActiveCategoryCount(shopId) {
+    const { count, error } = await supabase
+      .from('categories')
+      .select('*', { count: 'exact', head: true })
+      .eq('shop_id', shopId)
+      .eq('is_active', true);
+
+    if (error) {
+      logger.warn('Failed to count categories for shop', { error: error.message, shopId });
+      return null;
+    }
+
+    return typeof count === 'number' ? count : null;
   }
 
   /**
@@ -135,7 +305,6 @@ class ShopService {
         .from('shops')
         .select('*', { count: 'exact' })
         .eq('business_type', businessType)
-        .eq('is_active', true)
         .range(offset, offset + limit - 1)
         .order('name', { ascending: true });
 
@@ -195,20 +364,20 @@ class ShopService {
       };
 
       const shopsWithCategories = (shops || []).map((shop) => {
-        const normalizedImage = shop.image_url ?? shop.image ?? shop.logo_url ?? shop.banner_url ?? shop.thumbnail_url ?? null;
         const categoryCount = categoryCountByShop.get(shop.id) || 0;
         const subcategoryNames = parseSubcategories(shop?.subcategory);
 
         return {
           ...shop,
-          image_url: normalizedImage,
           category_count: categoryCount,
           subcategories: subcategoryNames,
         };
       });
 
+      const formattedShops = await enrichShopsWithInventory(shopsWithCategories);
+
       return {
-        shops: shopsWithCategories,
+        shops: formattedShops,
         pagination: {
           page,
           pageSize: limit,
@@ -254,14 +423,14 @@ class ShopService {
         logger.error('Failed to fetch restaurant shops for home', { error: restaurantError });
       }
 
-      const normalizeShopImage = (shop) => ({
-        ...shop,
-        image_url: shop?.image_url ?? shop?.image ?? shop?.logo_url ?? shop?.banner_url ?? shop?.thumbnail_url ?? null,
-      });
+      const [groceryFormatted, restaurantFormatted] = await Promise.all([
+        enrichShopsWithInventory(groceryShops || []),
+        enrichShopsWithInventory(restaurantShops || []),
+      ]);
 
       return {
-        grocery: (groceryShops || []).map(normalizeShopImage),
-        restaurant: (restaurantShops || []).map(normalizeShopImage),
+        grocery: groceryFormatted,
+        restaurant: restaurantFormatted,
       };
     } catch (error) {
       logger.error('Error in getShopsForHome', { error: error.message });
@@ -290,7 +459,7 @@ class ShopService {
       throw new Error('Failed to fetch shops');
     }
 
-    return data;
+    return enrichShopsWithInventory(data || []);
   }
 }
 

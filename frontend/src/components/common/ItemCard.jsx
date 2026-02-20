@@ -35,6 +35,8 @@ const ItemCard = ({
   image,
   isVeg,
   isAvailable = true,
+  stockQuantityLabel,
+  stockQuantityValue,
 }) => {
   const { addToCart, getCartItem, increaseQty, decreaseQty } = useCart();
   const formattedPrice = formatPrice(price);
@@ -46,6 +48,11 @@ const ItemCard = ({
   const isInCart = Boolean(cartItem);
   const secondaryText = subtitle || description;
   const showVegIndicator = typeof isVeg === 'boolean';
+  const hasStockLabel = typeof stockQuantityLabel === 'string' && stockQuantityLabel.trim().length > 0;
+  const stockDisplayLabel = hasStockLabel ? stockQuantityLabel.trim() : null;
+  const stockLabelClass = hasStockLabel && typeof stockQuantityValue === 'number' && stockQuantityValue <= 5
+    ? 'item-card-quantity low'
+    : 'item-card-quantity';
 
   const handleAddToCart = () => {
     if (!isAvailable) {
@@ -90,6 +97,7 @@ const ItemCard = ({
         </div>
 
         {secondaryText && <p className="item-card-subtitle">{secondaryText}</p>}
+        {hasStockLabel && <p className={stockLabelClass}>{stockDisplayLabel}</p>}
 
         <div className="item-card-footer">
           <div className="item-card-price-block">

@@ -137,17 +137,25 @@ const SubCategory = () => {
 
           {!loading && !error && items.length > 0 && (
             <div className="items-grid">
-              {items.map((item) => (
-                <ItemCard
-                  key={item.id}
-                  name={item.name}
-                  price={item.price}
-                  isVeg={item.is_veg}
-                  isAvailable={item.is_available}
-                  description={item.description}
-                  image={item.image_url}
-                />
-              ))}
+              {items.map((item) => {
+                const numericStock = Number(item?.stock_quantity);
+                const stockValue = Number.isFinite(numericStock) ? numericStock : null;
+                const stockLabel = stockValue !== null ? `${stockValue} ready` : null;
+
+                return (
+                  <ItemCard
+                    key={item.id}
+                    name={item.name}
+                    price={item.price}
+                    isVeg={item.is_veg}
+                    isAvailable={item.is_available !== false}
+                    description={item.description}
+                    stockQuantityLabel={stockLabel}
+                    stockQuantityValue={stockValue}
+                    image={item.image_url}
+                  />
+                );
+              })}
             </div>
           )}
         </div>

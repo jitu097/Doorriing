@@ -208,11 +208,7 @@ const Grocery = () => {
             {filteredShops.map((shop) => (
               <ShopCard
                 key={shop.id}
-                id={shop.id}
-                image={shop.image_url}
-                title={shop.name}
-                description={shop.category_count ? `${shop.category_count} categories available` : shop.description}
-                city={shop.city}
+                shop={shop}
               />
             ))}
           </div>
