@@ -20,7 +20,7 @@ button {
   margin-left: 0px;
   overflow: hidden;
   position: sticky;
-  top: 0;
+  top: 74px;
   z-index: 1;
 }
 

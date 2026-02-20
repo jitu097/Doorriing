@@ -19,14 +19,7 @@ const Landingpage = () => {
         <div className="landing-content">
           <div className="landing-text">
             <div className="landing-title">
-              <img src="/fresh.png.png" alt="Fresh" className="title-fresh-img" />
-              <img src="/small.png" alt="Small Badge" className="title-small-img" />
             </div>
-            <p className="landing-description">
-              Save time and energy.<br />
-              Shop from your local shops and restaurants and get fast<br />
-              delivery to your home.
-            </p>
             <div className="landing-btn-group">
               <button className="explore-btn" onClick={handleExplore}>
                 Explore Now
@@ -42,8 +35,6 @@ const Landingpage = () => {
           </div>
           
           <div className="landing-image">
-            <img src="/large.png" alt="Large Badge" className="large-image-above" />
-            <img src="/landing.png" alt="Food Delivery" className="main-image" />
             {/* Mobile view: buttons above, image covers whole view */}
             <div className="mobile-image-btns">
               <div className="mobile-signin-top">
