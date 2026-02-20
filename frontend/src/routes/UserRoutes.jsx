@@ -49,7 +49,6 @@ const UserRoutes = () => {
           <Route path="/restaurant/shop/:restaurantId/category/:categoryId" element={<SubCategory />} />
           <Route path="/shops" element={<ShopsList />} />
           <Route path="/shop/:shopId" element={<ShopDetails />} />
-          <Route path="/cart" element={<Navigate to="/home" replace />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/orders" element={<OrdersList />} />

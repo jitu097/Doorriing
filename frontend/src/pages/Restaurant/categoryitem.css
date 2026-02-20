@@ -32,9 +32,12 @@
 
 /* Restaurant Info */
 .restaurant-info {
-  background: linear-gradient(135deg, #8B4367 0%, #6B3355 100%);
-  padding: 1rem;
+  background:  #E95322;
   color: white;
+  position: sticky;
+  top: 75px;
+  z-index: 90;
+  padding: 1rem;
 }
 
 .info-row {
@@ -74,23 +77,29 @@
 
 /* Status Banner */
 .status-banner {
-  background: #C8A960;
-  padding: 1rem;
-  margin: 1rem;
-  border-radius: 12px;
+  background: #F5CB58!important;
+  padding: 0.5rem 0.75rem;
+  margin: 0.1rem -1rem;
+  border-radius: 0;
 }
 
 .banner-content {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .banner-icon {
-  font-size: 2.5rem;
+  font-size: 1.2rem;
   background: rgba(255, 255, 255, 0.2);
-  padding: 0.5rem;
+  padding: 0.2rem;
   border-radius: 50%;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .banner-text {
@@ -99,15 +108,17 @@
 
 .banner-text strong {
   display: block;
-  font-size: 1rem;
-  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  margin-bottom: 0.05rem;
   color: #333;
+  line-height: 1.1;
 }
 
 .banner-text p {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.7rem;
   color: #555;
+  line-height: 1.1;
 }
 
 .see-slots-btn {
@@ -116,7 +127,9 @@
   color: #333;
   font-weight: 600;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.4rem;
+  flex-shrink: 0;
 }
 
 /* Menu Section */
@@ -222,40 +235,39 @@
     gap: 0.3rem;
   }
 
-  .delivery-location {
-    font-size: 0.75rem;
-  }
-
   .icon {
     font-size: 0.9rem;
   }
 
   /* Status banner compact */
   .status-banner {
-    padding: 0.5rem 0.7rem;
-    margin: 0.5rem;
+    padding: 0.4rem 0.6rem;
+    margin: 0.3rem -0.8rem 0;
   }
 
   .banner-content {
-    gap: 0.5rem;
+    gap: 0.4rem;
   }
 
   .banner-icon {
-    font-size: 1.2rem;
-    padding: 0.2rem;
+    font-size: 1rem;
+    width: 1.3rem;
+    height: 1.3rem;
+    padding: 0.15rem;
   }
 
   .banner-text strong {
-    font-size: 0.75rem;
-    margin-bottom: 0.1rem;
+    font-size: 0.7rem;
+    margin-bottom: 0.05rem;
   }
 
   .banner-text p {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
   }
 
   .see-slots-btn {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
+    padding: 0.15rem 0.3rem;
   }
 
   /* Categories and other elements */

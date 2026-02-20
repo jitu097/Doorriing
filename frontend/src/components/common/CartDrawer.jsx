@@ -63,12 +63,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
                   </span>
                 </div>
 
-                <div className="summary-row saved">
-                  <span></span>
-                  <span>Saved ₹256</span>
-                  <span></span>
-                </div>
-
                 <div className="summary-row">
                   <span className="summary-icon">🚚</span>
                   <span>Delivery charge</span>
@@ -86,10 +80,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 <div className="summary-row grand-total">
                   <span>Grand total</span>
                   <span className="grand-total-value">₹{(subtotal + 2).toFixed(0)}</span>
-                </div>
-
-                <div className="summary-savings">
-                  Your total savings ₹256
                 </div>
               </div>
 

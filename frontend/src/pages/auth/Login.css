@@ -1,21 +1,58 @@
+/* Prevent body scroll on login page */
+body:has(.login-container) {
+  overflow: hidden;
+  height: 100vh;
+}
+
 .login-container {
-  min-height: 100vh;
+  height: 100vh;
+  width: 100vw;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   padding: 1rem;
-  background: linear-gradient(180deg, #f5f5f5 0%, #e8e8e8 100%);
-  position: relative;
+  padding-right: clamp(1rem, 5vw, 5rem);
+  background-image: url('/SIGNUPbg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow: hidden;
 }
 
 .login-card {
   background: white;
-  border-radius: 20px;
+  border-radius: 60px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  max-width: 420px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-width: 455px;
+  max-height: 105vh;
   width: 100%;
   animation: slideUp 0.5s ease-out;
+  margin-bottom:20px;
+  margin-right: -8px;
+}
+
+/* Custom scrollbar for login card */
+.login-card::-webkit-scrollbar {
+  width: 6px;
+}
+
+.login-card::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 0 20px 20px 0;
+}
+
+.login-card::-webkit-scrollbar-thumb {
+  background: #f8fafa;
+  border-radius: 10px;
+}
+
+.login-card::-webkit-scrollbar-thumb:hover {
+  background: #eef5f5;
 }
 
 @keyframes slideUp {
@@ -31,7 +68,7 @@
 
 /* Top Section with Image */
 .login-top-section {
-  background: linear-gradient(135deg, #dc5e1a 0%, #da5a4c 100%);
+  background: linear-gradient(135deg, #E95322 0%, #E95322 100%);
   height: 280px;
   position: relative;
   display: flex;
@@ -199,7 +236,7 @@
 
 .login-button {
   padding: 0.95rem;
-  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  background: #E95322;
   color: white;
   border: none;
   border-radius: 10px;
@@ -208,13 +245,13 @@
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: 0.5rem;
-  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+  box-shadow: 0 4px 15px rgba(233, 83, 34, 0.3);
 }
 
 .login-button:hover {
-  background: linear-gradient(135deg, #f57c00 0%, #ff9800 100%);
+  background: #d14a1e;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+  box-shadow: 0 6px 20px rgba(233, 83, 34, 0.4);
 }
 
 .login-button:disabled {
@@ -277,15 +314,49 @@
   flex-shrink: 0;
 }
 
+/* Tablet and small laptop */
+@media (max-width: 1024px) {
+  .login-container {
+    padding: 1rem;
+    padding-right: 2rem;
+  }
+
+  .login-card {
+    max-width: 420px;
+  }
+}
+
+/* Mobile landscape and small tablets */
+@media (max-width: 768px) {
+  .login-container {
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .login-card {
+    max-width: 450px;
+    border-radius: 40px;
+  }
+
+  .login-top-section {
+    height: 250px;
+  }
+
+  .login-boy-image {
+    height: 300px;
+  }
+}
+
+/* Mobile portrait */
 @media (max-width: 480px) {
   .login-container {
     padding: 0;
-    background: white;
-    align-items: flex-start;
+    justify-content: center;
   }
 
   .login-card {
     max-width: 100%;
+    max-height: 100vh;
     border-radius: 0;
     box-shadow: none;
   }
@@ -295,8 +366,8 @@
   }
 
   .login-boy-image {
-    height: 320px;
-    margin-right: 40px;
+    height: 280px;
+    margin-right: 20px;
   }
 
   .login-form-section {

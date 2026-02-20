@@ -251,7 +251,7 @@
 .checkout-button {
   width: 100%;
   padding: 14px 20px;
-  background: #0c831f;
+  background: #E95322;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -263,7 +263,7 @@
 }
 
 .checkout-button:hover {
-  background: #0a6e1a;
+  background: #d14516;
 }
 
 .checkout-button:disabled {

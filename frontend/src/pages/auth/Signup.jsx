@@ -141,7 +141,7 @@ const Signup = () => {
           <form onSubmit={handleSubmit} className="signup-form">
             <div className="form-group">
               <div className="input-wrapper">
-                <span className="input-icon">👤</span>
+                
                 <input
                   type="text"
                   id="name"
@@ -158,7 +158,7 @@ const Signup = () => {
 
             <div className="form-group">
               <div className="input-wrapper">
-                <span className="input-icon">✉️</span>
+               
                 <input
                   type="email"
                   id="email"
@@ -175,7 +175,7 @@ const Signup = () => {
 
             <div className="form-group">
               <div className="input-wrapper">
-                <span className="input-icon">📱</span>
+              
                 <input
                   type="tel"
                   id="phone"
@@ -192,7 +192,7 @@ const Signup = () => {
 
             <div className="form-group">
               <div className="input-wrapper">
-                <span className="input-icon">🔒</span>
+               
                 <input
                   type="password"
                   id="password"
@@ -209,7 +209,7 @@ const Signup = () => {
 
             <div className="form-group">
               <div className="input-wrapper">
-                <span className="input-icon">🔒</span>
+              
                 <input
                   type="password"
                   id="confirmPassword"

@@ -3,17 +3,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { useCart } from '../../context/CartContext';
 import Modal from '../common/Modal';
-import CartDrawer from '../common/CartDrawer';
 import './Navbar.css';
 
-const Navbar = () => {
+const Navbar = ({ onCartClick }) => {
   const navigate = useNavigate();
   const { getCartCount } = useCart();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [showAccount, setShowAccount] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const [showCart, setShowCart] = useState(false);
   const [address, setAddress] = useState({
     type: 'Home',
     building: '',
@@ -37,8 +35,6 @@ const Navbar = () => {
   const handleAccountClick = () => setShowAccount((v) => !v);
   const handleLocationClick = () => setShowLocation(true);
   const handleLocationClose = () => setShowLocation(false);
-  const handleCartClick = () => setShowCart(true);
-  const handleCartClose = () => setShowCart(false);
   const handleAddressChange = (e) => {
     setAddress({ ...address, [e.target.name]: e.target.value });
   };
@@ -120,7 +116,7 @@ const Navbar = () => {
         </div>
 
         {/* Cart Icon */}
-        <button onClick={handleCartClick} className="navbar-cart-ui">
+        <button onClick={onCartClick} className="navbar-cart-ui">
           <span className="cart-svg">
             {/* Bag icon SVG */}
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#222" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -160,9 +156,6 @@ const Navbar = () => {
           </form>
         </div>
       </Modal>
-
-      {/* Cart Drawer */}
-      <CartDrawer isOpen={showCart} onClose={handleCartClose} />
     </nav>
   );
 };

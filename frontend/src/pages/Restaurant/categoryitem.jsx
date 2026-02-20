@@ -99,19 +99,19 @@ const CategoryItem = () => {
             </span>
           </div>
         )}
-      </div>
 
-      {/* Status Banner */}
-      <div className="status-banner">
-        <div className="banner-content">
-          <span className="banner-icon">{isActive ? '✅' : '🔒'}</span>
-          <div className="banner-text">
-            <strong>{isActive ? 'OPEN FOR ORDERS' : 'SHUTTER IS DOWN'}</strong>
-            <p>{isActive ? 'The restaurant is accepting orders right now.' : 'The outlet will open in the next available slot.'}</p>
+        {/* Status Banner */}
+        <div className="status-banner">
+          <div className="banner-content">
+            <span className="banner-icon">{isActive ? '✅' : '🔒'}</span>
+            <div className="banner-text">
+              <strong>{isActive ? 'OPEN FOR ORDERS' : 'SHUTTER IS DOWN'}</strong>
+              <p>{isActive ? 'The restaurant is accepting orders right now.' : 'The outlet will open in the next available slot.'}</p>
+            </div>
+            <button className="see-slots-btn" type="button" disabled>
+              SEE SLOTS
+            </button>
           </div>
-          <button className="see-slots-btn" type="button" disabled>
-            SEE SLOTS
-          </button>
         </div>
       </div>
 

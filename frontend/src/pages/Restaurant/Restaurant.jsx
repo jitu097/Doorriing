@@ -4,6 +4,12 @@ import RestaurantCard from '../Restaurantcard/card';
 import EmptyState from '../../components/common/EmptyState';
 import { getShopsByBusinessType } from '../../services/shop.service.js';
 
+const carouselImages = [
+  '/one.png',
+  '/two.png',
+  '/third.png'
+];
+
 const parseShopSubcategories = (value) => {
   if (!value) {
     return [];
@@ -59,6 +65,16 @@ const Restaurant = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Auto-scroll carousel effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % carouselImages.length);
+    }, 3000); // Change image every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -124,28 +140,49 @@ const Restaurant = () => {
   return (
     <div>
       <div className="restaurant-curve-bg">
-        <div className="restaurant-content">
-          <h2>Restaurant Section</h2>
-          <p>Order delicious food from your favorite restaurants!</p>
+        <div className="carousel-container">
+          <div className="carousel-track" style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}>
+            {carouselImages.map((image, index) => (
+              <div key={index} className="carousel-slide">
+                <img src={image} alt={`Slide ${index + 1}`} className="carousel-image" />
+              </div>
+            ))}
+          </div>
+          <div className="carousel-dots">
+            {carouselImages.map((_, index) => (
+              <span
+                key={index}
+                className={`dot ${index === currentImageIndex ? 'active' : ''}`}
+                onClick={() => setCurrentImageIndex(index)}
+              ></span>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Category Scroller */}
-      <div className="category-scroller-container">
-        <div className="category-scroller">
-          {filters.map((category) => (
-            <button
-              key={category}
-              className={`category-btn ${selectedFilter === category ? 'active' : ''}`}
-              onClick={() => setSelectedFilter(category)}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-      </div>
-      
-      <div className="restaurant-cards-container">
+      {/* Main Wrapper with Sidebar */}
+      <div className="restaurant-main-wrapper">
+        {/* Category Sidebar */}
+        <aside className="category-sidebar">
+          <h3 className="category-sidebar-title">Categories</h3>
+          <div className="category-list">
+            {filters.map((category) => {
+              const displayText = category === 'All' ? 'ALL' : category;
+              return (
+                <button
+                  key={category}
+                  className={`category-btn ${selectedFilter === category ? 'active' : ''} ${category === 'All' ? 'all-btn' : ''}`}
+                  onClick={() => setSelectedFilter(category)}
+                >
+                  <span className="category-name">{displayText}</span>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <div className="restaurant-shops-container">
         {loading && <p>Loading restaurants...</p>}
 
         {!loading && error && (
@@ -168,7 +205,7 @@ const Restaurant = () => {
         )}
 
         {!loading && !error && filteredRestaurants.length > 0 && (
-          <div className="restaurant-cards-grid">
+          <div className="restaurant-shops-grid">
             {filteredRestaurants.map((restaurant) => (
               <RestaurantCard
                 key={restaurant.id}
@@ -181,6 +218,7 @@ const Restaurant = () => {
             ))}
           </div>
         )}
+        </div>
       </div>
     </div>
   );

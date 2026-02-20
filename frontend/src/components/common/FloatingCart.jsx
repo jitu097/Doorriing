@@ -1,10 +1,8 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import './FloatingCart.css';
 
-const FloatingCart = () => {
-  const navigate = useNavigate();
+const FloatingCart = ({ onCartClick }) => {
   const { getCartCount, getCartTotal } = useCart();
 
   const itemCount = getCartCount();
@@ -14,10 +12,6 @@ const FloatingCart = () => {
   if (itemCount === 0) {
     return null;
   }
-
-  const handleViewCart = () => {
-    navigate('/cart');
-  };
 
   return (
     <div className="floating-cart">
@@ -37,7 +31,7 @@ const FloatingCart = () => {
             <span className="cart-total">₹ {totalPrice.toFixed(0)}</span>
           </div>
         </div>
-        <button className="view-cart-btn" onClick={handleViewCart}>
+        <button className="view-cart-btn" onClick={onCartClick}>
           View Cart
           <svg 
             className="arrow-icon" 

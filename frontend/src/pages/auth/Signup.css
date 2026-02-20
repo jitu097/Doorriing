@@ -1,21 +1,57 @@
+/* Prevent body scroll on signup page */
+body:has(.signup-container) {
+  overflow: hidden;
+  height: 100vh;
+}
+
 .signup-container {
-  min-height: 100vh;
+  height: 100vh;
+  width: 100vw;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   padding: 1rem;
-  background: linear-gradient(180deg, #f5f5f5 0%, #e8e8e8 100%);
-  position: relative;
+  padding-right: clamp(1rem, 5vw, 5rem);
+  background-image: url('/SIGNUPbg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow: hidden;
 }
 
 .signup-card {
   background: white;
-  border-radius: 20px;
+  border-radius: 60px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  max-width: 420px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-width: 450px;
+  
+  max-height: 100vh;
   width: 100%;
   animation: slideUp 0.5s ease-out;
+}
+
+/* Custom scrollbar for signup card */
+.signup-card::-webkit-scrollbar {
+  width: 6px;
+}
+
+.signup-card::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 0 20px 20px 0;
+}
+
+.signup-card::-webkit-scrollbar-thumb {
+  background: #f8fafa;
+  border-radius: 10px;
+}
+
+.signup-card::-webkit-scrollbar-thumb:hover {
+  background: #eef5f5;
 }
 
 @keyframes slideUp {
@@ -184,7 +220,7 @@
 
 .signup-button {
   padding: 0.95rem;
-  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  background: #E95322;
   color: white;
   border: none;
   border-radius: 10px;
@@ -193,13 +229,13 @@
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: 0.5rem;
-  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+  box-shadow: 0 4px 15px rgba(233, 83, 34, 0.3);
 }
 
 .signup-button:hover {
-  background: linear-gradient(135deg, #f57c00 0%, #ff9800 100%);
+  background: #d14a1e;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+  box-shadow: 0 6px 20px rgba(233, 83, 34, 0.4);
 }
 
 .signup-button:disabled {
@@ -270,7 +306,7 @@
 }
 
 .signin-link {
-  color: #26bfbf;
+  color: #f6670f;
   text-decoration: none;
   font-weight: 600;
   margin-left: 0.25rem;
@@ -280,15 +316,49 @@
   text-decoration: underline;
 }
 
+/* Tablet and small laptop */
+@media (max-width: 1024px) {
+  .signup-container {
+    padding: 1rem;
+    padding-right: 2rem;
+  }
+
+  .signup-card {
+    max-width: 420px;
+  }
+}
+
+/* Mobile landscape and small tablets */
+@media (max-width: 768px) {
+  .signup-container {
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .signup-card {
+    max-width: 450px;
+    border-radius: 40px;
+  }
+
+  .signup-top-section {
+    height: 250px;
+  }
+
+  .signup-boy-image {
+    height: 300px;
+  }
+}
+
+/* Mobile portrait */
 @media (max-width: 480px) {
   .signup-container {
     padding: 0;
-    background: white;
-    align-items: flex-start;
+    justify-content: center;
   }
 
   .signup-card {
     max-width: 100%;
+    max-height: 100vh;
     border-radius: 0;
     box-shadow: none;
   }
@@ -298,8 +368,8 @@
   }
 
   .signup-boy-image {
-    height: 300px;
-    margin-right: 40px;
+    height: 280px;
+    margin-right: 20px;
   }
 
   .signup-form-section {
@@ -313,7 +383,7 @@
     height: 75px;
   }
 
-    .logo-text {
-      font-size: 0.7rem;
-    }
+  .logo-text {
+    font-size: 0.7rem;
   }
+}
