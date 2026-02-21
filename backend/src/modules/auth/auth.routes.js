@@ -4,6 +4,9 @@ import { authenticate } from '../../middlewares/auth.middleware.js';
 
 const router = Router();
 
+// Sync from Firebase
+router.post('/sync', authenticate, authController.sync);
+
 // Register or login (creates customer record if not exists)
 router.post('/register', authenticate, authController.register);
 

@@ -15,7 +15,7 @@ class CategoryService {
       // Categories are shop-scoped, meaning each shop has its own set of categories
       const { data, error } = await supabase
         .from('categories')
-        .select('id, shop_id, name, sort_order, is_active, created_at')
+        .select('id, shop_id, name, image_url, sort_order, is_active, created_at')
         .eq('shop_id', shopId)
         .eq('is_active', true)
         .order('sort_order', { ascending: true })
@@ -58,7 +58,7 @@ class CategoryService {
       // Step 1: Fetch category details
       const { data: category, error: categoryError } = await supabase
         .from('categories')
-        .select('id, shop_id, name, is_active')
+        .select('id, shop_id, name, image_url, is_active')
         .eq('id', categoryId)
         .eq('shop_id', shopId)
         .eq('is_active', true)
@@ -76,7 +76,7 @@ class CategoryService {
       // Subcategories are OPTIONAL - a category may have zero subcategories
       const { data: subcategories, error: subcategoryError } = await supabase
         .from('subcategories')
-        .select('id, category_id, name, is_active')
+        .select('id, category_id, name, image_url, is_active')
         .eq('category_id', categoryId)
         .eq('is_active', true)
         .order('name', { ascending: true });
@@ -143,6 +143,7 @@ class CategoryService {
           id: category.id,
           shop_id: category.shop_id,
           name: category.name,
+          image_url: category.image_url,
         },
         subcategories: subcategories || [],
         grouped_items: groupedItems,
@@ -165,7 +166,7 @@ class CategoryService {
     try {
       const { data, error } = await supabase
         .from('subcategories')
-        .select('id, category_id, name, description, display_order, is_active')
+        .select('id, category_id, name, image_url, description, display_order, is_active')
         .eq('category_id', categoryId)
         .eq('is_active', true)
         .order('display_order', { ascending: true })

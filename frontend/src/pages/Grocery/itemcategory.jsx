@@ -74,7 +74,7 @@ const ItemCategory = () => {
         <div className="shop-header">
           <button className="back-button" onClick={() => navigate(-1)}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
           <h1 className="shop-name">{shop?.name || 'Shop'}</h1>
@@ -138,10 +138,19 @@ const ItemCategory = () => {
                 style={{ backgroundColor: cardColors[index % cardColors.length] }}
                 onClick={() => handleCategoryClick(category)}
               >
-                <div className="category-icon">
-                  {category.name?.charAt(0)?.toUpperCase() || '#'}
-                </div>
-                <p className="category-name">{category.name}</p>
+                {category.image_url ? (
+                  <img
+                    src={category.image_url}
+                    alt={category.name}
+                    loading="lazy"
+                    className="category-image"
+                  />
+                ) : (
+                  <div className="category-icon">
+                    {category.name?.charAt(0)?.toUpperCase() || '#'}
+                  </div>
+                )}
+                <h3 className="category-name-heading">{category.name}</h3>
               </div>
             ))}
           </div>

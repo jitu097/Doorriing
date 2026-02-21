@@ -1,0 +1,6 @@
+{
+  "code": "PGRST204",
+  "details": null,
+  "hint": null,
+  "message": "Could not find the 'address_line_1' column of 'customer_addresses' in the schema cache"
+}

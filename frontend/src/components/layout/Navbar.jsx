@@ -1,8 +1,10 @@
 
 import { Link, useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
-import { useCart } from '../../context/CartContext';
 import Modal from '../common/Modal';
+import AddressForm from '../common/AddressForm';
+import { useAddress } from '../../context/AddressContext';
+import { useCart } from '../../context/CartContext';
 import './Navbar.css';
 
 const Navbar = ({ onCartClick }) => {
@@ -12,16 +14,28 @@ const Navbar = ({ onCartClick }) => {
   const [showAccount, setShowAccount] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const [address, setAddress] = useState({
+  const [search, setSearch] = useState('');
+
+  const { activeAddress, addAddress, updateAddress } = useAddress();
+
+  const [navFormData, setNavFormData] = useState({
     type: 'Home',
+    name: user.name || '',
+    phone: user.phone || '',
     building: '',
-    floor: '',
     area: '',
     landmark: '',
-    name: user.name || '',
-    phone: user.phone || ''
+    city: '',
+    state: '',
+    postalCode: '',
+    isDefault: true
   });
-  const [search, setSearch] = useState('');
+
+  React.useEffect(() => {
+    if (activeAddress) {
+      setNavFormData(activeAddress);
+    }
+  }, [activeAddress, showLocation]);
 
   const cartCount = getCartCount();
 
@@ -35,8 +49,19 @@ const Navbar = ({ onCartClick }) => {
   const handleAccountClick = () => setShowAccount((v) => !v);
   const handleLocationClick = () => setShowLocation(true);
   const handleLocationClose = () => setShowLocation(false);
-  const handleAddressChange = (e) => {
-    setAddress({ ...address, [e.target.name]: e.target.value });
+
+  const handleNavAddressSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (activeAddress && activeAddress.id) {
+        await updateAddress(activeAddress.id, navFormData);
+      } else {
+        await addAddress({ ...navFormData, isDefault: true });
+      }
+      setShowLocation(false);
+    } catch (error) {
+      alert(error.message || 'Error saving address from Navbar');
+    }
   };
 
   return (
@@ -49,8 +74,7 @@ const Navbar = ({ onCartClick }) => {
 
         {/* Location */}
         <div className="navbar-location" onClick={handleLocationClick}>
-          
-          <div className="location-address">{address.area || 'Location'} <span className="account-caret">▼</span></div>
+          <div className="location-address">{activeAddress?.area || 'Location'} <span className="account-caret">▼</span></div>
         </div>
 
         {/* Search - Desktop */}
@@ -69,8 +93,8 @@ const Navbar = ({ onCartClick }) => {
         </div>
 
         {/* Search - Mobile Icon */}
-        <button 
-          className="searchbar-icon-btn searchbar-mobile-icon" 
+        <button
+          className="searchbar-icon-btn searchbar-mobile-icon"
           type="button"
           onClick={() => setShowSearch(true)}
         >
@@ -88,8 +112,8 @@ const Navbar = ({ onCartClick }) => {
               onChange={e => setSearch(e.target.value)}
               autoFocus
             />
-            <button 
-              className="searchbar-close-btn" 
+            <button
+              className="searchbar-close-btn"
               type="button"
               onClick={() => setShowSearch(false)}
             >
@@ -131,32 +155,15 @@ const Navbar = ({ onCartClick }) => {
       </div>
 
       {/* Location Modal */}
-      <Modal isOpen={showLocation} onClose={handleLocationClose}>
-        <div className="location-modal">
-          <h3>Enter complete address</h3>
-          <div className="address-types">
-            {['Home', 'Work', 'Hotel', 'Other'].map(type => (
-              <button
-                key={type}
-                className={address.type === type ? 'active' : ''}
-                onClick={() => setAddress({ ...address, type })}
-                type="button"
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-          <form className="address-form">
-            <input name="building" placeholder="Flat / House no / Building name *" value={address.building} onChange={handleAddressChange} required />
-            <input name="floor" placeholder="Floor (optional)" value={address.floor} onChange={handleAddressChange} />
-            <input name="area" placeholder="Area / Sector / Locality *" value={address.area} onChange={handleAddressChange} required />
-            <input name="landmark" placeholder="Nearby landmark (optional)" value={address.landmark} onChange={handleAddressChange} />
-            <input name="name" placeholder="Your name *" value={address.name} onChange={handleAddressChange} required />
-            <input name="phone" placeholder="Your phone number (optional)" value={address.phone} onChange={handleAddressChange} />
-            <button type="submit" className="address-save-btn">Save</button>
-          </form>
-        </div>
-      </Modal>
+      {showLocation && (
+        <AddressForm
+          formData={navFormData}
+          setFormData={setNavFormData}
+          onSubmit={handleNavAddressSubmit}
+          onCancel={handleLocationClose}
+          isEditing={!!activeAddress}
+        />
+      )}
     </nav>
   );
 };

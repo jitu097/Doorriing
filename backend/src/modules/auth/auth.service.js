@@ -44,6 +44,67 @@ class AuthService {
   }
 
   /**
+   * Sync customer from Firebase token payload safely
+   */
+  async syncCustomer(firebaseUser) {
+    try {
+      const { uid: firebaseUid, email, name: fullName } = firebaseUser;
+
+      if (!firebaseUid || !email) {
+        throw new Error('Invalid Firebase user payload: missing uid or email');
+      }
+
+      // Check if customer exists
+      const { data: existing, error: fetchError } = await supabase
+        .from('customers')
+        .select('id, firebase_uid, email, full_name, phone, created_at, updated_at')
+        .eq('firebase_uid', firebaseUid)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        logger.error('Error fetching customer during sync', { error: fetchError });
+        throw new Error('Database error during sync');
+      }
+
+      if (existing) {
+        return existing;
+      }
+
+      // Insert new customer if it doesn't exist
+      const { data: newCustomer, error: insertError } = await supabase
+        .from('customers')
+        .insert({
+          firebase_uid: firebaseUid,
+          email: email,
+          full_name: fullName || email.split('@')[0],
+          phone: firebaseUser.phone_number || null,
+        })
+        .select('id, firebase_uid, email, full_name, phone, created_at, updated_at')
+        .single();
+
+      if (insertError) {
+        logger.error('Failed to insert new customer during sync', { error: insertError, firebaseUid });
+        // Handle race condition where user might exist due to concurrent requests
+        if (insertError.code === '23505') { // unique violation
+          const { data: retryExisting } = await supabase
+            .from('customers')
+            .select('id, firebase_uid, email, full_name, phone, created_at, updated_at')
+            .eq('firebase_uid', firebaseUid)
+            .single();
+          if (retryExisting) return retryExisting;
+        }
+        throw new Error('Failed to sync new customer account');
+      }
+
+      logger.info('New customer synced from Firebase', { customerId: newCustomer.id });
+      return newCustomer;
+    } catch (error) {
+      logger.error('Error in syncCustomer', { error: error.message });
+      throw error;
+    }
+  }
+
+  /**
    * Get customer profile
    */
   async getCustomerProfile(customerId) {

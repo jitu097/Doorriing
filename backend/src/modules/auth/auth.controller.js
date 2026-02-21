@@ -4,6 +4,37 @@ import { logger } from '../../utils/logger.js';
 
 class AuthController {
   /**
+   * Sync customer from Firebase Login
+   * POST /api/auth/sync
+   */
+  async sync(req, res, next) {
+    try {
+      // We expect req.user to be populated by the `authenticate` middleware
+      // But we can also handle the decoded token data passed natively or construct it from req.user
+      const { firebaseUid, email } = req.user;
+
+      // Let's pass the raw decoded info to syncCustomer
+      const firebaseUserPayload = {
+        uid: firebaseUid,
+        email: email,
+        name: req.body?.full_name || email?.split('@')[0], // Optional Name fallback if no Google Name
+      };
+
+      const customerProfile = await authService.syncCustomer(firebaseUserPayload);
+
+      return sendSuccess(
+        res,
+        customerProfile,
+        'Profile synced successfully',
+        200
+      );
+    } catch (error) {
+      logger.error('Sync controller error', { error: error.message });
+      next(error);
+    }
+  }
+
+  /**
    * Register or login customer
    * POST /api/auth/register
    */

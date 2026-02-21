@@ -8,10 +8,7 @@ const Profile = () => {
   const [profileData, setProfileData] = useState({
     displayName: user?.displayName || '',
     email: user?.email || '',
-    phone: '',
-    address: '',
-    city: '',
-    postalCode: ''
+    phone: ''
   });
 
   const handleInputChange = (e) => {
@@ -34,10 +31,7 @@ const Profile = () => {
     setProfileData({
       displayName: user?.displayName || '',
       email: user?.email || '',
-      phone: '',
-      address: '',
-      city: '',
-      postalCode: ''
+      phone: ''
     });
   };
 
@@ -63,7 +57,7 @@ const Profile = () => {
             <h1>{profileData.displayName || 'User Profile'}</h1>
             <p className="profile-email">{profileData.email}</p>
           </div>
-          <button 
+          <button
             className="edit-profile-btn"
             onClick={() => setIsEditing(!isEditing)}
           >
@@ -117,55 +111,7 @@ const Profile = () => {
             </div>
           </div>
 
-          <div className="profile-section">
-            <h2>Address Information</h2>
-            <div className="profile-grid">
-              <div className="profile-field full-width">
-                <label>Street Address</label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    name="address"
-                    value={profileData.address}
-                    onChange={handleInputChange}
-                    placeholder="Enter your street address"
-                  />
-                ) : (
-                  <p>{profileData.address || 'Not provided'}</p>
-                )}
-              </div>
 
-              <div className="profile-field">
-                <label>City</label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    name="city"
-                    value={profileData.city}
-                    onChange={handleInputChange}
-                    placeholder="Enter your city"
-                  />
-                ) : (
-                  <p>{profileData.city || 'Not provided'}</p>
-                )}
-              </div>
-
-              <div className="profile-field">
-                <label>Postal Code</label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    name="postalCode"
-                    value={profileData.postalCode}
-                    onChange={handleInputChange}
-                    placeholder="Enter postal code"
-                  />
-                ) : (
-                  <p>{profileData.postalCode || 'Not provided'}</p>
-                )}
-              </div>
-            </div>
-          </div>
 
           {isEditing && (
             <div className="profile-actions">

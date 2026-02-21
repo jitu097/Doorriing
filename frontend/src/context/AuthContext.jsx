@@ -7,6 +7,7 @@ import {
     signInWithPopup
 } from 'firebase/auth';
 import { auth, googleProvider } from '../config/firebase';
+import api from '../services/api';
 
 export const AuthContext = createContext();
 
@@ -34,26 +35,43 @@ export const AuthProvider = ({ children }) => {
         return signOut(auth);
     };
 
+    const [customerProfile, setCustomerProfile] = useState(null);
+
     // Subscribe to auth state changes
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
-            setLoading(false);
 
-            // Optional: Sync with local storage if needed for other non-auth logic, 
-            // but Firebase handles session persistence automatically.
             if (currentUser) {
+                try {
+                    // Sync with backend
+                    const token = await currentUser.getIdToken();
+                    const response = await api.post('/auth/sync', {}, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.success && response.data) {
+                        setCustomerProfile(response.data);
+                    }
+                } catch (error) {
+                    console.error('Failed to sync customer profile with backend:', error);
+                    setCustomerProfile(null);
+                }
+
                 localStorage.setItem('user', JSON.stringify({
                     uid: currentUser.uid,
                     email: currentUser.email,
                     displayName: currentUser.displayName
                 }));
-                // Note: Managing tokens manually is usually not needed with Firebase SDK unless for backend calls
-                // currentUser.getIdToken().then(token => localStorage.setItem('token', token));
             } else {
+                setCustomerProfile(null);
                 localStorage.removeItem('user');
                 localStorage.removeItem('token');
             }
+
+            setLoading(false);
         });
 
         return () => unsubscribe();
@@ -61,6 +79,7 @@ export const AuthProvider = ({ children }) => {
 
     const value = {
         user,
+        customerProfile,
         loading,
         registerWithEmail,
         loginWithEmail,

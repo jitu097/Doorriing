@@ -79,7 +79,7 @@ const SubCategory = () => {
       <div className="subcategory-header">
         <button className="back-button" onClick={() => navigate(-1)}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18L9 12L15 6" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M15 18L9 12L15 6" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
         <div className="header-info">
@@ -107,7 +107,16 @@ const SubCategory = () => {
                   className={`subcategory-item ${isActive ? 'active' : ''}`}
                   onClick={() => setSelectedGroupKey(key)}
                 >
-                  <div className="subcategory-icon">{icon}</div>
+                  {group.image_url ? (
+                    <img
+                      src={group.image_url}
+                      alt={name}
+                      loading="lazy"
+                      className="w-8 h-8 object-cover rounded"
+                    />
+                  ) : (
+                    <div className="subcategory-icon">{icon}</div>
+                  )}
                   <div className="subcategory-name">{name}</div>
                 </div>
               );

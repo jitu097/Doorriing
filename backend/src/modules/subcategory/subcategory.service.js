@@ -14,7 +14,7 @@ class SubcategoryService {
 
             const { data, error } = await supabase
                 .from('subcategories')
-                .select('id, category_id, shop_id, name, is_active, created_at')
+                .select('id, category_id, shop_id, name, image_url, is_active, created_at')
                 .eq('category_id', categoryId)
                 .eq('is_active', true)
                 .order('name', { ascending: true });
@@ -44,7 +44,7 @@ class SubcategoryService {
 
             const { data, error } = await supabase
                 .from('subcategories')
-                .select('id, category_id, shop_id, name, is_active')
+                .select('id, category_id, shop_id, name, image_url, is_active')
                 .eq('id', subcategoryId)
                 .eq('is_active', true)
                 .single();
@@ -77,7 +77,7 @@ class SubcategoryService {
 
             const { data, error } = await supabase
                 .from('subcategories')
-                .select('id, category_id, shop_id, name, is_active, created_at')
+                .select('id, category_id, shop_id, name, image_url, is_active, created_at')
                 .eq('shop_id', shopId)
                 .eq('is_active', true)
                 .order('name', { ascending: true });
