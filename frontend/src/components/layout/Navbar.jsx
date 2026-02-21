@@ -107,8 +107,9 @@ const Navbar = ({ onCartClick }) => {
             <div className="account-dropdown">
               <ul>
                 <li><Link to="/orders">My Orders</Link></li>
-                <li><span>Address</span></li>
-                <li><span>Profile</span></li>
+                <li><Link to="/address">Address</Link></li>
+                <li><Link to="/profile">Profile</Link></li>
+                <li><Link to="/about">About Us</Link></li>
                 <li><button onClick={handleLogout} className="logout-btn">Logout</button></li>
               </ul>
             </div>

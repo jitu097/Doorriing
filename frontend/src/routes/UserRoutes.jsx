@@ -1,13 +1,15 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from '../pages/auth/Login';
 import Signup from '../pages/auth/Signup';
-import Landingpage from '../pages/orders/Landingpage/Landingpage';
+import Landingpage from '../pages/Landingpage/Landingpage';
 import Home from '../pages/home/Home';
 import Checkout from '../pages/cart/Checkout';
 import OrderSuccess from '../pages/cart/OrderSuccess';
 import OrdersList from '../pages/orders/OrdersList';
 import OrderDetails from '../pages/orders/OrderDetails';
 import Profile from '../pages/profile/Profile';
+import Address from '../pages/Address/Address';
+import AboutUs from '../pages/Aboutus/aboutus';
 
 import ShopsList from '../pages/shop/ShopsList';
 import ShopDetails from '../pages/shop/ShopDetails';
@@ -54,6 +56,8 @@ const UserRoutes = () => {
           <Route path="/orders" element={<OrdersList />} />
           <Route path="/orders/:orderId" element={<OrderDetails />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/address" element={<Address />} />
+          <Route path="/about" element={<AboutUs />} />
         </Route>
       </Route>
 
