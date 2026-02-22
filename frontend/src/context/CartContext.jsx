@@ -22,18 +22,61 @@ export const CartProvider = ({ children }) => {
         }
     });
 
+    const [cartMeta, setCartMeta] = useState(() => {
+        // Initialize cart metadata (shop info)
+        try {
+            const savedMeta = localStorage.getItem('cartMeta');
+            return savedMeta ? JSON.parse(savedMeta) : { shopId: null, shopType: null };
+        } catch (error) {
+            console.error('Error loading cart metadata:', error);
+            return { shopId: null, shopType: null };
+        }
+    });
+
     // Sync to localStorage whenever cart changes
     useEffect(() => {
         try {
             localStorage.setItem('cartItems', JSON.stringify(cartItems));
+            localStorage.setItem('cartMeta', JSON.stringify(cartMeta));
         } catch (error) {
             console.error('Error saving cart to localStorage:', error);
         }
-    }, [cartItems]);
+    }, [cartItems, cartMeta]);
 
     // Add item to cart or increase quantity if already exists
     const addToCart = (item) => {
         setCartItems((prevItems) => {
+            // Check for shop conflicts
+            const hasItems = prevItems.length > 0;
+            
+            if (hasItems) {
+                const firstItem = prevItems[0];
+                const isDifferentShopType = item.shopType && firstItem.shopType && item.shopType !== firstItem.shopType;
+                const isDifferentShop = item.shopId && firstItem.shopId && item.shopId !== firstItem.shopId;
+                
+                if (isDifferentShopType || isDifferentShop) {
+                    // Different shop type or different shop - clear cart and add new item
+                    const shopTypeMsg = isDifferentShopType 
+                        ? `Cannot add ${item.shopType} items to cart with ${firstItem.shopType} items.`
+                        : `Cannot add items from different shops.`;
+                    
+                    const confirmMsg = `${shopTypeMsg}\n\nYour cart will be cleared to add items from the new ${item.shopType || 'shop'}. Continue?`;
+                    
+                    if (window.confirm(confirmMsg)) {
+                        // Clear cart and add new item
+                        setCartMeta({ shopId: item.shopId, shopType: item.shopType });
+                        return [{ ...item, quantity: 1 }];
+                    } else {
+                        // User cancelled, keep existing cart
+                        return prevItems;
+                    }
+                }
+            } else {
+                // First item in cart - set shop metadata
+                setCartMeta({ shopId: item.shopId, shopType: item.shopType });
+            }
+            
+            // Check if item already exists
             const existingItem = prevItems.find((i) => i.id === item.id);
 
             if (existingItem) {
@@ -42,7 +85,7 @@ export const CartProvider = ({ children }) => {
                     i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
                 );
             } else {
-                // New item, add with quantity 1
+                // New item from same shop, add with quantity 1
                 return [...prevItems, { ...item, quantity: 1 }];
             }
         });
@@ -50,7 +93,14 @@ export const CartProvider = ({ children }) => {
 
     // Remove item completely from cart
     const removeFromCart = (id) => {
-        setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
+        setCartItems((prevItems) => {
+            const newItems = prevItems.filter((item) => item.id !== id);
+            // Clear metadata if cart becomes empty
+            if (newItems.length === 0) {
+                setCartMeta({ shopId: null, shopType: null });
+            }
+            return newItems;
+        });
     };
 
     // Increase quantity by 1
@@ -69,7 +119,12 @@ export const CartProvider = ({ children }) => {
 
             if (item && item.quantity === 1) {
                 // Remove item if quantity is 1
-                return prevItems.filter((i) => i.id !== id);
+                const newItems = prevItems.filter((i) => i.id !== id);
+                // Clear metadata if cart becomes empty
+                if (newItems.length === 0) {
+                    setCartMeta({ shopId: null, shopType: null });
+                }
+                return newItems;
             } else {
                 // Decrease quantity
                 return prevItems.map((i) =>
@@ -82,6 +137,7 @@ export const CartProvider = ({ children }) => {
     // Clear entire cart
     const clearCart = () => {
         setCartItems([]);
+        setCartMeta({ shopId: null, shopType: null });
     };
 
     // Get cart total price
@@ -109,6 +165,7 @@ export const CartProvider = ({ children }) => {
 
     const value = {
         cartItems,
+        cartMeta,
         addToCart,
         removeFromCart,
         increaseQty,

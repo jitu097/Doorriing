@@ -162,6 +162,8 @@ const SubCategory = () => {
                     stockQuantityLabel={stockLabel}
                     stockQuantityValue={stockValue}
                     image={item.image_url}
+                    shopId={restaurantId}
+                    shopType="restaurant"
                   />
                 );
               })}

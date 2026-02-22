@@ -37,6 +37,8 @@ const ItemCard = ({
   isAvailable = true,
   stockQuantityLabel,
   stockQuantityValue,
+  shopId,
+  shopType,
 }) => {
   const { addToCart, getCartItem, increaseQty, decreaseQty } = useCart();
   const formattedPrice = formatPrice(price);
@@ -68,6 +70,8 @@ const ItemCard = ({
       originalPrice,
       isVeg,
       description,
+      shopId,
+      shopType,
     });
   };
 
