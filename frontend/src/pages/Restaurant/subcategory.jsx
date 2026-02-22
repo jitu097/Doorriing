@@ -150,12 +150,16 @@ const SubCategory = () => {
                 const numericStock = Number(item?.stock_quantity);
                 const stockValue = Number.isFinite(numericStock) ? numericStock : null;
                 const stockLabel = stockValue !== null ? `${stockValue} ready` : null;
+                const halfPortionPrice = item?.half_portion_price;
+                const fullPortionPrice = item?.full_price ?? item?.price;
 
                 return (
                   <ItemCard
                     key={item.id}
                     name={item.name}
                     price={item.price}
+                    halfPortionPrice={halfPortionPrice}
+                    fullPortionPrice={fullPortionPrice}
                     isVeg={item.is_veg}
                     isAvailable={item.is_available !== false}
                     description={item.description}

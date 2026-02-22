@@ -24,7 +24,7 @@ class ItemService {
 
       let query = supabase
         .from('items')
-        .select('id, shop_id, category_id, subcategory_id, name, description, price, image_url, is_active, is_available, stock_quantity, created_at', { count: 'exact' })
+        .select('id, shop_id, category_id, subcategory_id, name, description, price, full_price, half_portion_price, has_variants, image_url, is_active, is_available, stock_quantity, created_at', { count: 'exact' })
         .eq('shop_id', shopId)
         .eq('is_active', true)
         .eq('is_available', true);
@@ -87,7 +87,7 @@ class ItemService {
 
       const { data, error } = await supabase
         .from('items')
-        .select('id, shop_id, category_id, subcategory_id, name, description, price, image_url, is_active, is_available, stock_quantity, created_at')
+        .select('id, shop_id, category_id, subcategory_id, name, description, price, full_price, half_portion_price, has_variants, image_url, is_active, is_available, stock_quantity, created_at')
         .eq('id', itemId)
         .eq('is_active', true)
         .single();
@@ -143,7 +143,7 @@ class ItemService {
 
       const { data, error, count } = await supabase
         .from('items')
-        .select('id, shop_id, category_id, subcategory_id, name, description, price, image_url, is_active, is_available, stock_quantity', { count: 'exact' })
+        .select('id, shop_id, category_id, subcategory_id, name, description, price, full_price, half_portion_price, has_variants, image_url, is_active, is_available, stock_quantity', { count: 'exact' })
         .eq('category_id', categoryId)
         .eq('is_active', true)
         .eq('is_available', true)
@@ -184,7 +184,7 @@ class ItemService {
 
       const { data, error, count } = await supabase
         .from('items')
-        .select('id, shop_id, category_id, subcategory_id, name, description, price, image_url, is_active, is_available, stock_quantity', { count: 'exact' })
+        .select('id, shop_id, category_id, subcategory_id, name, description, price, full_price, half_portion_price, has_variants, image_url, is_active, is_available, stock_quantity', { count: 'exact' })
         .eq('shop_id', shopId)
         .eq('subcategory_id', subcategoryId)
         .eq('is_active', true)

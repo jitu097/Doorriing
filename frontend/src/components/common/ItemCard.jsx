@@ -39,13 +39,38 @@ const ItemCard = ({
   stockQuantityValue,
   shopId,
   shopType,
+  halfPortionPrice,
+  fullPortionPrice,
 }) => {
   const { addToCart, getCartItem, increaseQty, decreaseQty } = useCart();
-  const formattedPrice = formatPrice(price);
+  const basePrice = price;
+  const hasHalfVariant = halfPortionPrice !== undefined && halfPortionPrice !== null;
+  const fullVariantValue = fullPortionPrice ?? basePrice;
+  const priceValue = hasHalfVariant ? fullVariantValue : (basePrice ?? fullVariantValue);
+  const formattedPrice = formatPrice(priceValue);
   const formattedOriginalPrice = formatPrice(originalPrice);
-  const priceNumeric = Number(price);
+  const priceNumeric = Number(priceValue);
   const originalNumeric = Number(originalPrice);
-  const itemId = getFallbackId(id, name, price);
+  const formattedHalfVariantPrice = hasHalfVariant ? formatPrice(halfPortionPrice) : null;
+  const formattedFullVariantPrice = formatPrice(fullVariantValue);
+  const showVariantPricing = Boolean(hasHalfVariant && formattedHalfVariantPrice);
+  const variantOptions = showVariantPricing
+    ? [
+        {
+          key: 'half',
+          label: 'Half',
+          formattedPrice: formattedHalfVariantPrice,
+          priceValue: halfPortionPrice,
+        },
+        {
+          key: 'full',
+          label: 'Full',
+          formattedPrice: formattedFullVariantPrice,
+          priceValue: fullVariantValue,
+        },
+      ]
+    : null;
+  const itemId = getFallbackId(id, name, priceValue ?? price);
   const cartItem = getCartItem(itemId);
   const isInCart = Boolean(cartItem);
   const secondaryText = subtitle || description;
@@ -64,7 +89,7 @@ const ItemCard = ({
     addToCart({
       id: itemId,
       name,
-      price,
+      price: priceValue ?? price,
       image,
       subtitle: secondaryText,
       originalPrice,
@@ -72,6 +97,28 @@ const ItemCard = ({
       description,
       shopId,
       shopType,
+    });
+  };
+
+  const handleVariantAdd = (variant) => {
+    if (!isAvailable) {
+      return;
+    }
+
+    const variantId = `${itemId}-${variant.key}`;
+    addToCart({
+      id: variantId,
+      name: `${name} (${variant.label})`,
+      price: variant.priceValue,
+      image,
+      subtitle: secondaryText,
+      originalPrice: undefined,
+      isVeg,
+      description,
+      shopId,
+      shopType,
+      portion: variant.label,
+      baseItemId: itemId,
     });
   };
 
@@ -102,46 +149,92 @@ const ItemCard = ({
 
         {secondaryText && <p className="item-card-subtitle">{secondaryText}</p>}
         {hasStockLabel && <p className={stockLabelClass}>{stockDisplayLabel}</p>}
+        {showVariantPricing && variantOptions ? (
+          <div className="item-card-variants">
+            {variantOptions.map((variant) => {
+              const variantId = `${itemId}-${variant.key}`;
+              const variantCartItem = getCartItem(variantId);
+              const inVariantCart = Boolean(variantCartItem);
 
-        <div className="item-card-footer">
-          <div className="item-card-price-block">
-            {shouldShowOriginal && (
-              <span className="item-card-price-original">₹{formattedOriginalPrice}</span>
-            )}
-            <span className="item-card-price">
-              {formattedPrice ? `₹${formattedPrice}` : 'Price unavailable'}
-            </span>
+              return (
+                <div className="item-card-variant-row" key={variant.key}>
+                  <div className="item-card-variant-info">
+                    <span className="item-card-variant-label">{variant.label}</span>
+                    <span className="item-card-variant-price">₹{variant.formattedPrice}</span>
+                  </div>
+                  {!inVariantCart ? (
+                    <button
+                      className="item-card-add-btn"
+                      type="button"
+                      disabled={!isAvailable}
+                      onClick={() => handleVariantAdd(variant)}
+                    >
+                      {isAvailable ? 'ADD' : 'UNAVAILABLE'}
+                    </button>
+                  ) : (
+                    <div className="item-card-qty-controls">
+                      <button
+                        className="qty-btn-small"
+                        onClick={() => decreaseQty(variantId)}
+                        aria-label={`Decrease ${variant.label} quantity`}
+                      >
+                        -
+                      </button>
+                      <span className="qty-display-small">{variantCartItem.quantity}</span>
+                      <button
+                        className="qty-btn-small"
+                        onClick={() => increaseQty(variantId)}
+                        aria-label={`Increase ${variant.label} quantity`}
+                      >
+                        +
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-
-          {!isInCart ? (
-            <button
-              className="item-card-add-btn"
-              type="button"
-              disabled={!isAvailable}
-              onClick={handleAddToCart}
-            >
-              {isAvailable ? 'ADD' : 'UNAVAILABLE'}
-            </button>
-          ) : (
-            <div className="item-card-qty-controls">
-              <button
-                className="qty-btn-small"
-                onClick={() => decreaseQty(itemId)}
-                aria-label="Decrease quantity"
-              >
-                -
-              </button>
-              <span className="qty-display-small">{cartItem.quantity}</span>
-              <button
-                className="qty-btn-small"
-                onClick={() => increaseQty(itemId)}
-                aria-label="Increase quantity"
-              >
-                +
-              </button>
+        ) : (
+          <div className="item-card-footer">
+            <div className="item-card-price-block">
+              {shouldShowOriginal && (
+                <span className="item-card-price-original">₹{formattedOriginalPrice}</span>
+              )}
+              <span className="item-card-price">
+                {formattedPrice ? `₹${formattedPrice}` : 'Price unavailable'}
+              </span>
             </div>
-          )}
-        </div>
+
+            {!isInCart ? (
+              <button
+                className="item-card-add-btn"
+                type="button"
+                disabled={!isAvailable}
+                onClick={handleAddToCart}
+              >
+                {isAvailable ? 'ADD' : 'UNAVAILABLE'}
+              </button>
+            ) : (
+              <div className="item-card-qty-controls">
+                <button
+                  className="qty-btn-small"
+                  onClick={() => decreaseQty(itemId)}
+                  aria-label="Decrease quantity"
+                >
+                  -
+                </button>
+                <span className="qty-display-small">{cartItem.quantity}</span>
+                <button
+                  className="qty-btn-small"
+                  onClick={() => increaseQty(itemId)}
+                  aria-label="Increase quantity"
+                >
+                  +
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
