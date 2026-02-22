@@ -188,22 +188,22 @@ if (subcategories && subcategories.length > 0) {
 
 ```bash
 # 1. Home Page
-curl http://localhost:5000/api/shops/home
+curl http://localhost:5001/api/shops/home
 
 # 2. Browse Grocery
-curl "http://localhost:5000/api/shops/browse/grocery?page=1"
+curl "http://localhost:5001/api/shops/browse/grocery?page=1"
 
 # 3. Shop Categories
-curl http://localhost:5000/api/categories/shop/{shopId}
+curl http://localhost:5001/api/categories/shop/{shopId}
 
 # 4. Category Details
-curl "http://localhost:5000/api/categories/{categoryId}?shop_id={shopId}"
+curl "http://localhost:5001/api/categories/{categoryId}?shop_id={shopId}"
 
 # 5. Items by Subcategory
-curl "http://localhost:5000/api/items/subcategory/{subcategoryId}?shop_id={shopId}"
+curl "http://localhost:5001/api/items/subcategory/{subcategoryId}?shop_id={shopId}"
 
 # 6. Items with Filters
-curl "http://localhost:5000/api/items/shop/{shopId}?category_id={categoryId}&subcategory_id={subcategoryId}"
+curl "http://localhost:5001/api/items/shop/{shopId}?category_id={categoryId}&subcategory_id={subcategoryId}"
 ```
 
 ---

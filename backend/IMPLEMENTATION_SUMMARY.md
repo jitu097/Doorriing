@@ -282,32 +282,32 @@ Updated the item service to support subcategory filtering and display.
 
 ### Test Case 1: Home Page
 ```bash
-curl http://localhost:5000/api/shops/home
+curl http://localhost:5001/api/shops/home
 ```
 
 ### Test Case 2: Browse Page (Grocery)
 ```bash
-curl "http://localhost:5000/api/shops/browse/grocery?page=1&page_size=10"
+curl "http://localhost:5001/api/shops/browse/grocery?page=1&page_size=10"
 ```
 
 ### Test Case 3: Shop Page (Categories)
 ```bash
-curl http://localhost:5000/api/categories/shop/{shopId}
+curl http://localhost:5001/api/categories/shop/{shopId}
 ```
 
 ### Test Case 4: Category Page (With Subcategories)
 ```bash
-curl "http://localhost:5000/api/categories/{categoryId}?shop_id={shopId}"
+curl "http://localhost:5001/api/categories/{categoryId}?shop_id={shopId}"
 ```
 
 ### Test Case 5: Items with Subcategory Filter
 ```bash
-curl "http://localhost:5000/api/items/shop/{shopId}?category_id={categoryId}&subcategory_id={subcategoryId}"
+curl "http://localhost:5001/api/items/shop/{shopId}?category_id={categoryId}&subcategory_id={subcategoryId}"
 ```
 
 ### Test Case 6: Items by Subcategory
 ```bash
-curl "http://localhost:5000/api/items/subcategory/{subcategoryId}?shop_id={shopId}"
+curl "http://localhost:5001/api/items/subcategory/{subcategoryId}?shop_id={shopId}"
 ```
 
 ---

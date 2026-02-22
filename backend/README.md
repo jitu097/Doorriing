@@ -122,7 +122,7 @@ npm run dev
 npm start
 ```
 
-Server will start at: `http://localhost:5000`
+Server will start at: `http://localhost:5001`
 
 ---
 
@@ -268,7 +268,7 @@ To test the API:
 
 3. **Health Check**:
    ```bash
-  curl http://localhost:5000/api/health
+  curl http://localhost:5001/api/health
    ```
 
 ---

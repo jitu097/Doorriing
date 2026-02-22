@@ -2,7 +2,7 @@
 
 ## Base URL
 ```
-http://localhost:5000/api
+http://localhost:5001/api
 ```
 
 ---
@@ -289,7 +289,7 @@ Authorization: Bearer <firebase_id_token>
 1. Copy `.env.example` to `.env` and fill in credentials
 2. Install dependencies: `npm install`
 3. Run dev server: `npm run dev`
-4. Server runs on `http://localhost:5000`
+4. Server runs on `http://localhost:5001`
 
 ---
 

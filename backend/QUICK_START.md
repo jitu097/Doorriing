@@ -34,24 +34,24 @@ npm run dev
 npm start
 ```
 
-Server will be available at: `http://localhost:5000`
+Server will be available at: `http://localhost:5001`
 
 ## Quick Test
 
 1. **Health Check**:
    ```bash
-   curl http://localhost:5000/api/health
+   curl http://localhost:5001/api/health
    ```
 
 2. **List Shops** (no auth required):
    ```bash
-   curl http://localhost:5000/api/shops
+   curl http://localhost:5001/api/shops
    ```
 
 3. **Authenticated Request** (requires Firebase token):
    ```bash
    curl -H "Authorization: Bearer YOUR_FIREBASE_TOKEN" \
-      http://localhost:5000/api/auth/me
+      http://localhost:5001/api/auth/me
    ```
 
 ## API Endpoints

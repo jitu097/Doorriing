@@ -429,25 +429,25 @@ Common error codes:
 
 ### Test Home Page
 ```bash
-curl http://localhost:5000/api/shops/home
+curl http://localhost:5001/api/shops/home
 ```
 
 ### Test Browse (Grocery)
 ```bash
-curl "http://localhost:5000/api/shops/browse/grocery?page=1&page_size=10"
+curl "http://localhost:5001/api/shops/browse/grocery?page=1&page_size=10"
 ```
 
 ### Test Shop Categories
 ```bash
-curl http://localhost:5000/api/categories/shop/550e8400-e29b-41d4-a716-446655440000
+curl http://localhost:5001/api/categories/shop/550e8400-e29b-41d4-a716-446655440000
 ```
 
 ### Test Category Details
 ```bash
-curl "http://localhost:5000/api/categories/550e8400-e29b-41d4-a716-446655440001?shop_id=550e8400-e29b-41d4-a716-446655440000"
+curl "http://localhost:5001/api/categories/550e8400-e29b-41d4-a716-446655440001?shop_id=550e8400-e29b-41d4-a716-446655440000"
 ```
 
 ### Test Items with Filters
 ```bash
-curl "http://localhost:5000/api/items/shop/550e8400-e29b-41d4-a716-446655440000?category_id=550e8400-e29b-41d4-a716-446655440001&subcategory_id=550e8400-e29b-41d4-a716-446655440002"
+curl "http://localhost:5001/api/items/shop/550e8400-e29b-41d4-a716-446655440000?category_id=550e8400-e29b-41d4-a716-446655440001&subcategory_id=550e8400-e29b-41d4-a716-446655440002"
 ```
