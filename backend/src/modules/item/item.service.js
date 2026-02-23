@@ -87,7 +87,7 @@ class ItemService {
 
       const { data, error } = await supabase
         .from('items')
-        .select('id, shop_id, category_id, subcategory_id, name, description, price, full_price, half_portion_price, has_variants, image_url, is_active, is_available, stock_quantity, created_at')
+        .select('id, shop_id, category_id, subcategory_id, name, description, price, full_price, half_portion_price, has_variants, image_url, is_active, is_available, stock_quantity, created_at, shops!inner(business_type)')
         .eq('id', itemId)
         .eq('is_active', true)
         .single();
@@ -121,9 +121,12 @@ class ItemService {
         return { available: false, reason: 'Item is not available' };
       }
 
-      // Check stock for grocery items
-      if (item.stock_quantity !== null && item.stock_quantity < quantity) {
-        return { available: false, reason: 'Insufficient stock', availableStock: item.stock_quantity };
+      // Check stock for grocery items ONLY
+      // Restaurants do not manage stock quantity constraints
+      if (item.shops?.business_type === 'grocery') {
+        if (item.stock_quantity !== null && item.stock_quantity < quantity) {
+          return { available: false, reason: 'Insufficient stock', availableStock: item.stock_quantity };
+        }
       }
 
       return { available: true, item };

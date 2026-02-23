@@ -58,11 +58,15 @@ class CartService {
             id,
             item_id,
             quantity,
+            variant,
             items (
               id,
               name,
               description,
               price,
+              half_portion_price,
+              full_price,
+              has_variants,
               image_url,
               is_available,
               stock_quantity
@@ -86,14 +90,53 @@ class CartService {
         return null;
       }
 
-      // Calculate total
-      const itemsTotal = data.cart_items.reduce((sum, item) => {
-        return sum + (item.items.price * item.quantity);
-      }, 0);
+      let itemsTotal = 0;
+      let validItems = [];
+
+      // Process variants for frontend format
+      if (data.cart_items) {
+        for (const ci of data.cart_items) {
+          if (!ci.items) continue;
+
+          let itemObj = { ...ci.items };
+          let unitPrice = Number(itemObj.price) || 0;
+
+          let variantLabel = ci.variant;
+          let variantSuffix = '';
+
+          // Determine correct price based on variant
+          if (variantLabel === 'Half' && itemObj.half_portion_price != null) {
+            unitPrice = Number(itemObj.half_portion_price);
+            variantSuffix = '-half';
+          } else if (variantLabel === 'Full' && itemObj.full_price != null) {
+            unitPrice = Number(itemObj.full_price);
+            variantSuffix = '-full';
+          }
+
+          // Remap id to match frontend expectation (e.g., uuid-half)
+          const frontendId = variantSuffix ? `${itemObj.id}${variantSuffix}` : itemObj.id;
+
+          // Calculate total
+          itemsTotal += unitPrice * ci.quantity;
+
+          validItems.push({
+            id: ci.id,
+            item_id: frontendId, // used for identifying in frontend
+            quantity: ci.quantity,
+            items: {
+              ...itemObj,
+              id: frontendId,
+              price: unitPrice,
+              portion: variantLabel
+            }
+          });
+        }
+      }
 
       return {
         ...data,
-        items_count: data.cart_items.length,
+        cart_items: validItems,
+        items_count: validItems.length,
         items_total: itemsTotal,
       };
     } catch (error) {
@@ -105,25 +148,36 @@ class CartService {
   /**
    * Add item to cart
    */
-  async addItemToCart(customerId, shopId, itemId, quantity) {
+  async addItemToCart(customerId, shopId, itemId, quantity, variant) {
     try {
       // Validate item availability and stock
       const availability = await itemService.checkItemAvailability(itemId, quantity);
-      
+
       if (!availability.available) {
         throw new Error(availability.reason);
+      }
+
+      const item = availability.item;
+      let targetPrice = Number(item.price);
+
+      // Determine correct price if it's a variant
+      if (variant === 'Half' && item.half_portion_price != null) {
+        targetPrice = Number(item.half_portion_price);
+      } else if (variant === 'Full' && item.full_price != null) {
+        targetPrice = Number(item.full_price);
       }
 
       // Get or create cart
       const cart = await this.getOrCreateCart(customerId, shopId);
 
-      // Check if item already in cart
-      const { data: existingItem, error: fetchError } = await supabase
+      // We differentiate cart items by both itemId AND variant
+      const { data: existingItems, error: fetchError } = await supabase
         .from('cart_items')
-        .select('id, quantity')
+        .select('id, quantity, variant')
         .eq('cart_id', cart.id)
-        .eq('item_id', itemId)
-        .single();
+        .eq('item_id', itemId);
+
+      const existingItem = (existingItems || []).find(i => (i.variant || null) === (variant || null));
 
       if (existingItem) {
         // Update quantity
@@ -152,6 +206,7 @@ class CartService {
             cart_id: cart.id,
             item_id: itemId,
             quantity,
+            variant: variant || null
           });
 
         if (insertError) {
@@ -166,7 +221,7 @@ class CartService {
         .update({ updated_at: new Date().toISOString() })
         .eq('id', cart.id);
 
-      logger.info('Item added to cart', { cartId: cart.id, itemId, quantity });
+      logger.info('Item added to cart', { cartId: cart.id, itemId, quantity, variant });
 
       // Return updated cart
       return this.getCustomerCart(customerId, shopId);
@@ -181,8 +236,12 @@ class CartService {
    */
   async updateCartItem(customerId, cartItemId, quantity) {
     try {
-      if (quantity <= 0) {
-        throw new Error('Quantity must be greater than 0');
+      if (quantity === 0) {
+        return await this.removeCartItem(customerId, cartItemId);
+      }
+
+      if (quantity < 0) {
+        throw new Error('Quantity must be 0 or greater');
       }
 
       // Get cart item with item details
@@ -265,11 +324,21 @@ class CartService {
         throw new Error('Failed to remove cart item');
       }
 
-      // Update cart timestamp
-      await supabase
-        .from('carts')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', cartItem.cart_id);
+      // Clean up empty cart automatically
+      const { count } = await supabase
+        .from('cart_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('cart_id', cartItem.cart_id);
+
+      if (count === 0) {
+        await supabase.from('carts').delete().eq('id', cartItem.cart_id);
+      } else {
+        // Update cart timestamp
+        await supabase
+          .from('carts')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', cartItem.cart_id);
+      }
 
       logger.info('Cart item removed', { cartItemId });
 
@@ -288,9 +357,9 @@ class CartService {
       const cart = await this.getOrCreateCart(customerId, shopId);
 
       const { error } = await supabase
-        .from('cart_items')
+        .from('carts')
         .delete()
-        .eq('cart_id', cart.id);
+        .eq('id', cart.id);
 
       if (error) {
         logger.error('Failed to clear cart', { error });

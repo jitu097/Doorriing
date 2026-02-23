@@ -21,7 +21,7 @@ class CartController {
       return sendSuccess(res, cart, 'Cart fetched successfully');
     } catch (error) {
       logger.error('GetCart controller error', { error: error.message });
-      next(error);
+      return res.status(500).json({ success: false, message: error.message, debug: { item_id, baseItemId, variant, quantity } });
     }
   }
 
@@ -42,7 +42,20 @@ class CartController {
         return sendError(res, 'Quantity must be greater than 0', 400);
       }
 
-      const cart = await cartService.addItemToCart(customerId, shop_id, item_id, quantity);
+      // Parse variant from item_id if frontend sent format like uuid-half
+      let baseItemId = item_id;
+      let variant = null;
+      if (typeof item_id === 'string') {
+        if (item_id.endsWith('-half')) {
+          baseItemId = item_id.slice(0, -5);
+          variant = 'Half';
+        } else if (item_id.endsWith('-full')) {
+          baseItemId = item_id.slice(0, -5);
+          variant = 'Full';
+        }
+      }
+
+      const cart = await cartService.addItemToCart(customerId, shop_id, baseItemId, quantity, variant);
       return sendSuccess(res, cart, 'Item added to cart successfully', 201);
     } catch (error) {
       if (error.message.includes('not available') || error.message.includes('stock')) {
@@ -63,7 +76,7 @@ class CartController {
       const { id } = req.params;
       const { quantity } = req.body;
 
-      if (!quantity || quantity <= 0) {
+      if (quantity === undefined || quantity < 0) {
         return sendError(res, 'Valid quantity is required', 400);
       }
 
