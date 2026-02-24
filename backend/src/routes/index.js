@@ -8,6 +8,7 @@ import cartRoutes from '../modules/cart/cart.routes.js';
 import orderRoutes from '../modules/order/order.routes.js';
 import notificationRoutes from '../modules/notification/notification.routes.js';
 import addressRoutes from '../modules/address/address.routes.js';
+import bookingRoutes from '../modules/booking/booking.routes.js';
 
 const router = Router();
 
@@ -30,5 +31,6 @@ router.use('/cart', cartRoutes);
 router.use('/orders', orderRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/user/addresses', addressRoutes);
+router.use('/bookings', bookingRoutes);
 
 export default router;

@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import './Profile.css';
+import MyBookings from './MyBookings';
 
 const Profile = () => {
   const { user } = useContext(AuthContext);
@@ -134,20 +135,23 @@ const Profile = () => {
             </div>
           </div>
           <div className="stat-card">
+            <div className="stat-icon">🍽️</div>
+            <div className="stat-info">
+              <h3>3</h3>
+              <p>Table Bookings</p>
+            </div>
+          </div>
+          <div className="stat-card">
             <div className="stat-icon">⭐</div>
             <div className="stat-info">
               <h3>0</h3>
               <p>Reviews</p>
             </div>
           </div>
-          <div className="stat-card">
-            <div className="stat-icon">❤️</div>
-            <div className="stat-info">
-              <h3>0</h3>
-              <p>Favorites</p>
-            </div>
-          </div>
         </div>
+
+        {/* My Bookings Section */}
+        <MyBookings />
       </div>
     </div>
   );

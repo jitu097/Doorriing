@@ -6,7 +6,7 @@ button {
 }
 
 .restaurant-curve-bg {
-  min-height: 15vh;
+  min-height: 30vh;
   background: linear-gradient(135deg, #ffb347 60%, #ffcc33 100%);
   border-bottom-left-radius: 80px 40px;
   border-bottom-right-radius: 80px 40px;
