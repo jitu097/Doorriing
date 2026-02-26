@@ -7,18 +7,13 @@ export const AddressContext = createContext();
 export const useAddress = () => useContext(AddressContext);
 
 export const AddressProvider = ({ children }) => {
-    const { user } = useContext(AuthContext);
+    const { user, loading: authLoading } = useContext(AuthContext);
     const [addresses, setAddresses] = useState([]);
     const [activeAddress, setActiveAddress] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    const getHeaders = async () => {
-        if (!user) return {};
-        const token = await user.getIdToken();
-        return { Authorization: `Bearer ${token}` };
-    };
-
     const fetchAddresses = useCallback(async () => {
+        if (authLoading) return;
         if (!user) {
             setAddresses([]);
             setActiveAddress(null);
@@ -26,8 +21,7 @@ export const AddressProvider = ({ children }) => {
         }
         try {
             setIsLoading(true);
-            const headers = await getHeaders();
-            const response = await api.get('/user/addresses', { headers });
+            const response = await api.get('/user/addresses');
             if (response.success) {
                 setAddresses(response.data || []);
                 const defaultAddress = response.data.find(a => a.isDefault);
@@ -38,7 +32,7 @@ export const AddressProvider = ({ children }) => {
         } finally {
             setIsLoading(false);
         }
-    }, [user]);
+    }, [user, authLoading]);
 
     useEffect(() => {
         fetchAddresses();
@@ -46,8 +40,7 @@ export const AddressProvider = ({ children }) => {
 
     const addAddress = async (newAddressData) => {
         try {
-            const headers = await getHeaders();
-            const response = await api.post('/user/addresses', newAddressData, { headers });
+            const response = await api.post('/user/addresses', newAddressData);
             if (response.success) {
                 await fetchAddresses();
             }
@@ -59,8 +52,7 @@ export const AddressProvider = ({ children }) => {
 
     const updateAddress = async (id, updatedData) => {
         try {
-            const headers = await getHeaders();
-            const response = await api.put(`/user/addresses/${id}`, updatedData, { headers });
+            const response = await api.put(`/user/addresses/${id}`, updatedData);
             if (response.success) {
                 await fetchAddresses();
             }
@@ -72,8 +64,7 @@ export const AddressProvider = ({ children }) => {
 
     const deleteAddress = async (id) => {
         try {
-            const headers = await getHeaders();
-            const response = await api.delete(`/user/addresses/${id}`, { headers });
+            const response = await api.delete(`/user/addresses/${id}`);
             if (response.success) {
                 await fetchAddresses();
             }
@@ -85,8 +76,7 @@ export const AddressProvider = ({ children }) => {
 
     const setDefaultAddress = async (id) => {
         try {
-            const headers = await getHeaders();
-            const response = await api.patch(`/user/addresses/${id}/default`, {}, { headers });
+            const response = await api.patch(`/user/addresses/${id}/default`, {});
             if (response.success) {
                 await fetchAddresses();
             }

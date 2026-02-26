@@ -1,76 +1,109 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { orderService } from '../../services/order.service.js';
+import { getStatusLabel } from '../../utils/orderUtils.js';
 import './OrderDetails.css';
 
 const OrderDetails = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
 
-  // Sample order data - replace with API call
-  const [order] = useState({
-    id: orderId || 'ORD-2024-001',
-    shopName: 'Fresh Mart Grocery',
-    shopType: 'grocery',
-    shopAddress: '456 Market Street, Downtown',
-    shopPhone: '+1 234-567-8900',
-    items: [
-      { 
-        id: 1,
-        name: 'Organic Apples', 
-        quantity: 2, 
-        price: 120,
-        image: 'https://via.placeholder.com/80'
-      },
-      { 
-        id: 2,
-        name: 'Brown Bread', 
-        quantity: 1, 
-        price: 45,
-        image: 'https://via.placeholder.com/80'
-      },
-      { 
-        id: 3,
-        name: 'Fresh Milk', 
-        quantity: 2, 
-        price: 60,
-        image: 'https://via.placeholder.com/80'
-      }
-    ],
-    subtotal: 225,
-    deliveryFee: 40,
-    tax: 13,
-    discount: 30,
-    totalAmount: 248,
-    status: 'on-the-way',
-    orderDate: '2024-02-20T10:30:00',
-    estimatedDelivery: '45 mins',
-    paymentMethod: 'Online - UPI',
-    transactionId: 'TXN123456789',
-    deliveryAddress: {
-      name: 'John Doe',
-      phone: '+1 234-567-8901',
-      address: '123 Main Street, Apartment 4B',
-      city: 'New York',
-      postalCode: '10001'
-    },
-    tracking: [
-      { status: 'Order Placed', time: '10:30 AM', completed: true },
-      { status: 'Confirmed', time: '10:32 AM', completed: true },
-      { status: 'Preparing', time: '10:35 AM', completed: true },
-      { status: 'Out for Delivery', time: '11:00 AM', completed: true },
-      { status: 'Delivered', time: 'Expected by 11:15 AM', completed: false }
-    ]
-  });
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
 
-  const getStatusColor = (status) => {
-    const colors = {
-      'delivered': '#4CAF50',
-      'on-the-way': '#2196F3',
-      'preparing': '#FF9800',
-      'cancelled': '#f44336'
+  useEffect(() => {
+    let polling = true;
+    let timeoutId;
+
+    const fetchOrderDetails = async (showLoading = true) => {
+      try {
+        if (showLoading) setLoading(true);
+        const response = await orderService.getOrderById(orderId);
+        const o = response.data;
+        if (o) {
+          setOrder({
+            id: o.order_number || o.id,
+            shopName: o.shop_id || 'BazarSe Shop',
+            shopType: 'store',
+            shopAddress: '',
+            shopPhone: '',
+            items: (o.order_items || []).map(oi => ({
+              id: oi.id,
+              name: oi.items?.name || 'Unknown Item',
+              quantity: oi.quantity,
+              price: oi.unit_price,
+              image: oi.items?.image_url || 'https://via.placeholder.com/80'
+            })),
+            subtotal: o.items_total || 0,
+            deliveryFee: o.delivery_charge || 0,
+            tax: 0,
+            discount: 0,
+            totalAmount: o.total_amount,
+            status: o.status || 'placed',
+            orderDate: o.created_at,
+            estimatedDelivery: o.status !== 'delivered' && o.status !== 'cancelled' && o.status !== 'rejected' && o.status !== 'expired' ? '45 mins' : null,
+            paymentMethod: o.payment_method === 'cod' ? 'Cash on Delivery' : 'Online',
+            transactionId: '',
+            deliveryAddress: {
+              name: o.customer_name || 'Customer',
+              phone: o.customer_phone || '',
+              address: o.delivery_address || '',
+              city: '',
+              postalCode: ''
+            },
+            tracking: [
+              { status: 'Order Placed', time: new Date(o.created_at).toLocaleTimeString(), completed: true },
+              { status: 'Preparing', time: '', completed: ['preparing', 'packing', 'ready', 'out_for_delivery', 'delivered'].includes(o.status) },
+              { status: 'Out for Delivery', time: '', completed: ['out_for_delivery', 'delivered'].includes(o.status) },
+              { status: 'Delivered', time: '', completed: o.status === 'delivered' }
+            ]
+          });
+
+          // Polling logic: keep polling every 10s if status is pending
+          if (o.status === 'pending' && polling) {
+            timeoutId = setTimeout(() => fetchOrderDetails(false), 10000);
+          } else {
+            polling = false;
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching order details', err);
+        setErrorMsg('Order details could not be loaded.');
+      } finally {
+        if (showLoading) setLoading(false);
+      }
     };
-    return colors[status] || '#999';
+
+    if (orderId) {
+      fetchOrderDetails(true);
+    }
+
+    return () => {
+      polling = false;
+      clearTimeout(timeoutId);
+    };
+  }, [orderId]);
+
+  const handleCancelOrder = async () => {
+    if (!window.confirm('Are you sure you want to cancel this order?')) return;
+    try {
+      setCancelling(true);
+      await orderService.cancelOrder(orderId);
+      // Update local state without waiting for poll
+      setOrder(prev => ({ ...prev, status: 'cancelled' }));
+    } catch (err) {
+      alert(err.response?.data?.message || err.message || 'Failed to cancel order');
+    } finally {
+      setCancelling(false);
+    }
   };
+
+  if (loading && !order) return <div className="order-details-container" style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>;
+  if (errorMsg || !order) return <div className="order-details-container" style={{ padding: '50px', textAlign: 'center', color: 'red' }}>{errorMsg || 'Order not found'}</div>;
+
+  const statusInfo = getStatusLabel(order.status);
 
   return (
     <div className="order-details-container">
@@ -85,8 +118,8 @@ const OrderDetails = () => {
               <h1>Order Details</h1>
               <p className="order-number">Order #{order.id}</p>
             </div>
-            <div className="order-status-badge" style={{ background: getStatusColor(order.status) }}>
-              {order.status.replace('-', ' ').toUpperCase()}
+            <div className={`order-status-badge ${statusInfo.colorClass}`}>
+              {statusInfo.label.toUpperCase()}
             </div>
           </div>
           <div className="order-time-info">
@@ -223,8 +256,20 @@ const OrderDetails = () => {
             <div className="detail-card actions-card">
               <button className="detail-action-btn primary">Need Help?</button>
               <button className="detail-action-btn secondary">Download Invoice</button>
+
               {order.status === 'delivered' && (
                 <button className="detail-action-btn secondary">Rate Order</button>
+              )}
+
+              {order.status === 'pending' && (
+                <button
+                  className="detail-action-btn"
+                  style={{ backgroundColor: '#fef2f2', color: '#991b1b', border: '1px solid #fca5a5' }}
+                  onClick={handleCancelOrder}
+                  disabled={cancelling}
+                >
+                  {cancelling ? 'Cancelling...' : 'Cancel Order'}
+                </button>
               )}
             </div>
           </div>

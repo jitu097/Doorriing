@@ -116,7 +116,8 @@ class ShopController {
       return sendPaginated(res, result.shops, result.pagination, 'Shops fetched successfully');
     } catch (error) {
       logger.error('GetShopsByBusinessType controller error', { error: error.message });
-      next(error);
+      // Expose the raw error message to client for debugging
+      return res.status(500).json({ success: false, message: 'Failed to fetch shops', rawError: error.message, stack: error.stack });
     }
   }
 

@@ -1,121 +1,46 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { orderService } from '../../services/order.service.js';
+import { getStatusLabel } from '../../utils/orderUtils.js';
 import './OrdersList.css';
 
 const OrdersList = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  // Sample orders data - replace with API call
-  const sampleOrders = [
-    {
-      id: 'ORD-2024-001',
-      shopName: 'Fresh Mart Grocery',
-      shopType: 'grocery',
-      items: [
-        { name: 'Organic Apples', quantity: 2, price: 120 },
-        { name: 'Brown Bread', quantity: 1, price: 45 },
-        { name: 'Fresh Milk', quantity: 2, price: 60 }
-      ],
-      totalAmount: 225,
-      status: 'delivered',
-      orderDate: '2024-02-18',
-      deliveryDate: '2024-02-19',
-      paymentMethod: 'Online',
-      deliveryAddress: '123 Main Street, Apartment 4B, New York, NY 10001'
-    },
-    {
-      id: 'ORD-2024-002',
-      shopName: 'Spice Paradise Restaurant',
-      shopType: 'restaurant',
-      items: [
-        { name: 'Chicken Biryani', quantity: 2, price: 350 },
-        { name: 'Paneer Tikka', quantity: 1, price: 180 },
-        { name: 'Garlic Naan', quantity: 3, price: 45 }
-      ],
-      totalAmount: 575,
-      status: 'on-the-way',
-      orderDate: '2024-02-20',
-      estimatedDelivery: '45 mins',
-      paymentMethod: 'Cash on Delivery',
-      deliveryAddress: '123 Main Street, Apartment 4B, New York, NY 10001'
-    },
-    {
-      id: 'ORD-2024-003',
-      shopName: 'Quick Bites Cafe',
-      shopType: 'restaurant',
-      items: [
-        { name: 'Pizza Margherita', quantity: 1, price: 250 },
-        { name: 'Cold Coffee', quantity: 2, price: 120 }
-      ],
-      totalAmount: 370,
-      status: 'preparing',
-      orderDate: '2024-02-20',
-      estimatedDelivery: '30 mins',
-      paymentMethod: 'Online',
-      deliveryAddress: '123 Main Street, Apartment 4B, New York, NY 10001'
-    },
-    {
-      id: 'ORD-2024-004',
-      shopName: 'Green Valley Store',
-      shopType: 'grocery',
-      items: [
-        { name: 'Rice 5kg', quantity: 1, price: 450 },
-        { name: 'Cooking Oil', quantity: 1, price: 180 }
-      ],
-      totalAmount: 630,
-      status: 'cancelled',
-      orderDate: '2024-02-17',
-      cancelledDate: '2024-02-17',
-      paymentMethod: 'Online',
-      refundStatus: 'Refunded',
-      deliveryAddress: '123 Main Street, Apartment 4B, New York, NY 10001'
-    }
-  ];
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
-    // Simulate API call
-    setLoading(true);
-    setTimeout(() => {
-      setOrders(sampleOrders);
-      setLoading(false);
-    }, 500);
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        setErrorMsg(null);
+        const response = await orderService.getOrders();
+
+        // Transform backend format to UI format if needed, or just use it directly
+        // Backend returns: [{ id, order_number, shop_id, total_amount, status, created_at }, ...]
+        const mappedOrders = (response.data || []).map(o => ({
+          id: o.id,
+          orderNumber: o.order_number,
+          shopName: o.shop_id || 'BazarSe Shop', // Without join, shopName may need extra fetching, keeping graceful fallback
+          items: [], // Summary view doesn't bring items in this list endpoint
+          totalAmount: o.total_amount,
+          status: o.status,
+          orderDate: o.created_at,
+        }));
+        setOrders(mappedOrders);
+      } catch (err) {
+        console.error('Failed to fetch orders', err);
+        setErrorMsg('Failed to load orders.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
   }, []);
 
-  const getStatusBadgeClass = (status) => {
-    const statusClasses = {
-      'delivered': 'status-delivered',
-      'on-the-way': 'status-on-the-way',
-      'preparing': 'status-preparing',
-      'cancelled': 'status-cancelled',
-      'pending': 'status-pending'
-    };
-    return statusClasses[status] || 'status-default';
-  };
-
-  const getStatusIcon = (status) => {
-    const icons = {
-      'delivered': '✓',
-      'on-the-way': '🚚',
-      'preparing': '👨‍🍳',
-      'cancelled': '✕',
-      'pending': '⏱️'
-    };
-    return icons[status] || '📦';
-  };
-
-  const getStatusText = (status) => {
-    const texts = {
-      'delivered': 'Delivered',
-      'on-the-way': 'On the Way',
-      'preparing': 'Preparing',
-      'cancelled': 'Cancelled',
-      'pending': 'Pending'
-    };
-    return texts[status] || status;
-  };
+  // Status helper mapping handles UI text and color
 
   const filteredOrders = orders.filter(order => {
     if (activeTab === 'all') return true;
@@ -150,14 +75,14 @@ const OrdersList = () => {
         </div>
 
         <div className="orders-tabs">
-          <button 
+          <button
             className={`tab ${activeTab === 'all' ? 'active' : ''}`}
             onClick={() => setActiveTab('all')}
           >
             All Orders
             <span className="tab-count">{orders.length}</span>
           </button>
-          <button 
+          <button
             className={`tab ${activeTab === 'active' ? 'active' : ''}`}
             onClick={() => setActiveTab('active')}
           >
@@ -166,7 +91,7 @@ const OrdersList = () => {
               {orders.filter(o => ['preparing', 'on-the-way', 'pending'].includes(o.status)).length}
             </span>
           </button>
-          <button 
+          <button
             className={`tab ${activeTab === 'completed' ? 'active' : ''}`}
             onClick={() => setActiveTab('completed')}
           >
@@ -175,7 +100,7 @@ const OrdersList = () => {
               {orders.filter(o => o.status === 'delivered').length}
             </span>
           </button>
-          <button 
+          <button
             className={`tab ${activeTab === 'cancelled' ? 'active' : ''}`}
             onClick={() => setActiveTab('cancelled')}
           >
@@ -203,32 +128,32 @@ const OrdersList = () => {
         ) : (
           <div className="orders-list">
             {filteredOrders.map(order => (
-              <div 
-                key={order.id} 
+              <div
+                key={order.id}
                 className="order-card"
                 onClick={() => handleOrderClick(order.id)}
               >
                 <div className="order-card-header">
                   <div className="order-info">
                     <h3>{order.shopName}</h3>
-                    <span className="order-id">Order #{order.id}</span>
+                    <span className="order-id">Order #{order.orderNumber}</span>
                   </div>
-                  <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
-                    <span className="status-icon">{getStatusIcon(order.status)}</span>
-                    {getStatusText(order.status)}
+                  <span className={`status-badge ${getStatusLabel(order.status).colorClass}`}>
+                    {getStatusLabel(order.status).label}
                   </span>
                 </div>
 
                 <div className="order-items">
-                  {order.items.map((item, index) => (
-                    <div key={index} className="order-item">
-                      <span className="item-name">{item.name}</span>
-                      <span className="item-quantity">x{item.quantity}</span>
-                    </div>
-                  ))}
-                  {order.items.length > 2 && (
-                    <div className="more-items">
-                      +{order.items.length - 2} more items
+                  {order.items && order.items.length > 0 ? (
+                    order.items.map((item, index) => (
+                      <div key={index} className="order-item">
+                        <span className="item-name">{item.name}</span>
+                        <span className="item-quantity">x{item.quantity}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="order-item">
+                      <span className="item-name">Items summary not available in this view.</span>
                     </div>
                   )}
                 </div>
@@ -259,7 +184,7 @@ const OrdersList = () => {
                 <div className="order-actions">
                   {order.status === 'delivered' && (
                     <>
-                      <button 
+                      <button
                         className="action-btn secondary"
                         onClick={(e) => handleReorder(order, e)}
                       >
@@ -272,7 +197,7 @@ const OrdersList = () => {
                   )}
                   {(order.status === 'preparing' || order.status === 'on-the-way') && (
                     <>
-                      <button 
+                      <button
                         className="action-btn primary"
                         onClick={(e) => handleTrackOrder(order, e)}
                       >

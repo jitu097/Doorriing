@@ -43,22 +43,21 @@ export const AuthProvider = ({ children }) => {
             setUser(currentUser);
 
             if (currentUser) {
-                try {
-                    // Sync with backend
-                    const token = await currentUser.getIdToken();
-                    const response = await api.post('/auth/sync', {}, {
+                // Background sync - do not await
+                currentUser.getIdToken().then(token => {
+                    api.post('/auth/sync', {}, {
                         headers: {
                             Authorization: `Bearer ${token}`
                         }
+                    }).then(response => {
+                        if (response.success && response.data) {
+                            setCustomerProfile(response.data);
+                        }
+                    }).catch(error => {
+                        console.error('Failed to sync customer profile with backend:', error);
+                        setCustomerProfile(null);
                     });
-
-                    if (response.success && response.data) {
-                        setCustomerProfile(response.data);
-                    }
-                } catch (error) {
-                    console.error('Failed to sync customer profile with backend:', error);
-                    setCustomerProfile(null);
-                }
+                });
 
                 localStorage.setItem('user', JSON.stringify({
                     uid: currentUser.uid,

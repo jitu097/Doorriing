@@ -28,13 +28,15 @@ class OrderService {
       }
 
       // Validate all items are still available
+      const isRestaurant = cart.business_type === 'restaurant';
+      
       for (const cartItem of cart.cart_items) {
         if (!cartItem.items.is_available) {
           throw new Error(`Item "${cartItem.items.name}" is no longer available`);
         }
 
-        // Check stock for grocery items
-        if (cartItem.items.stock_quantity !== null && cartItem.items.stock_quantity < cartItem.quantity) {
+        // Check stock ONLY for grocery items (restaurants don't use stock management)
+        if (!isRestaurant && cartItem.items.stock_quantity !== null && cartItem.items.stock_quantity < cartItem.quantity) {
           throw new Error(`Insufficient stock for "${cartItem.items.name}"`);
         }
       }

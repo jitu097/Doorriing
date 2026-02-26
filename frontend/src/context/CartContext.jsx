@@ -18,24 +18,11 @@ export const CartProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Optional: Keep auth sync if available
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-    // We'll hook into Firebase Auth here manually to detect if user is logged in
-    import('../config/firebase').then(({ auth }) => {
-        auth.onAuthStateChanged((user) => {
-            setIsAuthenticated(!!user);
-            if (!user) {
-                // Clear local empty cart when logged out
-                setCartItems([]);
-                setCartMeta({ shopId: null, shopType: null });
-                setLoading(false);
-            }
-        });
-    }).catch(e => console.error(e));
+    const { user, loading: authLoading } = useAuth();
+    const isAuthenticated = !!user;
 
     const fetchCart = useCallback(async () => {
-        if (!isAuthenticated) return;
+        if (authLoading || !isAuthenticated) return;
         try {
             setLoading(true);
             setError(null);
@@ -65,14 +52,20 @@ export const CartProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, authLoading]);
 
     // Initial fetch when authenticated
     useEffect(() => {
-        if (isAuthenticated) {
-            fetchCart();
+        if (!authLoading) {
+            if (isAuthenticated) {
+                fetchCart();
+            } else {
+                setCartItems([]);
+                setCartMeta({ shopId: null, shopType: null });
+                setLoading(false);
+            }
         }
-    }, [fetchCart, isAuthenticated]);
+    }, [fetchCart, isAuthenticated, authLoading]);
 
     // Add item to cart or increase quantity
     const addToCart = async (item) => {

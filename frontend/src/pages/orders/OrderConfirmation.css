@@ -1,0 +1,224 @@
+.order-confirmation-page {
+    padding: 2rem 1rem;
+    background-color: #f8f9fa;
+    min-height: calc(100vh - 80px); /* Adjust based on navbar height */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.confirmation-container {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    padding: 2rem;
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+}
+
+.success-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+}
+
+.checkmark {
+    width: 100%;
+    height: 100%;
+    animation: scale-up 0.5s ease-out;
+}
+
+.success-title {
+    font-size: 1.75rem;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+}
+
+.status-alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.status-alert strong {
+    display: block;
+    font-size: 1.125rem;
+    margin-bottom: 0.25rem;
+}
+
+.status-alert p {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.badge-yellow { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.badge-blue { background-color: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
+.badge-orange { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+.badge-purple { background-color: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+.badge-green { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+.badge-red { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+.badge-gray { background-color: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+.badge-dark-red { background-color: #991b1b; color: white; border: 1px solid #7f1d1d; }
+
+.order-summary-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    text-align: left;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.summary-header {
+    background-color: #f9fafb;
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.summary-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #374151;
+}
+
+.order-number {
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.summary-details {
+    padding: 1.5rem;
+}
+
+.detail-group {
+    margin-bottom: 1.5rem;
+}
+
+.detail-group:last-child {
+    margin-bottom: 0;
+}
+
+.detail-group h3 {
+    font-size: 1rem;
+    color: #4b5563;
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+}
+
+.detail-group p {
+    margin: 0.25rem 0;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.address-name {
+    font-weight: 600;
+    color: #374151 !important;
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+.item-qty {
+    width: 30px;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.item-name {
+    flex-grow: 1;
+    color: #374151;
+}
+
+.item-price {
+    font-weight: 500;
+    color: #111827;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    color: #6b7280;
+}
+
+.grand-total {
+    font-weight: 700;
+    color: #111827;
+    font-size: 1.125rem;
+    border-top: 1px dashed #d1d5db;
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+}
+
+.success-actions {
+    display: flex;
+    gap: 1rem;
+    flex-direction: column;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: none;
+    width: 100%;
+}
+
+.btn-primary {
+    background-color: #0c831f;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0a6b19;
+}
+
+.btn-secondary {
+    background-color: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+    background-color: #e5e7eb;
+}
+
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #0c831f;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes scale-up {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@media (min-width: 640px) {
+    .success-actions {
+        flex-direction: row;
+    }
+}

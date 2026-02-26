@@ -310,7 +310,7 @@ class ShopService {
 
       if (error) {
         logger.error('Failed to fetch shops by business type', { error, businessType });
-        throw new Error('Failed to fetch shops');
+        throw new Error(`Failed to fetch shops: ${error.message || JSON.stringify(error)}`);
       }
 
       const shopIds = (shops || []).map((shop) => shop.id).filter(Boolean);

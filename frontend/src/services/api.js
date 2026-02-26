@@ -1,3 +1,5 @@
+import { auth } from '../config/firebase';
+
 const DEFAULT_API_BASE_URL = 'http://localhost:5001/api';
 
 const buildUrl = (path, params) => {
@@ -34,10 +36,25 @@ const formatError = async (response) => {
 
 const apiRequest = async (path, { method = 'GET', params, body, headers = {} } = {}) => {
 	const url = buildUrl(path, params);
+
+	// Auto attach firebase token securely
+	let authHeaders = {};
+	try {
+		await auth.authStateReady(); // Wait for Firebase to initialize
+		const currentUser = auth?.currentUser;
+		if (currentUser) {
+			const token = await currentUser.getIdToken(false);
+			authHeaders = { Authorization: `Bearer ${token}` };
+		}
+	} catch (e) {
+		console.warn('Failed to retrieve auth token for api request', e);
+	}
+
 	const requestInit = {
 		method,
 		headers: {
 			Accept: 'application/json',
+			...authHeaders,
 			...headers,
 		},
 	};

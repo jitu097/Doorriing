@@ -5,22 +5,74 @@ import itemService from '../item/item.service.js';
 class CartService {
   /**
    * Get or create active cart for customer and shop
+   * Handles shop switching by clearing cart if customer tries to add from different shop
    */
   async getOrCreateCart(customerId, shopId) {
     try {
-      // Check if cart exists
+      // Check if customer has ANY cart (due to UNIQUE constraint on customer_id)
       const { data: existingCart, error: fetchError } = await supabase
         .from('carts')
         .select('id, customer_id, shop_id, updated_at')
         .eq('customer_id', customerId)
-        .eq('shop_id', shopId)
-        .single();
+        .maybeSingle();
 
-      if (existingCart) {
-        return existingCart;
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        logger.error('Failed to fetch cart', { error: fetchError, customerId });
+        throw new Error(`Database error: ${fetchError.message}`);
       }
 
-      // Create new cart
+      if (existingCart) {
+        // Cart exists - check if it's for the same shop
+        if (existingCart.shop_id === shopId) {
+          // Same shop - return existing cart
+          logger.info('[CART] Using existing cart', { 
+            cartId: existingCart.id, 
+            customerId, 
+            shopId 
+          });
+          return existingCart;
+        } else {
+          // Different shop - clear old cart and create new one
+          logger.info('[CART] Shop changed, clearing old cart', {
+            oldCartId: existingCart.id,
+            oldShopId: existingCart.shop_id,
+            newShopId: shopId
+          });
+
+          // Delete cart_items first (due to foreign key)
+          await supabase
+            .from('cart_items')
+            .delete()
+            .eq('cart_id', existingCart.id);
+
+          // Update existing cart to new shop instead of deleting/creating
+          const { data: updatedCart, error: updateError } = await supabase
+            .from('carts')
+            .update({ 
+              shop_id: shopId,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingCart.id)
+            .select()
+            .single();
+
+          if (updateError) {
+            logger.error('[CART] Failed to update cart shop', { 
+              error: updateError, 
+              cartId: existingCart.id 
+            });
+            throw new Error('Failed to switch shop in cart');
+          }
+
+          logger.info('[CART] Cart updated to new shop', {
+            cartId: updatedCart.id,
+            newShopId: shopId
+          });
+          return updatedCart;
+        }
+      }
+
+      // No cart exists - create new one
       const { data: newCart, error: createError } = await supabase
         .from('carts')
         .insert({
@@ -31,14 +83,27 @@ class CartService {
         .single();
 
       if (createError) {
-        logger.error('Failed to create cart', { error: createError, customerId, shopId });
-        throw new Error('Failed to create cart');
+        logger.error('[CART] Failed to create cart', { 
+          error: createError, 
+          customerId, 
+          shopId 
+        });
+        throw new Error(`Failed to create cart: ${createError.message}`);
       }
 
-      logger.info('New cart created', { cartId: newCart.id, customerId, shopId });
+      logger.info('[CART] New cart created', { 
+        cartId: newCart.id, 
+        customerId, 
+        shopId 
+      });
       return newCart;
     } catch (error) {
-      logger.error('Error in getOrCreateCart', { error: error.message });
+      logger.error('[CART] Error in getOrCreateCart', { 
+        error: error.message,
+        stack: error.stack,
+        customerId,
+        shopId
+      });
       throw error;
     }
   }
@@ -54,6 +119,9 @@ class CartService {
           id,
           shop_id,
           updated_at,
+          shops!inner (
+            business_type
+          ),
           cart_items (
             id,
             item_id,
@@ -135,6 +203,7 @@ class CartService {
 
       return {
         ...data,
+        business_type: data.shops?.business_type || null,
         cart_items: validItems,
         items_count: validItems.length,
         items_total: itemsTotal,
@@ -150,8 +219,24 @@ class CartService {
    */
   async addItemToCart(customerId, shopId, itemId, quantity, variant) {
     try {
+      // LOG 1: Entry point
+      logger.info('[CART-SERVICE] addItemToCart called', { 
+        customerId, 
+        shopId, 
+        itemId, 
+        quantity, 
+        variant 
+      });
+
       // Validate item availability and stock
       const availability = await itemService.checkItemAvailability(itemId, quantity);
+
+      // LOG 2: Availability check result
+      logger.info('[CART-SERVICE] Availability checked', { 
+        itemId, 
+        available: availability.available,
+        reason: availability.reason || 'N/A'
+      });
 
       if (!availability.available) {
         throw new Error(availability.reason);
@@ -160,15 +245,36 @@ class CartService {
       const item = availability.item;
       let targetPrice = Number(item.price);
 
+      // LOG 3: Item data retrieved
+      logger.info('[CART-SERVICE] Item data', { 
+        itemId: item.id,
+        price: item.price,
+        half_portion_price: item.half_portion_price,
+        full_price: item.full_price,
+        has_variants: item.has_variants,
+        variant: variant
+      });
+
       // Determine correct price if it's a variant
       if (variant === 'Half' && item.half_portion_price != null) {
         targetPrice = Number(item.half_portion_price);
+        logger.info('[CART-SERVICE] Applied Half variant price', { targetPrice });
       } else if (variant === 'Full' && item.full_price != null) {
         targetPrice = Number(item.full_price);
+        logger.info('[CART-SERVICE] Applied Full variant price', { targetPrice });
+      } else {
+        logger.info('[CART-SERVICE] Using default price', { targetPrice, variant });
       }
 
       // Get or create cart
       const cart = await this.getOrCreateCart(customerId, shopId);
+      
+      // LOG 4: Cart obtained
+      logger.info('[CART-SERVICE] Cart obtained/created', { 
+        cartId: cart.id,
+        customerId: cart.customer_id,
+        shopId: cart.shop_id
+      });
 
       // We differentiate cart items by both itemId AND variant
       const { data: existingItems, error: fetchError } = await supabase
@@ -177,11 +283,33 @@ class CartService {
         .eq('cart_id', cart.id)
         .eq('item_id', itemId);
 
+      if (fetchError) {
+        logger.error('[CART-SERVICE] Failed to fetch existing cart items', { 
+          error: fetchError,
+          cartId: cart.id,
+          itemId
+        });
+        throw new Error(`Database error: ${fetchError.message}`);
+      }
+
+      // LOG 5: Existing items check
+      logger.info('[CART-SERVICE] Existing items in cart', { 
+        existingItems: existingItems || [],
+        lookingForVariant: variant
+      });
+
       const existingItem = (existingItems || []).find(i => (i.variant || null) === (variant || null));
 
       if (existingItem) {
         // Update quantity
         const newQuantity = existingItem.quantity + quantity;
+
+        // LOG 6: Update path
+        logger.info('[CART-SERVICE] Updating existing cart item', {
+          cartItemId: existingItem.id,
+          oldQuantity: existingItem.quantity,
+          newQuantity
+        });
 
         // Re-validate stock for new quantity
         const recheck = await itemService.checkItemAvailability(itemId, newQuantity);
@@ -195,23 +323,38 @@ class CartService {
           .eq('id', existingItem.id);
 
         if (updateError) {
-          logger.error('Failed to update cart item', { error: updateError });
+          logger.error('[CART-SERVICE] Failed to update cart item', { 
+            error: updateError,
+            cartItemId: existingItem.id
+          });
           throw new Error('Failed to update cart item');
         }
       } else {
         // Add new item
+        const insertPayload = {
+          cart_id: cart.id,
+          item_id: itemId,
+          quantity,
+          variant: variant || null
+        };
+
+        // LOG 7: Insert path
+        logger.info('[CART-SERVICE] Inserting new cart item', { insertPayload });
+
         const { error: insertError } = await supabase
           .from('cart_items')
-          .insert({
-            cart_id: cart.id,
-            item_id: itemId,
-            quantity,
-            variant: variant || null
-          });
+          .insert(insertPayload);
 
         if (insertError) {
-          logger.error('Failed to add item to cart', { error: insertError });
-          throw new Error('Failed to add item to cart');
+          logger.error('[CART-SERVICE] Failed to insert cart item', { 
+            error: insertError,
+            code: insertError.code,
+            details: insertError.details,
+            hint: insertError.hint,
+            message: insertError.message,
+            insertPayload
+          });
+          throw new Error(`Failed to add item to cart: ${insertError.message}`);
         }
       }
 
@@ -221,12 +364,20 @@ class CartService {
         .update({ updated_at: new Date().toISOString() })
         .eq('id', cart.id);
 
-      logger.info('Item added to cart', { cartId: cart.id, itemId, quantity, variant });
+      logger.info('[CART-SERVICE] Item added to cart successfully', { cartId: cart.id, itemId, quantity, variant });
 
       // Return updated cart
       return this.getCustomerCart(customerId, shopId);
     } catch (error) {
-      logger.error('Error in addItemToCart', { error: error.message });
+      logger.error('[CART-SERVICE] Error in addItemToCart', { 
+        error: error.message,
+        stack: error.stack,
+        customerId,
+        shopId,
+        itemId,
+        quantity,
+        variant
+      });
       throw error;
     }
   }
@@ -324,21 +475,12 @@ class CartService {
         throw new Error('Failed to remove cart item');
       }
 
-      // Clean up empty cart automatically
-      const { count } = await supabase
-        .from('cart_items')
-        .select('id', { count: 'exact', head: true })
-        .eq('cart_id', cartItem.cart_id);
-
-      if (count === 0) {
-        await supabase.from('carts').delete().eq('id', cartItem.cart_id);
-      } else {
-        // Update cart timestamp
-        await supabase
-          .from('carts')
-          .update({ updated_at: new Date().toISOString() })
-          .eq('id', cartItem.cart_id);
-      }
+      // Just update timestamp - don't delete empty cart due to UNIQUE constraint
+      // Cart remains and gets reused when new items are added
+      await supabase
+        .from('carts')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', cartItem.cart_id);
 
       logger.info('Cart item removed', { cartItemId });
 
@@ -350,27 +492,33 @@ class CartService {
   }
 
   /**
-   * Clear entire cart
+   * Clear entire cart (removes all items)
+   * Note: Doesn't delete cart itself due to UNIQUE constraint on customer_id
    */
   async clearCart(customerId, shopId) {
     try {
       const cart = await this.getOrCreateCart(customerId, shopId);
 
+      // Delete all cart items instead of the cart itself
       const { error } = await supabase
-        .from('carts')
+        .from('cart_items')
         .delete()
-        .eq('id', cart.id);
+        .eq('cart_id', cart.id);
 
       if (error) {
-        logger.error('Failed to clear cart', { error });
+        logger.error('[CART] Failed to clear cart items', { error, cartId: cart.id });
         throw new Error('Failed to clear cart');
       }
 
-      logger.info('Cart cleared', { cartId: cart.id });
+      logger.info('[CART] Cart items cleared', { cartId: cart.id });
 
       return { success: true };
     } catch (error) {
-      logger.error('Error in clearCart', { error: error.message });
+      logger.error('[CART] Error in clearCart', { 
+        error: error.message,
+        customerId,
+        shopId
+      });
       throw error;
     }
   }

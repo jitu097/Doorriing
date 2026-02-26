@@ -3,6 +3,7 @@ import net from 'node:net';
 import app from './app.js';
 import { config } from './config/env.js';
 import { logger } from './utils/logger.js';
+import { supabase } from './config/supabaseClient.js';
 
 const REQUESTED_PORT = Number(config.port) || 5001;
 const MAX_PORT_SEARCH = 20;
@@ -26,7 +27,6 @@ const checkPortAvailability = (port) =>
 const findOpenPort = async (preferredPort) => {
   let port = preferredPort;
   for (let attempts = 0; attempts < MAX_PORT_SEARCH; attempts += 1) {
-    // Try consecutive ports until one is available or attempts are exhausted.
     const isAvailable = await checkPortAvailability(port);
     if (isAvailable) {
       return port;
@@ -46,15 +46,27 @@ const startServer = async () => {
       });
     }
 
-    const server = app.listen(port, () => {
+    const server = app.listen(port, async () => {
       logger.info('Server started successfully', {
         port,
         environment: config.nodeEnv,
       });
       console.log(`🚀 Server running on port ${port}`);
-      console.log(`📝 Environment: ${config.nodeEnv}`);
-      console.log(`🔗 API: http://localhost:${port}/api`);
-      console.log(`💚 Health: http://localhost:${port}/api/health`);
+
+      try {
+        const { data, error } = await supabase.from('customers').select('id').limit(1);
+        if (error) {
+          logger.error('🔥 SUPABASE CONNECTION FAILED ON STARTUP:', { error: error.message, code: error.code });
+          console.log('🔥 DATABASE ERROR:', error);
+          process.exit(1);
+        } else {
+          logger.info('✅ Supabase connected successfully.');
+        }
+      } catch (err) {
+        logger.error('🔥 CRITICAL SUPABASE NETWORK FAILURE:', { message: err.message, cause: err.cause, stack: err.stack });
+        console.log('🔥 NETWORK TIMEOUT CONNECTING TO DB URL:', process.env.SUPABASE_URL);
+        process.exit(1);
+      }
     });
 
     server.on('error', (error) => {
@@ -64,6 +76,18 @@ const startServer = async () => {
       });
       process.exit(1);
     });
+
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      logger.info('SIGTERM received, shutting down gracefully');
+      server.close(() => process.exit(0));
+    });
+
+    process.on('SIGINT', () => {
+      logger.info('SIGINT received, shutting down gracefully');
+      server.close(() => process.exit(0));
+    });
+
   } catch (error) {
     logger.error('Failed to start server', {
       requestedPort: REQUESTED_PORT,
@@ -75,23 +99,17 @@ const startServer = async () => {
 
 startServer();
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  process.exit(0);
-});
-
-process.on('SIGINT', () => {
-  logger.info('SIGINT received, shutting down gracefully');
-  process.exit(0);
-});
-
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-  logger.error('Uncaught exception', { error: error.message, stack: error.stack });
+  logger.error('Uncaught Exception', {
+    error: error.message,
+    stack: error.stack
+  });
+  console.log('--- UNCAUGHT EXCEPTION ERROR LOG ---', error);
   process.exit(1);
 });
 
+// Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled rejection', { reason, promise });
   process.exit(1);

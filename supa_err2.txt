@@ -1,0 +1,1 @@
+ConnectTimeoutError: Connect Timeout Error (attempted address: goqppqwtnzkvtowhtlmv.supabase.co:443, timeout: 10000ms)

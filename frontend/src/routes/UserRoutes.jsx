@@ -5,6 +5,7 @@ import Landingpage from '../pages/Landingpage/Landingpage';
 import Home from '../pages/home/Home';
 import Checkout from '../pages/cart/Checkout';
 import OrderSuccess from '../pages/cart/OrderSuccess';
+import OrderConfirmation from '../pages/orders/OrderConfirmation';
 import OrdersList from '../pages/orders/OrdersList';
 import OrderDetails from '../pages/orders/OrderDetails';
 import Profile from '../pages/profile/Profile';
@@ -53,6 +54,7 @@ const UserRoutes = () => {
           <Route path="/shop/:shopId" element={<ShopDetails />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-success" element={<OrderSuccess />} />
+          <Route path="/order-confirmation" element={<OrderConfirmation />} />
           <Route path="/orders" element={<OrdersList />} />
           <Route path="/orders/:orderId" element={<OrderDetails />} />
           <Route path="/profile" element={<Profile />} />

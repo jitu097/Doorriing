@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { orderService } from '../../services/order.service.js';
 import './Checkout.css';
 
 const Checkout = () => {
     const navigate = useNavigate();
     const { cartItems, getCartTotal, clearCart } = useCart();
+    const [loading, setLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState(null);
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -31,37 +34,33 @@ const Checkout = () => {
         });
     };
 
-    const handlePlaceOrder = (e) => {
+    const handlePlaceOrder = async (e) => {
         e.preventDefault();
+        setErrorMsg(null);
 
         // Validation
         if (!formData.name || !formData.phone || !formData.building || !formData.area) {
-            alert('Please fill in all required fields');
+            setErrorMsg('Please fill in all required fields');
             return;
         }
 
-        // Generate mock order ID
-        const orderId = `ORD-${Date.now()}`;
+        try {
+            setLoading(true);
+            const response = await orderService.checkout(formData);
 
-        // Save order details to localStorage (demo)
-        const orderData = {
-            orderId,
-            items: cartItems,
-            total: grandTotal,
-            address: formData,
-            timestamp: new Date().toISOString(),
-            status: 'Confirmed'
-        };
+            // Clear cart Context natively
+            await clearCart();
 
-        // Save to localStorage
-        const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-        localStorage.setItem('orders', JSON.stringify([orderData, ...existingOrders]));
+            const orderId = response.data?.order?.id || response.data?.order?.order_number || 'success';
 
-        // Clear cart
-        clearCart();
-
-        // Navigate to success page
-        navigate(`/order-success?orderId=${orderId}`);
+            // Navigate to confirmation page
+            navigate(`/order-confirmation?orderId=${orderId}`);
+        } catch (error) {
+            console.error('Checkout failed:', error);
+            setErrorMsg(error.message || 'Failed to place order. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (cartItems.length === 0) {
@@ -75,6 +74,7 @@ const Checkout = () => {
                 <h1 className="checkout-title">Checkout</h1>
 
                 <form className="checkout-form" onSubmit={handlePlaceOrder}>
+                    {errorMsg && <div className="error-message" style={{ color: 'red', marginBottom: '15px' }}>{errorMsg}</div>}
                     <div className="checkout-sections">
                         {/* Left Section: Address & Payment */}
                         <div className="checkout-main">
@@ -224,8 +224,8 @@ const Checkout = () => {
                                     <span>₹{grandTotal.toFixed(2)}</span>
                                 </div>
 
-                                <button type="submit" className="place-order-btn">
-                                    Place Order
+                                <button type="submit" className="place-order-btn" disabled={loading}>
+                                    {loading ? 'Processing...' : 'Place Order'}
                                 </button>
                             </div>
                         </div>

@@ -6,6 +6,8 @@ import subcategoryRoutes from '../modules/subcategory/subcategory.routes.js';
 import itemRoutes from '../modules/item/item.routes.js';
 import cartRoutes from '../modules/cart/cart.routes.js';
 import orderRoutes from '../modules/order/order.routes.js';
+// Import new user order routes
+import userOrderRoutes from './order.routes.js';
 import notificationRoutes from '../modules/notification/notification.routes.js';
 import addressRoutes from '../modules/address/address.routes.js';
 import bookingRoutes from '../modules/booking/booking.routes.js';
@@ -29,6 +31,8 @@ router.use('/subcategories', subcategoryRoutes);
 router.use('/items', itemRoutes);
 router.use('/cart', cartRoutes);
 router.use('/orders', orderRoutes);
+// Mount user order endpoints
+router.use('/user/orders', userOrderRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/user/addresses', addressRoutes);
 router.use('/bookings', bookingRoutes);

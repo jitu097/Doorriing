@@ -21,7 +21,7 @@ class CartController {
       return sendSuccess(res, cart, 'Cart fetched successfully');
     } catch (error) {
       logger.error('GetCart controller error', { error: error.message });
-      return res.status(500).json({ success: false, message: error.message, debug: { item_id, baseItemId, variant, quantity } });
+      next(error);
     }
   }
 
@@ -33,6 +33,15 @@ class CartController {
     try {
       const { customerId } = req.user;
       const { shop_id, item_id, quantity = 1 } = req.body;
+
+      // LOG 1: Request received
+      logger.info('[CART-ADD] Request received', { 
+        customerId, 
+        shop_id, 
+        item_id, 
+        quantity,
+        rawBody: req.body 
+      });
 
       if (!shop_id || !item_id) {
         return sendError(res, 'shop_id and item_id are required', 400);
@@ -55,13 +64,31 @@ class CartController {
         }
       }
 
+      // LOG 2: Parsed variant info
+      logger.info('[CART-ADD] Parsed variant', { 
+        baseItemId, 
+        variant, 
+        originalItemId: item_id 
+      });
+
       const cart = await cartService.addItemToCart(customerId, shop_id, baseItemId, quantity, variant);
+      
+      // LOG 3: Success
+      logger.info('[CART-ADD] Item added successfully', { customerId, baseItemId, variant });
+      
       return sendSuccess(res, cart, 'Item added to cart successfully', 201);
     } catch (error) {
+      // LOG 4: Error with full details
+      logger.error('[CART-ADD] Error occurred', { 
+        error: error.message, 
+        stack: error.stack,
+        customerId: req.user?.customerId,
+        body: req.body
+      });
+      
       if (error.message.includes('not available') || error.message.includes('stock')) {
         return sendError(res, error.message, 400);
       }
-      logger.error('AddItem controller error', { error: error.message });
       next(error);
     }
   }
