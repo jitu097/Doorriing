@@ -19,7 +19,7 @@
 .scroller-img-container {
   min-width: 100vw;
   width: 100vw;
-  height: 620px;
+  height: 400px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -90,8 +90,14 @@
     width: 100vw;
   }
   .image-scroller-wrapper {
-    margin-bottom: 1rem;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    margin-bottom: 0;
     width: 100vw;
+    z-index: 50;
+    background: #fff;
   }
   .scroller-arrow {
     width: 36px;

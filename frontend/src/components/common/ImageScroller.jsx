@@ -13,6 +13,18 @@ const ImageScroller = () => {
   const scrollerRef = useRef(null);
   const touchStartX = useRef(null);
 
+  // Auto-scroll functionality
+  React.useEffect(() => {
+    const autoScrollInterval = setInterval(() => {
+      setCurrent((prev) => {
+        // Go to next image, or loop back to first
+        return prev === images.length - 1 ? 0 : prev + 1;
+      });
+    }, 3000); // Change slide every 3 seconds
+
+    return () => clearInterval(autoScrollInterval);
+  }, []);
+
   // Handle swipe for mobile
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;

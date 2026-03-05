@@ -35,23 +35,31 @@ const UserRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
 
-      {/* Protected Routes with Layout */}
-      <Route element={<ProtectedRoute />}>
-        {/* Landing pages without navbar */}
-        <Route path="/grocery" element={<GroceryLanding />} />
-        <Route path="/restaurant" element={<RestaurantLanding />} />
+      {/* Public Browsing Pages - Allow exploring without auth */}
+      <Route element={<PageLayout />}>
+        <Route path="/home" element={<Home />} />
+        <Route path="/shops" element={<ShopsList />} />
+        <Route path="/shop/:shopId" element={<ShopDetails />} />
+        <Route path="/about" element={<AboutUs />} />
+      </Route>
 
-        {/* Routes with Layout (includes navbar) */}
+      {/* Public Grocery & Restaurant Pages - Browse without navbar */}
+      <Route path="/grocery" element={<GroceryLanding />} />
+      <Route path="/restaurant" element={<RestaurantLanding />} />
+
+      {/* Public Grocery & Restaurant Browsing - With navbar */}
+      <Route element={<PageLayout />}>
+        <Route path="/grocery/browse" element={<Grocery />} />
+        <Route path="/grocery/shop/:shopId" element={<ItemCategory />} />
+        <Route path="/grocery/shop/:shopId/category/:categoryId" element={<SubCategoryItem />} />
+        <Route path="/restaurant/browse" element={<Restaurant />} />
+        <Route path="/restaurant/shop/:restaurantId" element={<CategoryItem />} />
+        <Route path="/restaurant/shop/:restaurantId/category/:categoryId" element={<SubCategory />} />
+      </Route>
+
+      {/* Protected Routes - Require authentication */}
+      <Route element={<ProtectedRoute />}>
         <Route element={<PageLayout />}>
-          <Route path="/home" element={<Home />} />
-          <Route path="/grocery/browse" element={<Grocery />} />
-          <Route path="/grocery/shop/:shopId" element={<ItemCategory />} />
-          <Route path="/grocery/shop/:shopId/category/:categoryId" element={<SubCategoryItem />} />
-          <Route path="/restaurant/browse" element={<Restaurant />} />
-          <Route path="/restaurant/shop/:restaurantId" element={<CategoryItem />} />
-          <Route path="/restaurant/shop/:restaurantId/category/:categoryId" element={<SubCategory />} />
-          <Route path="/shops" element={<ShopsList />} />
-          <Route path="/shop/:shopId" element={<ShopDetails />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
@@ -59,7 +67,6 @@ const UserRoutes = () => {
           <Route path="/orders/:orderId" element={<OrderDetails />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/address" element={<Address />} />
-          <Route path="/about" element={<AboutUs />} />
         </Route>
       </Route>
 

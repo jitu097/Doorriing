@@ -5,12 +5,13 @@ import Modal from '../common/Modal';
 import AddressForm from '../common/AddressForm';
 import { useAddress } from '../../context/AddressContext';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../hooks/useAuth';
 import './Navbar.css';
 
 const Navbar = ({ onCartClick }) => {
   const navigate = useNavigate();
   const { getCartCount } = useCart();
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const { user, logout } = useAuth();
   const [showAccount, setShowAccount] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -20,8 +21,8 @@ const Navbar = ({ onCartClick }) => {
 
   const [navFormData, setNavFormData] = useState({
     type: 'Home',
-    name: user.name || '',
-    phone: user.phone || '',
+    name: user?.displayName || '',
+    phone: '',
     building: '',
     area: '',
     landmark: '',
@@ -40,10 +41,13 @@ const Navbar = ({ onCartClick }) => {
   const cartCount = getCartCount();
 
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
   const handleAccountClick = () => setShowAccount((v) => !v);
@@ -73,9 +77,11 @@ const Navbar = ({ onCartClick }) => {
         </Link>
 
         {/* Location */}
-        <div className="navbar-location" onClick={handleLocationClick}>
-          <div className="location-address">{activeAddress?.area || 'Location'} <span className="account-caret">▼</span></div>
-        </div>
+        {user && (
+          <div className="navbar-location" onClick={handleLocationClick}>
+            <div className="location-address">{activeAddress?.area || 'Location'} <span className="account-caret">▼</span></div>
+          </div>
+        )}
 
         {/* Search - Desktop */}
         <div className="navbar-searchbar navbar-searchbar-desktop">
@@ -122,23 +128,32 @@ const Navbar = ({ onCartClick }) => {
           </div>
         )}
 
-        {/* Account Dropdown */}
-        <div className="navbar-account-wrapper">
-          <div className="navbar-account" onClick={handleAccountClick} tabIndex={0}>
-            <img src="/account.png" alt="Account" className="account-icon" />
-          </div>
-          {showAccount && (
-            <div className="account-dropdown">
-              <ul>
-                <li><Link to="/orders">My Orders</Link></li>
-                <li><Link to="/address">Address</Link></li>
-                <li><Link to="/profile">Profile</Link></li>
-                <li><Link to="/about">About Us</Link></li>
-                <li><button onClick={handleLogout} className="logout-btn">Logout</button></li>
-              </ul>
+        {/* Account Dropdown - Only show when logged in */}
+        {user && (
+          <div className="navbar-account-wrapper">
+            <div className="navbar-account" onClick={handleAccountClick} tabIndex={0}>
+              <img src="/account.png" alt="Account" className="account-icon" />
             </div>
-          )}
-        </div>
+            {showAccount && (
+              <div className="account-dropdown">
+                <ul>
+                  <li><Link to="/orders">My Orders</Link></li>
+                  <li><Link to="/address">Address</Link></li>
+                  <li><Link to="/profile">Profile</Link></li>
+                  <li><Link to="/about">About Us</Link></li>
+                  <li><button onClick={handleLogout} className="logout-btn">Logout</button></li>
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Login Button - Show when not logged in */}
+        {!user && (
+          <Link to="/login" className="navbar-login-btn">
+            Login
+          </Link>
+        )}
 
         {/* Cart Icon */}
         <button onClick={onCartClick} className="navbar-cart-ui">

@@ -5,12 +5,8 @@ const Landingpage = () => {
   const navigate = useNavigate();
 
   const handleExplore = () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      navigate('/shops');
-    } else {
-      navigate('/login');
-    }
+    // Allow users to browse without authentication
+    navigate('/home');
   };
 
   return (

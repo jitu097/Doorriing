@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { cartService } from '../services/cart.service';
 import { useAuth } from '../hooks/useAuth';
 
@@ -17,6 +18,7 @@ export const CartProvider = ({ children }) => {
     const [cartMeta, setCartMeta] = useState({ shopId: null, shopType: null });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const navigate = useNavigate();
 
     const { user, loading: authLoading } = useAuth();
     const isAuthenticated = !!user;
@@ -70,7 +72,8 @@ export const CartProvider = ({ children }) => {
     // Add item to cart or increase quantity
     const addToCart = async (item) => {
         if (!isAuthenticated) {
-            alert('Please login to add items to cart.');
+            // Redirect to login page when user tries to add to cart without authentication
+            navigate('/login');
             return;
         }
 

@@ -293,6 +293,23 @@
 	gap: 0.3rem;
 }
 
+.navbar-login-btn {
+	margin-right: 1.5rem;
+	padding: 0.6rem 1.5rem;
+	background: #f5565c;
+	color: #fff;
+	border-radius: 8px;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 1rem;
+	transition: background 0.15s;
+	flex-shrink: 0;
+}
+
+.navbar-login-btn:hover {
+	background: #e13c42;
+}
+
 .account-icon {
 	width: 2.2rem;
 	height: 2.2rem;
