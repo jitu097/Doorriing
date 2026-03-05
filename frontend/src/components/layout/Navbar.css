@@ -206,10 +206,11 @@
 	position: sticky;
 	top: 0;
 	z-index: 100;
-	margin-top: -8px;
-	margin-left: 8px;
-	
+	margin-top: 0;
+	margin-left: 0;
+	margin-bottom: 1rem;
 	width: 100%;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 .navbar-container {
 	display: flex;
@@ -452,6 +453,7 @@
 	font-size: 1.5rem;
 	cursor: pointer;
 	padding: 0.5rem;
+	
 	color: #222;
 }
 
@@ -575,8 +577,17 @@
 /* Mobile (max-width: 600px) */
 @media (max-width: 600px) {
 	.navbar {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
 		padding: 0.4rem 0;
 		width: 100%;
+		margin-left: 0;
+		margin-top: 0;
+		margin-bottom: 0;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+		z-index: 100;
 	}
 
 	.navbar-container {

@@ -69,7 +69,8 @@ const Home = () => {
         {/* Grocery Items Section */}
         <div className="home-items-section">
           <h2 className="section-title">Fresh Grocery Items</h2>
-          {loading ? (
+    <h2 className="section-title">Fresh </h2>
+           {loading ? (
             <div className="loading-message">Loading items...</div>
           ) : groceryItems.length > 0 ? (
             <div className="items-grid">

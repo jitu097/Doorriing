@@ -1,6 +1,7 @@
 .home-page {
   min-height: 100vh;
   background: #f8f9fa;
+  padding-top: 0.5rem;
 }
 
 .home-content {
@@ -71,7 +72,7 @@
 
 @media (max-width: 600px) {
   .home-content {
-    margin-top: 380px;
+    margin-top: 330px;
     padding: 1.5rem 1rem;
   }
 
