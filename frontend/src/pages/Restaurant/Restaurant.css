@@ -103,7 +103,7 @@ button {
   display: flex;
   gap: 1.5rem;
   max-width: 1400px;
-  margin: 0 auto;
+ margin: 4.0rem auto 0 auto;
   padding: 0 1rem 0 0;
   box-sizing: border-box;
   height: calc(100vh - 74px - 15vh);
