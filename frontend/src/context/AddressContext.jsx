@@ -43,6 +43,7 @@ export const AddressProvider = ({ children }) => {
             const response = await api.post('/user/addresses', newAddressData);
             if (response.success) {
                 await fetchAddresses();
+                return response.data;
             }
         } catch (error) {
             console.error('Failed to add address', error);
@@ -55,6 +56,7 @@ export const AddressProvider = ({ children }) => {
             const response = await api.put(`/user/addresses/${id}`, updatedData);
             if (response.success) {
                 await fetchAddresses();
+                return response.data;
             }
         } catch (error) {
             console.error('Failed to update address', error);

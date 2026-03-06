@@ -5,6 +5,12 @@ const AddressForm = ({ formData, setFormData, onSubmit, onCancel, isEditing }) =
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
+        
+        // Prevent changes to locked fields
+        if (['city', 'state', 'postalCode'].includes(name)) {
+            return;
+        }
+
         setFormData(prev => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value
@@ -71,15 +77,15 @@ const AddressForm = ({ formData, setFormData, onSubmit, onCancel, isEditing }) =
                     <div className="form-row">
                         <div className="form-group">
                             <label className="form-label">City *</label>
-                            <input type="text" name="city" value={formData.city} onChange={handleInputChange} placeholder="Enter city" required />
+                            <input type="text" name="city" value="Latehar" readOnly className="locked-input" placeholder="Enter city" required />
                         </div>
                         <div className="form-group">
                             <label className="form-label">State *</label>
-                            <input type="text" name="state" value={formData.state} onChange={handleInputChange} placeholder="Enter state" required />
+                            <input type="text" name="state" value="Jharkhand" readOnly className="locked-input" placeholder="Enter state" required />
                         </div>
                         <div className="form-group">
                             <label className="form-label">Postal Code *</label>
-                            <input type="text" name="postalCode" value={formData.postalCode} onChange={handleInputChange} placeholder="ZIP code" required />
+                            <input type="text" name="postalCode" value="829206" readOnly className="locked-input" placeholder="ZIP code" required />
                         </div>
                     </div>
 

@@ -16,9 +16,9 @@ const Address = () => {
     building: '',
     area: '',
     landmark: '',
-    city: '',
-    state: '',
-    postalCode: '',
+    city: 'Latehar',
+    state: 'Jharkhand',
+    postalCode: '829206',
     isDefault: false
   });
 
@@ -41,9 +41,9 @@ const Address = () => {
       building: '',
       area: '',
       landmark: '',
-      city: '',
-      state: '',
-      postalCode: '',
+      city: 'Latehar',
+      state: 'Jharkhand',
+      postalCode: '829206',
       isDefault: false
     });
     setShowModal(true);

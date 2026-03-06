@@ -26,9 +26,9 @@ const Navbar = ({ onCartClick }) => {
     building: '',
     area: '',
     landmark: '',
-    city: '',
-    state: '',
-    postalCode: '',
+    city: 'Latehar',
+    state: 'Jharkhand',
+    postalCode: '829206',
     isDefault: true
   });
 
@@ -51,7 +51,7 @@ const Navbar = ({ onCartClick }) => {
   };
 
   const handleAccountClick = () => setShowAccount((v) => !v);
-  const handleLocationClick = () => setShowLocation(true);
+  const handleLocationClick = () => navigate('/address');
   const handleLocationClose = () => setShowLocation(false);
 
   const handleNavAddressSubmit = async (e) => {
@@ -78,8 +78,8 @@ const Navbar = ({ onCartClick }) => {
 
         {/* Location */}
         {user && (
-          <div className="navbar-location" onClick={handleLocationClick}>
-            <div className="location-address">{activeAddress?.area || 'Location'} <span className="account-caret">▼</span></div>
+          <div className="navbar-location" onClick={handleLocationClick} title="Manage delivery addresses" style={{ cursor: 'pointer' }}>
+            <div className="location-address">{activeAddress?.area || 'Select Location'} <span className="account-caret">▼</span></div>
           </div>
         )}
 

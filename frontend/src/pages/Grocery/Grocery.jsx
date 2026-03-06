@@ -182,37 +182,37 @@ const Grocery = () => {
 
         {/* Main Content */}
         <div className="grocery-shops-container">
-        {loading && <p>Loading shops...</p>}
+          {loading && <p>Loading shops...</p>}
 
-        {!loading && error && (
-          <EmptyState
-            title="We couldn't load shops"
-            description={error}
-            actionLabel="Retry"
-            onAction={() => {
-              setSelectedFilter('All');
-              setReloadKey((prev) => prev + 1);
-            }}
-          />
-        )}
+          {!loading && error && (
+            <EmptyState
+              title="We couldn't load shops"
+              description={error}
+              actionLabel="Retry"
+              onAction={() => {
+                setSelectedFilter('All');
+                setReloadKey((prev) => prev + 1);
+              }}
+            />
+          )}
 
-        {!loading && !error && filteredShops.length === 0 && (
-          <EmptyState
-            title="No shops found"
-            description={selectedFilter === 'All' ? 'No grocery shops are available right now.' : `No shops found in ${selectedFilter}.`}
-          />
-        )}
+          {!loading && !error && filteredShops.length === 0 && (
+            <EmptyState
+              title="No shops found"
+              description={selectedFilter === 'All' ? 'No grocery shops are available right now.' : `No shops found in ${selectedFilter}.`}
+            />
+          )}
 
-        {!loading && !error && filteredShops.length > 0 && (
-          <div className="grocery-shops-grid">
-            {filteredShops.map((shop) => (
-              <ShopCard
-                key={shop.id}
-                shop={shop}
-              />
-            ))}
-          </div>
-        )}
+          {!loading && !error && filteredShops.length > 0 && (
+            <div className="grocery-shops-grid">
+              {filteredShops.map((shop) => (
+                <ShopCard
+                  key={shop.id}
+                  shop={shop}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

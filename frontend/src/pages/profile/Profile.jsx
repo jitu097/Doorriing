@@ -1,10 +1,12 @@
 import { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import './Profile.css';
 import MyBookings from './MyBookings';
 
 const Profile = () => {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
     displayName: user?.displayName || '',
@@ -152,6 +154,36 @@ const Profile = () => {
 
         {/* My Bookings Section */}
         <MyBookings />
+
+        {/* Manage Addresses Section */}
+        <div className="profile-section" style={{ marginTop: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.5rem' }}>📍</span>
+              <div>
+                <h2 style={{ marginBottom: '4px' }}>Delivery Addresses</h2>
+                <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>Add or edit your delivery locations</p>
+              </div>
+            </div>
+            <button 
+              className="manage-addresses-btn" 
+              onClick={() => navigate('/address')}
+              style={{
+                padding: '0.8rem 1.5rem',
+                backgroundColor: '#fff',
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => { e.currentTarget.style.borderColor = '#ff4d4f'; e.currentTarget.style.color = '#ff4d4f'; }}
+              onMouseOut={(e) => { e.currentTarget.style.borderColor = '#e0e0e0'; e.currentTarget.style.color = 'inherit'; }}
+            >
+              Manage Addresses
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

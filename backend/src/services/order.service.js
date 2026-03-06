@@ -68,7 +68,7 @@ export const orderService = {
             // If it's an ID, fetch it
             if (!deliveryAddressStr && typeof addressData === 'string' && addressData.includes('-')) {
                 const { data: addressObj, error: addrError } = await supabase
-                    .from('addresses')
+                    .from('customer_addresses')
                     .select('*')
                     .eq('id', addressData)
                     .eq('customer_id', customerId)
@@ -77,11 +77,11 @@ export const orderService = {
                 if (addrError || !addressObj) throw new Error('Failed to fetch address or unauthorized');
 
                 const parts = [
-                    addressObj.building_no,
-                    addressObj.area,
+                    addressObj.address_line_1,
+                    addressObj.address_line_2,
                     addressObj.landmark
                 ].filter(Boolean);
-                deliveryAddressStr = `${addressObj.type || 'Home'}: ${parts.join(', ')}`;
+                deliveryAddressStr = `${addressObj.address_type || 'Home'}: ${parts.join(', ')}`;
             }
 
             if (!deliveryAddressStr) {
