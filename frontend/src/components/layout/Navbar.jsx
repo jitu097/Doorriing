@@ -73,7 +73,7 @@ const Navbar = ({ onCartClick }) => {
       <div className="navbar-container">
         {/* Logo */}
         <Link to="/home" className="navbar-logo">
-          <img src="/logobox.png" alt="BazarSe" className="logo-image" />
+          <img src="/Doorriing.png" alt="DoorRing" className="logo-image" />
         </Link>
 
         {/* Location */}
