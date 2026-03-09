@@ -33,7 +33,8 @@ const Checkout = () => {
 
     const subtotal = getCartTotal();
     const deliveryFee = 20;
-    const grandTotal = subtotal + deliveryFee;
+    const handlingCharge = 2;
+    const grandTotal = subtotal + deliveryFee + handlingCharge;
 
     // Auto-select logic
     useEffect(() => {
@@ -211,6 +212,13 @@ const Checkout = () => {
                                     </label>
                                 </div>
                             </div>
+
+                            {/* Place Order Button */}
+                            <div className="checkout-section">
+                                <button type="submit" className="place-order-btn" disabled={loading || !selectedAddressId}>
+                                    {loading ? 'Processing...' : 'Place Order'}
+                                </button>
+                            </div>
                             
                         </div>
 
@@ -242,6 +250,10 @@ const Checkout = () => {
                                 <div className="summary-row">
                                     <span>Delivery Fee</span>
                                     <span>₹{deliveryFee.toFixed(2)}</span>
+                                </div>
+                                <div className="summary-row">
+                                    <span>Handling Charge</span>
+                                    <span>₹{handlingCharge.toFixed(2)}</span>
                                 </div>
 
                                 <div className="summary-divider"></div>

@@ -9,8 +9,9 @@ const Cart = () => {
   const { cartItems, getCartTotal } = useCart();
 
   const subtotal = getCartTotal();
-  const deliveryFee = cartItems.length > 0 ? 20 : 0;
-  const grandTotal = subtotal + deliveryFee;
+  const deliveryFee = 20;
+  const handlingCharge = 2;
+  const grandTotal = subtotal + deliveryFee + handlingCharge;
 
   const handleCheckout = () => {
     if (cartItems.length > 0) {
@@ -52,6 +53,10 @@ const Cart = () => {
               <div className="summary-row">
                 <span>Delivery Fee</span>
                 <span>₹{deliveryFee.toFixed(2)}</span>
+              </div>
+              <div className="summary-row">
+                <span>Handling Charge</span>
+                <span>₹{handlingCharge.toFixed(2)}</span>
               </div>
               <div className="summary-divider"></div>
               <div className="summary-row total">

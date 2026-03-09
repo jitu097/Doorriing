@@ -9,8 +9,9 @@ const CartDrawer = ({ isOpen, onClose }) => {
   const { cartItems, getCartTotal } = useCart();
 
   const subtotal = getCartTotal();
-  const deliveryFee = cartItems.length > 0 ? 20 : 0;
-  const grandTotal = subtotal + deliveryFee;
+  const deliveryFee = 20;
+  const handlingCharge = 2;
+  const grandTotal = subtotal + deliveryFee + handlingCharge;
 
   const handleCheckout = () => {
     if (cartItems.length > 0) {
@@ -66,20 +67,20 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 <div className="summary-row">
                   <span className="summary-icon">🚚</span>
                   <span>Delivery charge</span>
-                  <span className="summary-value">FREE</span>
+                  <span className="summary-value">₹{deliveryFee}</span>
                 </div>
 
                 <div className="summary-row">
                   <span className="summary-icon">📦</span>
                   <span>Handling charge</span>
-                  <span className="summary-value">₹2</span>
+                  <span className="summary-value">₹{handlingCharge}</span>
                 </div>
 
                 <div className="summary-divider"></div>
 
                 <div className="summary-row grand-total">
                   <span>Grand total</span>
-                  <span className="grand-total-value">₹{(subtotal + 2).toFixed(0)}</span>
+                  <span className="grand-total-value">₹{grandTotal.toFixed(0)}</span>
                 </div>
               </div>
 

@@ -24,9 +24,9 @@ export const orderService = {
             const { data: cartItems, error: itemsError } = await supabase
                 .from('cart_items')
                 .select(`
-          id, quantity,
+          id, quantity, variant,
           items!inner (
-            id, shop_id, name, price, is_available, stock_quantity,
+            id, shop_id, name, price, half_portion_price, full_price, has_variants, is_available, stock_quantity,
             shops!inner ( id, is_active, business_type )
           )
         `)
@@ -88,13 +88,23 @@ export const orderService = {
                 throw new Error('Invalid delivery address');
             }
 
-            // STEP 4: Recalculate
+            // STEP 4: Recalculate (same as checkout page)
             let subtotal = 0;
             for (const ci of cartItems) {
-                subtotal += (ci.quantity * ci.items.price);
+                // Determine correct price based on variant
+                let unitPrice = Number(ci.items.price) || 0;
+                
+                if (ci.variant === 'Half' && ci.items.half_portion_price != null) {
+                    unitPrice = Number(ci.items.half_portion_price);
+                } else if (ci.variant === 'Full' && ci.items.full_price != null) {
+                    unitPrice = Number(ci.items.full_price);
+                }
+                
+                subtotal += (ci.quantity * unitPrice);
             }
-            const deliveryCharge = 0; // For now
-            const totalAmount = subtotal + deliveryCharge;
+            const deliveryCharge = 20;  // Fixed delivery charge
+            const handlingCharge = 2;   // Fixed handling charge
+            const totalAmount = subtotal + deliveryCharge + handlingCharge;
 
             // STEP 5: Generate order_number
             const datePart = new Date().toISOString().split('T')[0].replace(/-/g, '');
@@ -111,6 +121,7 @@ export const orderService = {
                 delivery_address: deliveryAddressStr,
                 items_total: subtotal,
                 delivery_charge: deliveryCharge,
+                handling_charge: handlingCharge,
                 total_amount: totalAmount,
                 status: 'pending',
                 payment_method: 'cod',
@@ -134,14 +145,25 @@ export const orderService = {
             };
 
             // STEP 7: Insert into order_items
-            const orderItemsToInsert = cartItems.map(ci => ({
-                order_id: newOrder.id,
-                item_id: ci.items.id,
-                item_name: ci.items.name,
-                quantity: ci.quantity,
-                item_price: ci.items.price, // Changed this from unit_price
-                subtotal: ci.items.price * ci.quantity // Changed from total_price
-            }));
+            const orderItemsToInsert = cartItems.map(ci => {
+                // Determine correct price based on variant (same logic as subtotal)
+                let unitPrice = Number(ci.items.price) || 0;
+                
+                if (ci.variant === 'Half' && ci.items.half_portion_price != null) {
+                    unitPrice = Number(ci.items.half_portion_price);
+                } else if (ci.variant === 'Full' && ci.items.full_price != null) {
+                    unitPrice = Number(ci.items.full_price);
+                }
+                
+                return {
+                    order_id: newOrder.id,
+                    item_id: ci.items.id,
+                    item_name: ci.items.name,
+                    quantity: ci.quantity,
+                    item_price: unitPrice,
+                    subtotal: unitPrice * ci.quantity
+                };
+            });
 
             const { error: oiInsertError } = await supabase
                 .from('order_items')
@@ -202,8 +224,7 @@ export const orderService = {
             .select(`
            *,
            order_items (
-             id, item_id, quantity, unit_price, total_price,
-             items ( name, image_url )
+             id, item_id, item_name, quantity, item_price, subtotal
            )
         `)
             .eq('id', orderId)

@@ -97,8 +97,8 @@ const OrderConfirmation = () => {
                             {itemsList.map(item => (
                                 <div key={item.id} className="summary-item">
                                     <span className="item-qty">{item.quantity}x</span>
-                                    <span className="item-name">{item.items?.name || 'Unknown Item'}</span>
-                                    <span className="item-price">₹{parseFloat(item.unit_price) * item.quantity}</span>
+                                    <span className="item-name">{item.item_name || 'Unknown Item'}</span>
+                                    <span className="item-price">₹{parseFloat(item.subtotal || 0).toFixed(0)}</span>
                                 </div>
                             ))}
                         </div>
@@ -106,11 +106,15 @@ const OrderConfirmation = () => {
                         <div className="detail-group totals">
                             <div className="total-row">
                                 <span>Subtotal</span>
-                                <span>₹{order.items_total || (order.total_amount - (order.delivery_charge || 0))}</span>
+                                <span>₹{order.items_total || 0}</span>
                             </div>
                             <div className="total-row">
                                 <span>Delivery Fee</span>
                                 <span>₹{order.delivery_charge || 0}</span>
+                            </div>
+                            <div className="total-row">
+                                <span>Handling Charge</span>
+                                <span>₹{order.handling_charge || 0}</span>
                             </div>
                             <div className="total-row grand-total">
                                 <span>Total Amount</span>
