@@ -25,6 +25,11 @@ const RestaurantCard = ({ shop }) => {
   const formattedStock = stockCount !== null ? `${formatCount(stockCount)} dishes ready` : null;
   const description = safeShop.description || (categoryCount ? `${categoryCount} categories available` : null);
   const showMeta = categoryCount !== null || formattedStock;
+  
+  // Check if booking is enabled for this restaurant
+  const isBookingEnabled = safeShop.is_booking_enabled === true;
+  const isRestaurant = safeShop.business_type === 'restaurant';
+  const showBookingButton = !isClosed && isRestaurant && isBookingEnabled;
 
 
 
@@ -94,7 +99,7 @@ const RestaurantCard = ({ shop }) => {
               {formattedStock && <span className="card-meta-pill">{formattedStock}</span>}
             </div>
           )}
-          {!isClosed && (
+          {showBookingButton && (
             <div className="card-booking-actions">
               <button 
                 className="btn-book-table" 
