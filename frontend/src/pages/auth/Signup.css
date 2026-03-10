@@ -213,9 +213,54 @@ body:has(.signup-container) {
   border-color: #e74c3c;
 }
 
+/* Direct input styling for inputs without wrappers */
+.signup-form input[type="text"],
+.signup-form input[type="email"],
+.signup-form input[type="tel"],
+.signup-form input[type="password"] {
+  width: 90%;
+  padding: 0.875rem 1.25rem;
+  border: 1px solid #aca8a8;
+  border-radius: 10px;
+  background: #fafafa;
+  height: 25px;
+  font-size: 0.95rem;
+  color: #000000;
+  transition: all 0.3s ease;
+  outline: none;
+  margin-left: 2px;
+}
+
+.signup-form input[type="text"]::placeholder,
+.signup-form input[type="email"]::placeholder,
+.signup-form input[type="tel"]::placeholder,
+.signup-form input[type="password"]::placeholder {
+  color: #999;
+  font-size: 0.95rem;
+}
+
+.signup-form input[type="text"]:focus,
+.signup-form input[type="email"]:focus,
+.signup-form input[type="tel"]:focus,
+.signup-form input[type="password"]:focus {
+  border-color: #bf4c26;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(38, 191, 191, 0.1);
+}
+
+.signup-form input[type="text"].error,
+.signup-form input[type="email"].error,
+.signup-form input[type="tel"].error,
+.signup-form input[type="password"].error {
+  border-color: #c33;
+  background: #fff5f5;
+}
+
 .error-text {
   color: #e74c3c;
   font-size: 0.85rem;
+  margin-top: -0.75rem;
+  display: block;
 }
 
 .signup-button {

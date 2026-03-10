@@ -139,90 +139,65 @@ const Signup = () => {
           {serverError && <div className="error-message">{serverError}</div>}
 
           <form onSubmit={handleSubmit} className="signup-form">
-            <div className="form-group">
-              <div className="input-wrapper">
-                
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className={errors.name ? 'error' : ''}
-                  placeholder="Full Name"
-                  disabled={loading}
-                />
-              </div>
-              {errors.name && <span className="error-text">{errors.name}</span>}
-            </div>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className={errors.name ? 'error' : ''}
+              placeholder="Full Name"
+              disabled={loading}
+            />
+            {errors.name && <span className="error-text">{errors.name}</span>}
 
-            <div className="form-group">
-              <div className="input-wrapper">
-               
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={errors.email ? 'error' : ''}
-                  placeholder="Email"
-                  disabled={loading}
-                />
-              </div>
-              {errors.email && <span className="error-text">{errors.email}</span>}
-            </div>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={errors.email ? 'error' : ''}
+              placeholder="Email"
+              disabled={loading}
+            />
+            {errors.email && <span className="error-text">{errors.email}</span>}
 
-            <div className="form-group">
-              <div className="input-wrapper">
-              
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className={errors.phone ? 'error' : ''}
-                  placeholder="Phone Number (Optional)"
-                  disabled={loading}
-                />
-              </div>
-              {errors.phone && <span className="error-text">{errors.phone}</span>}
-            </div>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className={errors.phone ? 'error' : ''}
+              placeholder="Phone Number (Optional)"
+              disabled={loading}
+            />
+            {errors.phone && <span className="error-text">{errors.phone}</span>}
 
-            <div className="form-group">
-              <div className="input-wrapper">
-               
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={errors.password ? 'error' : ''}
-                  placeholder="Password"
-                  disabled={loading}
-                />
-              </div>
-              {errors.password && <span className="error-text">{errors.password}</span>}
-            </div>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className={errors.password ? 'error' : ''}
+              placeholder="Password"
+              disabled={loading}
+            />
+            {errors.password && <span className="error-text">{errors.password}</span>}
 
-            <div className="form-group">
-              <div className="input-wrapper">
-              
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className={errors.confirmPassword ? 'error' : ''}
-                  placeholder="Confirm Password"
-                  disabled={loading}
-                />
-              </div>
-              {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
-            </div>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              className={errors.confirmPassword ? 'error' : ''}
+              placeholder="Confirm Password"
+              disabled={loading}
+            />
+            {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
 
             <button
               type="submit"

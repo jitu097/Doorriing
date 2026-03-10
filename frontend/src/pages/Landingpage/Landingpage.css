@@ -328,6 +328,19 @@
   .signup-btn {
     margin-top: -120px;
   }
+
+  /* Disable animations for mobile */
+  .landing-text {
+    animation: none;
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .landing-image {
+    animation: none;
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .mobile-explore-bottom {
@@ -399,5 +412,18 @@
 @media (max-width: 600px) {
   .mobile-image-btns {
     display: flex;
+  }
+
+  /* Disable all animations on mobile */
+  .landing-text,
+  .landing-image,
+  .main-image,
+  .arrow-decoration,
+  .mobile-image-full,
+  .mobile-btn-group,
+  .mobile-signin-top,
+  .mobile-explore-bottom {
+    animation: none !important;
+    transform: none !important;
   }
 }

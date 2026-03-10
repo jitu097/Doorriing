@@ -201,6 +201,48 @@ body:has(.login-container) {
   font-size: 0.85rem;
 }
 
+/* Direct input styling for inputs without wrappers */
+.login-form input[type="email"],
+.login-form input[type="password"] {
+  width: 90%;
+  padding: 0.875rem 1.25rem;
+  border: 1px solid #b3a5a5;
+  border-radius: 10px;
+  background: #fafafa;
+  font-size: 0.95rem;
+  color: #000000;
+  transition: all 0.3s ease;
+  outline: none;
+  height: 30px;
+  margin-left: -5px;
+}
+
+.login-form input[type="email"]::placeholder,
+.login-form input[type="password"]::placeholder {
+  color: #999;
+  font-size: 0.95rem;
+}
+
+.login-form input[type="email"]:focus,
+.login-form input[type="password"]:focus {
+  border-color: #bf4726;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(38, 191, 191, 0.1);
+}
+
+.login-form input[type="email"].error,
+.login-form input[type="password"].error {
+  border-color: #c33;
+  background: #fff5f5;
+}
+
+.error-text {
+  color: #c33;
+  font-size: 0.85rem;
+  margin-top: -0.75rem;
+  display: block;
+}
+
 .form-options {
   display: flex;
   justify-content: space-between;

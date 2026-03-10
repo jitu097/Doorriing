@@ -229,11 +229,13 @@
 	flex-shrink: 0;
 	text-decoration: none;
 	cursor: pointer;
+	margin-right: -30px;
 }
 .logo-image {
 	height: 60px;
-	width: 50px;
+	width: 100px;
 	object-fit: contain;
+	margin-right: -30px;
 }
 .navbar-location {
 	cursor: pointer;

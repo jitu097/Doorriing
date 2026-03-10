@@ -111,39 +111,31 @@ const Login = () => {
           {serverError && <div className="error-message">{serverError}</div>}
 
           <form onSubmit={handleSubmit} className="login-form">
-            <div className="form-group">
-              <div className="input-wrapper">
-                {/* <span className="input-icon">👤</span> */}
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={errors.email ? 'error' : ''}
-                  placeholder="Email"
-                  disabled={loading}
-                />
-              </div>
-              {errors.email && <span className="error-text">{errors.email}</span>}
-            </div>
+            {/* <span className="input-icon">👤</span> */}
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={errors.email ? 'error' : ''}
+              placeholder="Email"
+              disabled={loading}
+            />
+            {errors.email && <span className="error-text">{errors.email}</span>}
 
-            <div className="form-group">
-              <div className="input-wrapper">
-                {/* <span className="input-icon">🔒</span> */}
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={errors.password ? 'error' : ''}
-                  placeholder="Password"
-                  disabled={loading}
-                />
-              </div>
-              {errors.password && <span className="error-text">{errors.password}</span>}
-            </div>
+            {/* <span className="input-icon">🔒</span> */}
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className={errors.password ? 'error' : ''}
+              placeholder="Password"
+              disabled={loading}
+            />
+            {errors.password && <span className="error-text">{errors.password}</span>}
 
             <div className="form-options">
               <label className="remember-me">
