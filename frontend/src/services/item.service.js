@@ -52,12 +52,16 @@ export const itemService = {
 
     /**
      * Get grouped home items (grocery + restaurant)
-     * @param {number} limit
+     * @param {number} [limit]
      */
-    getHomeItems: async (limit = 10) => {
-        return api.get('/home/items', {
-            params: { limit }
-        });
+    getHomeItems: async (limit) => {
+        const config = {};
+
+        if (typeof limit === 'number' && limit > 0) {
+            config.params = { limit };
+        }
+
+        return api.get('/home/items', config);
     }
 };
 

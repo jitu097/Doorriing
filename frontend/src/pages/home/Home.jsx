@@ -6,8 +6,6 @@ import ItemCard from '../../components/common/ItemCard';
 import { itemService } from '../../services/item.service';
 import './Home.css';
 
-const ITEMS_LIMIT = 10;
-
 const SECTION_CONFIG = {
   grocery: {
     key: 'grocery',
@@ -22,12 +20,21 @@ const SECTION_CONFIG = {
 };
 
 const normalizeItems = (items = []) =>
-  (items || []).map((item) => ({
-    ...item,
-    shopId: item.shop_id,
-    shopName: item.shops?.name || '',
-    shopType: item.shops?.business_type || '',
-  }));
+  (items || []).map((item) => {
+    const basePrice = item.price ?? item.full_price ?? null;
+    const halfPortionPrice = item.half_portion_price ?? null;
+    const fullPortionPrice = item.full_price ?? basePrice;
+
+    return {
+      ...item,
+      price: basePrice,
+      shopId: item.shop_id,
+      shopName: item.shops?.name || '',
+      shopType: item.shops?.business_type || '',
+      halfPortionPrice,
+      fullPortionPrice,
+    };
+  });
 
 const Home = () => {
   const [groceryItems, setGroceryItems] = useState([]);
@@ -42,7 +49,7 @@ const Home = () => {
         setLoading(true);
         setError('');
 
-        const response = await itemService.getHomeItems(ITEMS_LIMIT);
+        const response = await itemService.getHomeItems();
         const payload = response?.data || {};
 
         setGroceryItems(normalizeItems(payload.grocery_items));
@@ -79,6 +86,7 @@ const Home = () => {
                 key={item.id}
                 id={item.id}
                 name={item.name}
+                subtitle={item.shopName}
                 description={item.description}
                 price={item.price}
                 image={item.image_url}
@@ -87,6 +95,8 @@ const Home = () => {
                 stockQuantityValue={item.stock_quantity}
                 shopId={item.shopId}
                 shopType={item.shopType}
+                halfPortionPrice={item.halfPortionPrice}
+                fullPortionPrice={item.fullPortionPrice}
               />
             );
           })}

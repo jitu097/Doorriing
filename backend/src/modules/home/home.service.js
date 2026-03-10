@@ -2,7 +2,6 @@ import { supabase } from '../../config/supabaseClient.js';
 import { BUSINESS_TYPE } from '../../utils/constants.js';
 import { logger } from '../../utils/logger.js';
 
-const DEFAULT_HOME_ITEMS_LIMIT = 10;
 const MAX_HOME_ITEMS_LIMIT = 20;
 
 const ITEM_SELECT_COLUMNS = `
@@ -26,22 +25,32 @@ const ITEM_SELECT_COLUMNS = `
 
 class HomeService {
   #sanitizeLimit(limit) {
+    if (limit === undefined || limit === null || limit === '') {
+      return null;
+    }
+
     const parsed = parseInt(limit, 10);
     if (Number.isNaN(parsed) || parsed <= 0) {
-      return DEFAULT_HOME_ITEMS_LIMIT;
+      return null;
     }
+
     return Math.min(parsed, MAX_HOME_ITEMS_LIMIT);
   }
 
   async #fetchItemsByBusinessType(businessType, limit) {
-    const { data, error } = await supabase
+    let query = supabase
       .from('items')
       .select(ITEM_SELECT_COLUMNS)
       .eq('is_active', true)
       .eq('is_available', true)
       .eq('shops.business_type', businessType)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+      .order('created_at', { ascending: false });
+
+    if (limit) {
+      query = query.limit(limit);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       logger.error('Failed to fetch home items', { error, businessType });
@@ -51,7 +60,7 @@ class HomeService {
     return data || [];
   }
 
-  async getHomeItems(limit = DEFAULT_HOME_ITEMS_LIMIT) {
+  async getHomeItems(limit) {
     try {
       const normalizedLimit = this.#sanitizeLimit(limit);
 
