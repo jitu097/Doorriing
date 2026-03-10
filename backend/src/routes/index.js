@@ -11,6 +11,7 @@ import userOrderRoutes from './order.routes.js';
 import notificationRoutes from '../modules/notification/notification.routes.js';
 import addressRoutes from '../modules/address/address.routes.js';
 import bookingRoutes from '../modules/booking/booking.routes.js';
+import homeRoutes from '../modules/home/home.routes.js';
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use('/user/orders', userOrderRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/user/addresses', addressRoutes);
 router.use('/bookings', bookingRoutes);
+router.use('/home', homeRoutes);
 
 export default router;

@@ -103,6 +103,7 @@ const Navbar = ({ onCartClick }) => {
           className="searchbar-icon-btn searchbar-mobile-icon"
           type="button"
           onClick={() => setShowSearch(true)}
+          aria-label="Open search"
         >
           <img src="/search.png" alt="Search" className="searchbar-icon" />
         </button>
@@ -113,7 +114,7 @@ const Navbar = ({ onCartClick }) => {
             <input
               type="text"
               className="searchbar-input-overlay"
-              placeholder="Search food..."
+              placeholder="Search products..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               autoFocus

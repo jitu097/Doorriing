@@ -48,6 +48,16 @@ export const itemService = {
         return api.get(`/items/subcategory/${subcategoryId}`, {
             params: { shop_id: shopId, page, page_size: pageSize }
         });
+    },
+
+    /**
+     * Get grouped home items (grocery + restaurant)
+     * @param {number} limit
+     */
+    getHomeItems: async (limit = 10) => {
+        return api.get('/home/items', {
+            params: { limit }
+        });
     }
 };
 
