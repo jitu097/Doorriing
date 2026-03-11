@@ -1,19 +1,7 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import './RestaurantLanding.css';
 
 const RestaurantLanding = () => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Auto-navigate to Restaurant.jsx after 3 seconds
-    const timer = setTimeout(() => {
-      navigate('/restaurant/browse');
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [navigate]);
-
   return (
     <div className="restaurant-landing-page">
       {/* Plate drops in */}
@@ -22,8 +10,6 @@ const RestaurantLanding = () => {
       <img src="/burger.png" alt="Burger" className="burger-drop-img" />
       {/* Pizza drops in */}
       <img src="/pizza.png" alt="Pizza" className="pizza-drop-img" />
-      {/* Fries drops in at the same time as pizza */}
-      <img src="/fries.png" alt="Fries" className="fries-drop-img" />
       {/* Drink slides in */}
       <img src="/drink.png" alt="Drink" className="drink-slide-img" />
       {/* Steam or sparkle effect */}

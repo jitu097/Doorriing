@@ -35,6 +35,77 @@
   }
 }
 
+/* Add drop animation for bas.png */
+.bas-drop-img {
+  position: absolute;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 370px;
+  animation: dropBas 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+}
+
+@keyframes dropBas {
+  to {
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Sequential drop animations for veg.png, gross.png, and fru.png */
+.veg-drop-img {
+  position: absolute;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  animation: dropVeg 1.2s 1.1s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+  z-index: 2;
+}
+
+@keyframes dropVeg {
+  to {
+    top: 49%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.gross-drop-img {
+  position: absolute;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 250px;
+  height: 250px;
+  animation: dropGross 1.2s 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+  z-index: 2;
+}
+
+@keyframes dropGross {
+  to {
+    top: 40%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.fru-drop-img {
+  position: absolute;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  height: 200px;
+  animation: dropFru 1.2s 1.4s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+  z-index: 2;
+}
+
+@keyframes dropFru {
+  to {
+    top: 41%;
+    transform: translate(-50%, -50%);
+  }
+}
+
 /* Desktop View */
 @media (min-width: 1024px) {
   .grocery-landing-image {

@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
@@ -7,9 +7,14 @@ import CartDrawer from '../common/CartDrawer';
 
 const PageLayout = () => {
   const [showCart, setShowCart] = useState(false);
+  const location = useLocation();
 
   const handleCartOpen = () => setShowCart(true);
   const handleCartClose = () => setShowCart(false);
+
+  // Hide FloatingCart on /cart and /checkout
+  const hideFloatingCart =
+    location.pathname.startsWith('/cart') || location.pathname.startsWith('/checkout');
 
   return (
     <div className="page-layout">
@@ -18,7 +23,7 @@ const PageLayout = () => {
         <Outlet />
       </main>
       <Footer />
-      <FloatingCart onCartClick={handleCartOpen} />
+      {!hideFloatingCart && <FloatingCart onCartClick={handleCartOpen} />}
       <CartDrawer isOpen={showCart} onClose={handleCartClose} />
     </div>
   );

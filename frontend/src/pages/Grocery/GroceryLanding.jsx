@@ -17,9 +17,24 @@ const GroceryLanding = () => {
   return (
     <div className="grocery-landing-page">
       <img 
-        src="/bags.png" 
-        alt="Grocery Landing" 
-        className="grocery-landing-image"
+        src="/bas.png" 
+        alt="Bas" 
+        className="bas-drop-img"
+      />
+      <img 
+        src="/veg.png" 
+        alt="Veg" 
+        className="veg-drop-img"
+      />
+      <img 
+        src="/gross.png" 
+        alt="Gross" 
+        className="gross-drop-img"
+      />
+      <img 
+        src="/fru.png" 
+        alt="Fru" 
+        className="fru-drop-img"
       />
     </div>
   );
