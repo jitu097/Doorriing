@@ -16,6 +16,10 @@
     width: 120px;
     height: 120px;
   }
+
+  .button-text {
+    font-size: 1.1rem;
+  }
 }
 
 @media (max-width: 600px) {
@@ -43,6 +47,10 @@
     height: 100px;
     margin-top: -10px;
   }
+
+  .button-text {
+    font-size: 1rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -54,6 +62,10 @@
   .home-button img {
     width: 80px;
     height: 80px;
+  }
+
+  .button-text {
+    font-size: 0.9rem;
   }
 }
 
@@ -92,7 +104,7 @@
 .grocery-button {
   background-image: 
     linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.3)),
-    url('/Gbutton.jpg');
+    url('/Gbutton.png');
 }
 
 /* Restaurant Button with gradient */
@@ -107,4 +119,11 @@
   height: 140px;
   margin-top: -15px;
   margin-bottom: 0.5rem;
+}
+
+.button-text {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #000;
+  text-align: center;
 }

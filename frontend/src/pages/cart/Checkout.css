@@ -77,8 +77,8 @@
 }
 
 .checkout-address-card.selected {
-    border-color: #1677ff;
-    background-color: #f0f7ff;
+    border-color: #E95322;
+    background-color: #FFFBEA;
 }
 
 .checkout-address-card.selected::before {
@@ -88,7 +88,7 @@
     left: 0;
     width: 6px;
     height: 100%;
-    background-color: #1677ff;
+    background-color: #E95322;
 }
 
 .address-main-info {
@@ -316,7 +316,7 @@
 .place-order-btn {
     width: 100%;
     padding: 16px;
-    background-color: #1677ff;
+    background-color: #E95322;
     color: white;
     border: none;
     border-radius: 8px;
@@ -324,11 +324,11 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 4px 6px rgba(22, 119, 255, 0.2);
+    box-shadow: 0 4px 6px rgba(233, 83, 34, 0.2);
 }
 
 .place-order-btn:hover {
-    background-color: #0958d9;
+    background-color: #c7431c;
     transform: translateY(-1px);
 }
 

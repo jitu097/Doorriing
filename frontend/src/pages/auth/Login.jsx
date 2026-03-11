@@ -102,7 +102,7 @@ const Login = () => {
           <div className="login-bg-shape"></div>
           <img src="/boy.png" alt="Boy" className="login-boy-image" />
           <div className="login-logo-badge">
-            <span className="logo-text">Grocery Store</span>
+            <img src="/Doorriing.png" alt="Logo" className="logo-image" style={{ width: '70px', height: '70px', objectFit: 'contain' }} />
           </div>
         </div>
 

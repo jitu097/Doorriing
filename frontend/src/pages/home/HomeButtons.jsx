@@ -7,12 +7,10 @@ const HomeButtons = () => {
   return (
     <div className="home-buttons-container">
       <button className="home-button grocery-button" onClick={() => navigate('/grocery')}>
-        <img src="/Grocery.png" alt="Grocery" />
-       
+        <span className="button-text">Grocery</span>
       </button>
       <button className="home-button restaurant-button" onClick={() => navigate('/restaurant')}>
-        <img src="/Restro.png" alt="Restaurant" />
-       
+        <span className="button-text">Restaurant</span>
       </button>
     </div>
   );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCart } from '../../context/CartContext';
 import './ItemCard.css';
 
@@ -12,7 +12,8 @@ const formatPrice = (price) => {
     return price;
   }
 
-  return numericPrice.toFixed(2);
+  // Show as integer if no decimals, else show up to 2 decimals (removes .00)
+  return numericPrice % 1 === 0 ? numericPrice.toString() : numericPrice.toFixed(2).replace(/\.00$/, '');
 };
 
 const getFallbackId = (id, name, price) => {
@@ -43,6 +44,8 @@ const ItemCard = ({
   fullPortionPrice,
 }) => {
   const { addToCart, getCartItem, increaseQty, decreaseQty } = useCart();
+  const [showVariants, setShowVariants] = useState(false);
+  
   const basePrice = price;
   const hasHalfVariant = halfPortionPrice !== undefined && halfPortionPrice !== null;
   const fullVariantValue = fullPortionPrice ?? basePrice;
@@ -86,6 +89,13 @@ const ItemCard = ({
       return;
     }
 
+    // If item has variants and they're not shown yet, show them instead of adding
+    if (showVariantPricing && !showVariants) {
+      setShowVariants(true);
+      return;
+    }
+
+    // If no variants, add directly to cart
     addToCart({
       id: itemId,
       name,
@@ -122,6 +132,26 @@ const ItemCard = ({
     });
   };
 
+  const handleVariantUpdate = (variant, changeAmount) => {
+    const variantId = `${itemId}-${variant.key}`;
+    if (changeAmount > 0) {
+      increaseQty(variantId);
+    } else {
+      decreaseQty(variantId);
+      
+      // Check if both Half and Full quantities are 0, if so collapse back to initial view
+      const halfVariantId = `${itemId}-half`;
+      const fullVariantId = `${itemId}-full`;
+      const halfQty = getCartItem(halfVariantId)?.quantity || 0;
+      const fullQty = getCartItem(fullVariantId)?.quantity || 0;
+      
+      // If both quantities are 0 after decrement, hide the portion controls
+      if (halfQty === 0 && fullQty === 0) {
+        setShowVariants(false);
+      }
+    }
+  };
+
   const shouldShowOriginal =
     formattedOriginalPrice &&
     formattedPrice &&
@@ -149,46 +179,45 @@ const ItemCard = ({
 
         {secondaryText && <p className="item-card-subtitle">{secondaryText}</p>}
         {hasStockLabel && <p className={stockLabelClass}>{stockDisplayLabel}</p>}
-        {showVariantPricing && variantOptions ? (
-          <div className="item-card-variants">
+        
+        {showVariantPricing && showVariants && variantOptions ? (
+          <div className="portion-controls-container">
             {variantOptions.map((variant) => {
               const variantId = `${itemId}-${variant.key}`;
               const variantCartItem = getCartItem(variantId);
-              const inVariantCart = Boolean(variantCartItem);
+              const variantQty = variantCartItem ? variantCartItem.quantity : 0;
 
               return (
-                <div className="item-card-variant-row" key={variant.key}>
-                  <div className="item-card-variant-info">
-                    <span className="item-card-variant-label">{variant.label}</span>
-                    <span className="item-card-variant-price">₹{variant.formattedPrice}</span>
+                <div className="portion-row" key={variant.key}>
+                  <div className="portion-info">
+                    <span className="portion-label-small">{variant.label}</span>
+                    <span className="portion-price-small">₹{variant.formattedPrice}</span>
                   </div>
-                  {!inVariantCart ? (
-                    <button
-                      className="item-card-add-btn"
-                      type="button"
-                      disabled={!isAvailable}
-                      onClick={() => handleVariantAdd(variant)}
-                    >
-                      {isAvailable ? 'ADD' : 'UNAVAILABLE'}
-                    </button>
-                  ) : (
-                    <div className="item-card-qty-controls">
+                  {variantQty > 0 ? (
+                    <div className="quantity-controls">
                       <button
-                        className="qty-btn-small"
-                        onClick={() => decreaseQty(variantId)}
+                        onClick={() => handleVariantUpdate(variant, -1)}
                         aria-label={`Decrease ${variant.label} quantity`}
                       >
-                        -
+                        −
                       </button>
-                      <span className="qty-display-small">{variantCartItem.quantity}</span>
+                      <span>{variantQty}</span>
                       <button
-                        className="qty-btn-small"
-                        onClick={() => increaseQty(variantId)}
+                        onClick={() => handleVariantUpdate(variant, 1)}
                         aria-label={`Increase ${variant.label} quantity`}
                       >
                         +
                       </button>
                     </div>
+                  ) : (
+                    <button
+                      className="portion-add-btn"
+                      type="button"
+                      disabled={!isAvailable}
+                      onClick={() => handleVariantAdd(variant)}
+                    >
+                      Add
+                    </button>
                   )}
                 </div>
               );
@@ -197,12 +226,21 @@ const ItemCard = ({
         ) : (
           <div className="item-card-footer">
             <div className="item-card-price-block">
-              {shouldShowOriginal && (
-                <span className="item-card-price-original">₹{formattedOriginalPrice}</span>
+              {showVariantPricing && variantOptions ? (
+                <div className="item-card-price-variants">
+                  <span className="price-variant-text">Half: ₹{formattedHalfVariantPrice}</span>
+                  <span className="price-variant-text">Full: ₹{formattedFullVariantPrice}</span>
+                </div>
+              ) : (
+                <>
+                  {shouldShowOriginal && (
+                    <span className="item-card-price-original">₹{formattedOriginalPrice}</span>
+                  )}
+                  <span className="item-card-price">
+                    {formattedPrice ? `₹${formattedPrice}` : 'Price unavailable'}
+                  </span>
+                </>
               )}
-              <span className="item-card-price">
-                {formattedPrice ? `₹${formattedPrice}` : 'Price unavailable'}
-              </span>
             </div>
 
             {!isInCart ? (
@@ -212,7 +250,7 @@ const ItemCard = ({
                 disabled={!isAvailable}
                 onClick={handleAddToCart}
               >
-                {isAvailable ? 'ADD' : 'UNAVAILABLE'}
+                {!isAvailable ? 'UNAVAILABLE' : 'Add'}
               </button>
             ) : (
               <div className="item-card-qty-controls">

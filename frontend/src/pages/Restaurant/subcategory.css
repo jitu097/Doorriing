@@ -130,7 +130,7 @@
 /* Responsive */
 @media (max-width: 768px) {
   .subcategory-sidebar {
-    width: 100px;
+    width: 60px;
   }
   
   .subcategory-item {

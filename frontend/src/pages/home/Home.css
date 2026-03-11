@@ -126,14 +126,15 @@
   }
 
   .home-section-toggle {
-    flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.5rem;
     border-radius: 24px;
-    padding: 0.75rem 1rem;
+    padding: 0.5rem;
   }
 
   .home-toggle-btn {
-    width: 100%;
+    flex: 1;
+    font-size: 0.9rem;
+    padding: 0.75rem 0.5rem;
   }
 
   .section-title {

@@ -206,15 +206,14 @@ body:has(.login-container) {
 .login-form input[type="password"] {
   width: 90%;
   padding: 0.875rem 1.25rem;
-  border: 1px solid #b3a5a5;
+  border: 1px solid #e0e0e0;
   border-radius: 10px;
   background: #fafafa;
   font-size: 0.95rem;
   color: #000000;
   transition: all 0.3s ease;
   outline: none;
-  height: 30px;
-  margin-left: -5px;
+  margin-left: -20px;
 }
 
 .login-form input[type="email"]::placeholder,
@@ -225,7 +224,7 @@ body:has(.login-container) {
 
 .login-form input[type="email"]:focus,
 .login-form input[type="password"]:focus {
-  border-color: #bf4726;
+  border-color: #26bfbf;
   background: white;
   box-shadow: 0 0 0 3px rgba(38, 191, 191, 0.1);
 }

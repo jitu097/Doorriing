@@ -146,7 +146,7 @@
   }
 
   .subcategory-item-sidebar {
-    width: 60px;
+    width: 50px;
     top: 130px;
     height: calc(100vh - 130px);
   }

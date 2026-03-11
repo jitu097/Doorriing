@@ -220,15 +220,14 @@ body:has(.signup-container) {
 .signup-form input[type="password"] {
   width: 90%;
   padding: 0.875rem 1.25rem;
-  border: 1px solid #aca8a8;
+  border: 1px solid #e0e0e0;
   border-radius: 10px;
   background: #fafafa;
-  height: 25px;
   font-size: 0.95rem;
   color: #000000;
   transition: all 0.3s ease;
   outline: none;
-  margin-left: 2px;
+  margin-left: -20px;
 }
 
 .signup-form input[type="text"]::placeholder,
@@ -243,7 +242,7 @@ body:has(.signup-container) {
 .signup-form input[type="email"]:focus,
 .signup-form input[type="tel"]:focus,
 .signup-form input[type="password"]:focus {
-  border-color: #bf4c26;
+  border-color: #26bfbf;
   background: white;
   box-shadow: 0 0 0 3px rgba(38, 191, 191, 0.1);
 }

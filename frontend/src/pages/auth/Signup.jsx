@@ -130,7 +130,7 @@ const Signup = () => {
           <div className="signup-bg-shape"></div>
           <img src="/family.png" alt="Boy" className="signup-boy-image" />
           <div className="signup-logo-badge">
-            <span className="logo-text">Grocery Store</span>
+            <img src="/Doorriing.png" alt="Logo" className="logo-image" style={{ width: '70px', height: '70px', objectFit: 'contain' }} />
           </div>
         </div>
 

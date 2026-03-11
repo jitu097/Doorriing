@@ -137,7 +137,7 @@
 /* Menu Section */
 .menu-section {
   background: white;
-  margin: 1rem;
+  margin: 25rem 1rem 1rem 1rem;
   padding: 1.5rem;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -177,10 +177,10 @@
 }
 
 .category-image {
-  width: 60px;
-  height: 60px;
+  width: 100px;
+  height: 120px;
   object-fit: cover;
-  border-radius: 50%;
+  border-radius: 8px;
   margin-bottom: 0.5rem;
   display: block;
   background-color: #f5f5f5;
@@ -290,7 +290,7 @@
   }
 
   .category-image {
-    width: 50px;
-    height: 50px;
+    width: 80px;
+    height: 80px;
   }
 }
