@@ -1,3 +1,68 @@
+@media (max-width: 600px) {
+  .doorriing-punchline-mobile {
+    width: 100vw;
+    background: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 2.5rem 0 1.5rem 1.5rem;
+    margin-bottom: 0;
+    gap: 0.3rem;
+    box-sizing: border-box;
+  }
+  .doorriing-punchline-main {
+    font-size: 3.2rem;
+    font-weight: 800;
+    color: #888;
+    letter-spacing: 0.01em;
+    margin-bottom: 0.3rem;
+    text-align: left;
+    line-height: 1.1;
+  }
+  .doorriing-punchline-sub {
+    font-size: 2.1rem;
+    font-weight: 700;
+    color: #888;
+    margin-bottom: 1.1rem;
+    text-align: left;
+    line-height: 1.1;
+  }
+  .doorriing-punchline-heart {
+    font-size: 2.2rem;
+    color: #f5565c;
+    text-align: center;
+    width: 100%;
+    margin-top: 0.3rem;
+    margin-bottom: 0.1rem;
+    letter-spacing: 0;
+    font-family: inherit;
+  }
+  .doorriing-punchline-brand {
+    font-size: 1.rem;
+    font-weight: 700;
+    color: #f5565c;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.85;
+    text-align: center;
+    width: 100%;
+    margin-left: 0;
+    margin-top: 0.2rem;
+  }
+}
+@media (max-width: 600px) {
+  .home-page {
+    display: flex;
+    flex-direction: column;
+  }
+  .home-buttons-container {
+    order: 1;
+  }
+  .scroller-row-mobile {
+    order: 2;
+  }
+}
 .home-page {
   min-height: 100vh;
   background: #f8f9fa;
@@ -10,11 +75,13 @@
   padding: 2rem;
 }
 
-.home-content h1 {
-  font-size: 2.5rem;
+
+.home-main-title {
+  font-size: 2.2rem;
   font-weight: 700;
   color: #222;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.2rem;
+  margin-top: 1.5rem;
   text-align: center;
 }
 
@@ -59,10 +126,12 @@
 }
 
 .home-toggle-btn.is-active {
-  background: linear-gradient(135deg, #f5565c, #f88f2d);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(245, 86, 92, 0.35);
-  transform: translateY(-2px);
+  background: transparent;
+  color: #f5565c;
+  box-shadow: none;
+  border-bottom: 3px solid #f88f2d;
+  border-radius: 0;
+  transform: none;
 }
 
 .home-items-section {

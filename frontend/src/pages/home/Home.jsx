@@ -69,7 +69,6 @@ const Home = () => {
 
   const renderItemsSection = (title, items, emptyMessage) => (
     <div className="home-items-section">
-      <h2 className="section-title">{title}</h2>
       {loading ? (
         <div className="loading-message">Loading items...</div>
       ) : error ? (
@@ -115,9 +114,7 @@ const Home = () => {
       <ImageScroller />
       <HomeButtons />
       <div className="home-content">
-        <h1>Welcome to BazarSe</h1>
-        <p>Your local marketplace</p>
-        
+        <h1 className="home-main-title">Welcome to Doorriing</h1>
         <div className="home-section-toggle">
           <button
             type="button"
@@ -136,6 +133,13 @@ const Home = () => {
         </div>
 
         {renderItemsSection(title, activeItems, emptyMessage)}
+      </div>
+      {/* Mobile-only punchline at page end */}
+      <div className="doorriing-punchline-mobile">
+        <div className="doorriing-punchline-main">Shop Local</div>
+        <div className="doorriing-punchline-sub">Doorriing Delivers ❤️</div>
+        <div className="doorriing-punchline-brand">DoorriinG</div>
+
       </div>
     </div>
   );

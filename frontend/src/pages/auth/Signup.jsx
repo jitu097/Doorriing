@@ -226,8 +226,29 @@ const Signup = () => {
               Sign up with Google
             </button>
 
+
             <div className="login-link">
               Already have an account? <Link to="/login" className="signin-link">Login</Link>
+            </div>
+            <div className="legal-text-auth">
+              By continuing, you agree to our{' '}
+              <a
+                href="/terms-of-service.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="legal-link"
+              >
+                Terms of service
+              </a>
+              {' '} &amp; {' '}
+              <a
+                href="/privacy-policy.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="legal-link"
+              >
+                Privacy policy
+              </a>
             </div>
           </form>
         </div>

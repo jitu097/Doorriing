@@ -32,8 +32,11 @@ const CartDrawer = ({ isOpen, onClose }) => {
     <div className="cart-drawer-overlay" onClick={handleOverlayClick}>
       <div className="cart-drawer">
         <div className="cart-drawer-header">
+          <button className="cart-drawer-back" onClick={onClose} aria-label="Go back">
+            <span style={{fontSize: '1.6rem', fontWeight: 600, lineHeight: 1}}>&larr;</span>
+          </button>
           <h2>My Cart</h2>
-          <button className="cart-drawer-close" onClick={onClose}>
+          <button className="cart-drawer-close" onClick={onClose} aria-label="Close cart">
             ✕
           </button>
         </div>
@@ -88,7 +91,12 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 <button className="checkout-button" onClick={handleCheckout}>
                   Proceed to Checkout
                 </button>
-                <div className="cancellation-policy">Cancellation Policy</div>
+                <div className="cancellation-policy-box">
+                  <div className="cancellation-policy-title">Cancellation Policy</div>
+                  <div className="cancellation-policy-text">
+                    Orders cannot be cancelled once packed for delivery. In case of unexpected delays, a refund will be provided, if applicable.
+                  </div>
+                </div>
               </div>
             </>
           )}
