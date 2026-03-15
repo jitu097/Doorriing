@@ -1,20 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAddress } from '../../context/AddressContext';
-import { orderService } from '../../services/order.service.js';
 import AddressForm from '../../components/common/AddressForm';
 import './Checkout.css';
 
 const Checkout = () => {
     const navigate = useNavigate();
-    const { cartItems, getCartTotal, clearCart } = useCart();
+    const location = useLocation();
+    const { cartItems, getCartTotal } = useCart();
     const { addresses, addAddress, updateAddress, isLoading: addressLoading } = useAddress();
     
-    const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState(null);
-    const [selectedAddressId, setSelectedAddressId] = useState(null);
-    const [paymentMethod, setPaymentMethod] = useState('COD');
+    const initialSelectedAddressId = location.state?.selectedAddressId || sessionStorage.getItem('checkoutSelectedAddressId');
+    const [selectedAddressId, setSelectedAddressId] = useState(initialSelectedAddressId ? String(initialSelectedAddressId) : null);
 
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [editingAddress, setEditingAddress] = useState(null);
@@ -41,41 +40,29 @@ const Checkout = () => {
         if (addresses && addresses.length > 0 && !selectedAddressId) {
             const defaultAddress = addresses.find(a => a.isDefault);
             if (defaultAddress) {
-                setSelectedAddressId(defaultAddress.id);
+                setSelectedAddressId(String(defaultAddress.id));
             } else {
-                setSelectedAddressId(addresses[0].id);
+                setSelectedAddressId(String(addresses[0].id));
             }
         }
     }, [addresses, selectedAddressId]);
 
-    const handlePlaceOrder = async (e) => {
-        e.preventDefault();
-        setErrorMsg(null);
+    useEffect(() => {
+        if (selectedAddressId) {
+            sessionStorage.setItem('checkoutSelectedAddressId', String(selectedAddressId));
+        }
+    }, [selectedAddressId]);
 
+    const handleContinueToPayment = (e) => {
+        e.preventDefault();
         if (!selectedAddressId) {
-            setErrorMsg('Please select a delivery address');
+            setErrorMsg('Please select a delivery address before continuing');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
-
-        try {
-            setLoading(true);
-            const response = await orderService.checkout({
-                addressId: selectedAddressId,
-                paymentMethod: paymentMethod
-            });
-
-            await clearCart();
-            
-            const orderId = response.data?.order?.id || response.data?.order?.order_number || 'success';
-            navigate(`/order-confirmation?orderId=${orderId}`);
-        } catch (error) {
-            console.error('Checkout failed:', error);
-            setErrorMsg(error.message || 'Failed to place order. Please try again.');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        } finally {
-            setLoading(false);
-        }
+        setErrorMsg(null);
+        sessionStorage.setItem('checkoutSelectedAddressId', selectedAddressId);
+        navigate('/checkout/payment', { state: { selectedAddressId } });
     };
 
     const handleAddNewAddress = () => {
@@ -124,9 +111,12 @@ const Checkout = () => {
     return (
         <div className="checkout-page">
             <div className="checkout-container">
-                <h1 className="checkout-title">Checkout</h1>
+                <div className="checkout-title-row">
+                    <h1 className="checkout-title">Checkout</h1>
+                    <span className="checkout-step-indicator">Step 1 of 2</span>
+                </div>
 
-                <form className="checkout-form" onSubmit={handlePlaceOrder}>
+                <form className="checkout-form" onSubmit={handleContinueToPayment}>
                     {errorMsg && <div className="error-message" style={{ color: '#dc2626', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #fecaca' }}>{errorMsg}</div>}
                     
                     <div className="checkout-sections">
@@ -141,36 +131,56 @@ const Checkout = () => {
                                     <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>Loading addresses...</div>
                                 ) : (
                                     <div className="address-grid-horizontal">
-                                        {addresses.map(addr => (
-                                            <div 
-                                                key={addr.id} 
-                                                className={`checkout-address-card ${selectedAddressId === addr.id ? 'selected' : ''}`}
-                                                onClick={() => setSelectedAddressId(addr.id)}
-                                            >
-                                                <div className="address-main-info">
-                                                    <input 
-                                                        type="radio" 
-                                                        className="address-radio"
-                                                        checked={selectedAddressId === addr.id}
-                                                        onChange={() => setSelectedAddressId(addr.id)}
-                                                    />
-                                                    <div className="address-details-text">
-                                                        <div className="address-header-row">
-                                                            <span className={`address-type-badge ${addr.isDefault ? 'default' : ''}`}>
-                                                                {getAddressIcon(addr.type)} {addr.type} {addr.isDefault && '(Default)'}
-                                                            </span>
+                                        {addresses.map(addr => {
+                                            const normalizedId = String(addr.id);
+                                            const isSelected = selectedAddressId && String(selectedAddressId) === normalizedId;
+                                            const primaryLine = [addr.building, addr.area, addr.landmark]
+                                                .filter(Boolean)
+                                                .join(', ');
+                                            const secondaryParts = [addr.city, addr.state]
+                                                .filter(Boolean)
+                                                .join(', ');
+                                            const secondaryLine = addr.postalCode
+                                                ? `${secondaryParts}${secondaryParts ? ' - ' : ''}${addr.postalCode}`
+                                                : secondaryParts;
+
+                                            return (
+                                                <div 
+                                                    key={addr.id} 
+                                                    className={`checkout-address-card ${isSelected ? 'selected' : ''}`}
+                                                    onClick={() => setSelectedAddressId(normalizedId)}
+                                                >
+                                                    <div className="address-main-info">
+                                                        <input 
+                                                            type="radio" 
+                                                            className="address-radio"
+                                                            checked={isSelected}
+                                                            onChange={() => setSelectedAddressId(normalizedId)}
+                                                        />
+                                                        <div className="address-details-text">
+                                                            <div className="address-header-row">
+                                                                <span className={`address-type-badge ${addr.isDefault ? 'default' : ''}`}>
+                                                                    {getAddressIcon(addr.type)} {addr.type} {addr.isDefault && '(Default)'}
+                                                                </span>
+                                                            </div>
+                                                            <span className="address-name">{addr.name}</span>
+                                                            {primaryLine && (
+                                                                <span className="address-line primary">{primaryLine}</span>
+                                                            )}
+                                                            {secondaryLine && (
+                                                                <span className="address-line secondary">{secondaryLine}</span>
+                                                            )}
+                                                            {addr.phone && (
+                                                                <span className="address-phone">📞 {addr.phone}</span>
+                                                            )}
                                                         </div>
-                                                        <span className="address-name">{addr.name}</span>
-                                                        <span className="address-line">{addr.building}, {addr.area}</span>
-                                                        <span className="address-line">{addr.city}, {addr.state} - {addr.postalCode}</span>
-                                                        <span className="address-phone">📞 {addr.phone}</span>
                                                     </div>
+                                                    <button type="button" className="address-edit-btn" onClick={(e) => handleEditAddress(e, addr)}>
+                                                        Edit
+                                                    </button>
                                                 </div>
-                                                <button type="button" className="address-edit-btn" onClick={(e) => handleEditAddress(e, addr)}>
-                                                    Edit
-                                                </button>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
 
                                         <button type="button" className="add-new-address-btn" onClick={handleAddNewAddress}>
                                             <span style={{ fontSize: '18px' }}>+</span> Add New Address
@@ -180,45 +190,6 @@ const Checkout = () => {
                             </div>
 
                             {/* Payment Method Selection */}
-                            <div className="checkout-section">
-                                <h2 className="section-heading">Payment Method</h2>
-                                <div className="payment-options">
-                                    <label className="payment-option">
-                                        <input
-                                            type="radio"
-                                            name="paymentMethod"
-                                            value="COD"
-                                            checked={paymentMethod === 'COD'}
-                                            onChange={(e) => setPaymentMethod(e.target.value)}
-                                        />
-                                        <div className="payment-info">
-                                            <strong>Cash on Delivery</strong>
-                                            <span>Pay when you receive</span>
-                                        </div>
-                                    </label>
-                                    
-                                    <label className="payment-option">
-                                        <input
-                                            type="radio"
-                                            name="paymentMethod"
-                                            value="Card"
-                                            checked={paymentMethod === 'Card'}
-                                            onChange={(e) => setPaymentMethod(e.target.value)}
-                                        />
-                                        <div className="payment-info">
-                                            <strong>Card Payment</strong>
-                                            <span>Credit / Debit Card (Demo)</span>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-
-                            {/* Place Order Button */}
-                            <div className="checkout-section">
-                                <button type="submit" className="place-order-btn" disabled={loading || !selectedAddressId}>
-                                    {loading ? 'Processing...' : 'Place Order'}
-                                </button>
-                            </div>
                             
                         </div>
 
@@ -263,8 +234,12 @@ const Checkout = () => {
                                     <span>₹{grandTotal.toFixed(2)}</span>
                                 </div>
 
-                                <button type="submit" className="place-order-btn" disabled={loading || !selectedAddressId}>
-                                    {loading ? 'Processing...' : 'Place Order'}
+                                <button
+                                    type="submit"
+                                    className="place-order-btn"
+                                    disabled={!selectedAddressId}
+                                >
+                                    Continue to Payment
                                 </button>
                             </div>
                         </div>

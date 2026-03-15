@@ -22,7 +22,8 @@ const RestaurantCard = ({ shop }) => {
   const statusMeta = getShopStatusMeta(safeShop);
   const isClosed = statusMeta.isClosed;
   const initials = title ? title.charAt(0).toUpperCase() : '?';
-  const formattedStock = stockCount !== null ? `${formatCount(stockCount)} dishes ready` : null;
+  const hasItemCount = stockCount !== null && Number(stockCount) > 0;
+  const formattedStock = hasItemCount ? `${formatCount(stockCount)} items` : null;
   const description = safeShop.description || (categoryCount ? `${categoryCount} categories available` : null);
   const showMeta = categoryCount !== null || formattedStock;
   

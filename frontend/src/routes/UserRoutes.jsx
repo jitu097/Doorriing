@@ -4,6 +4,7 @@ import Signup from '../pages/auth/Signup';
 import Landingpage from '../pages/Landingpage/Landingpage';
 import Home from '../pages/home/Home';
 import Checkout from '../pages/cart/Checkout';
+import CheckoutPayment from '../pages/cart/CheckoutPayment';
 import OrderSuccess from '../pages/cart/OrderSuccess';
 import OrderConfirmation from '../pages/orders/OrderConfirmation';
 import OrdersList from '../pages/orders/OrdersList';
@@ -61,6 +62,7 @@ const UserRoutes = () => {
       <Route element={<ProtectedRoute />}>
         <Route element={<PageLayout />}>
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/checkout/payment" element={<CheckoutPayment />} />
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
           <Route path="/orders" element={<OrdersList />} />

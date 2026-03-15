@@ -5,6 +5,41 @@ import { useAuth } from '../hooks/useAuth';
 
 const CartContext = createContext();
 
+const normalizeIdValue = (value) => {
+    if (value === undefined || value === null) return '';
+    return typeof value === 'string' ? value : value.toString();
+};
+
+const ensureVariantSuffix = (idValue, variantLabel) => {
+    const normalizedId = normalizeIdValue(idValue);
+    if (!variantLabel) return normalizedId;
+
+    const trimmedVariant = variantLabel.toString().trim().toLowerCase();
+    if (!trimmedVariant) return normalizedId;
+
+    if (normalizedId.endsWith(`-${trimmedVariant}`)) {
+        return normalizedId;
+    }
+
+    const baseId = normalizedId.replace(/-(half|full)$/i, '');
+    return `${baseId}-${trimmedVariant}`;
+};
+
+const deriveClientItemId = (item, fallback = '') => {
+    if (!item) return normalizeIdValue(fallback);
+    if (item.clientItemId) return ensureVariantSuffix(item.clientItemId, item.portion || item.variant);
+    if (item.client_id) return ensureVariantSuffix(item.client_id, item.portion || item.variant);
+
+    const rawId = item.serverItemId ?? item.server_id ?? item.item_id ?? item.id ?? fallback;
+    return ensureVariantSuffix(rawId, item.portion || item.variant || item.portion_label || item.selectedPortion);
+};
+
+const findCartItemByClientId = (items, targetId) => {
+    const normalizedTarget = normalizeIdValue(targetId);
+    if (!normalizedTarget) return null;
+    return items.find((entry) => deriveClientItemId(entry) === normalizedTarget) || null;
+};
+
 export const useCart = () => {
     const context = useContext(CartContext);
     if (!context) {
@@ -38,12 +73,20 @@ export const CartProvider = ({ children }) => {
                 }
 
                 // Map backend structure to frontend structure
-                const mappedItems = cart_items.map(ci => ({
-                    ...ci.items,
-                    cartItemId: ci.id,
-                    quantity: ci.quantity,
-                    shopId: shop_id
-                }));
+                const mappedItems = cart_items.map((ci) => {
+                    const itemPayload = ci.items || {};
+                    const fallbackId = itemPayload?.id ?? ci.item_id ?? ci.id;
+                    const enrichedPayload = { ...itemPayload, variant: itemPayload?.portion || ci.variant };
+                    const clientItemId = deriveClientItemId(enrichedPayload, fallbackId);
+
+                    return {
+                        ...enrichedPayload,
+                        clientItemId,
+                        cartItemId: ci.id,
+                        quantity: ci.quantity,
+                        shopId: shop_id,
+                    };
+                });
 
                 setCartItems(mappedItems);
                 setCartMeta({ shopId: shop_id, shopType: mappedItems[0]?.shopType || null });
@@ -78,6 +121,13 @@ export const CartProvider = ({ children }) => {
         }
 
         try {
+            const payloadItemId = item.id ?? item.itemId ?? item.serverItemId;
+            if (!payloadItemId) {
+                throw new Error('Unable to add item to cart: missing item identifier');
+            }
+
+            const clientItemId = deriveClientItemId(item, payloadItemId);
+
             // Check for shop conflicts locally first for quick UX
             const hasItems = cartItems.length > 0;
             if (hasItems) {
@@ -103,12 +153,18 @@ export const CartProvider = ({ children }) => {
 
             // Optimistically add item to local state so UI updates instantly
             setCartItems(prev => {
-                const exists = prev.find(i => i.id === item.id);
+                const exists = prev.find(i => deriveClientItemId(i) === clientItemId);
                 if (exists) {
-                    return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+                    return prev.map(i =>
+                        deriveClientItemId(i) === clientItemId
+                            ? { ...i, quantity: i.quantity + 1 }
+                            : i
+                    );
                 }
                 return [...prev, {
                     ...item,
+                    id: payloadItemId,
+                    clientItemId,
                     quantity: 1,
                     shopId: item.shopId,
                     cartItemId: `temp-${Date.now()}` // Temporary ID until fetched
@@ -123,7 +179,7 @@ export const CartProvider = ({ children }) => {
             // setLoading(true);
 
             // API Call in background
-            await cartService.addToCart(item.shopId, item.id, 1);
+            await cartService.addToCart(item.shopId, payloadItemId, 1);
 
             // Re-fetch quietly to get real cartItemIds from DB
             await fetchCart();
@@ -139,11 +195,12 @@ export const CartProvider = ({ children }) => {
     // Remove item completely from cart
     const removeFromCart = async (id) => {
         try {
-            const item = cartItems.find(i => i.id === id);
+            const item = findCartItemByClientId(cartItems, id);
             if (!item) return;
 
             // Optimistic update - UI updates instantly
-            const newItems = cartItems.filter((i) => i.id !== id);
+            const targetClientId = deriveClientItemId(item);
+            const newItems = cartItems.filter((i) => deriveClientItemId(i) !== targetClientId);
             setCartItems(newItems);
             if (newItems.length === 0) {
                 setCartMeta({ shopId: null, shopType: null });
@@ -162,13 +219,16 @@ export const CartProvider = ({ children }) => {
     // Increase quantity by 1
     const increaseQty = async (id) => {
         try {
-            const item = cartItems.find((i) => i.id === id);
+            const item = findCartItemByClientId(cartItems, id);
             if (!item) return;
 
             const newQty = item.quantity + 1;
 
             // Optimistically update
-            setCartItems((prev) => prev.map(i => i.id === id ? { ...i, quantity: newQty } : i));
+            const targetClientId = deriveClientItemId(item);
+            setCartItems((prev) => prev.map(i =>
+                deriveClientItemId(i) === targetClientId ? { ...i, quantity: newQty } : i
+            ));
 
             if (item.cartItemId && !item.cartItemId.toString().startsWith('temp-')) {
                 await cartService.updateCartItem(item.cartItemId, newQty);
@@ -182,7 +242,7 @@ export const CartProvider = ({ children }) => {
     // Decrease quantity by 1, remove if quantity becomes 0
     const decreaseQty = async (id) => {
         try {
-            const item = cartItems.find((i) => i.id === id);
+            const item = findCartItemByClientId(cartItems, id);
             if (!item) return;
 
             if (item.quantity === 1) {
@@ -193,7 +253,10 @@ export const CartProvider = ({ children }) => {
             const newQty = item.quantity - 1;
 
             // Optimistically update
-            setCartItems((prev) => prev.map(i => i.id === id ? { ...i, quantity: newQty } : i));
+            const targetClientId = deriveClientItemId(item);
+            setCartItems((prev) => prev.map(i =>
+                deriveClientItemId(i) === targetClientId ? { ...i, quantity: newQty } : i
+            ));
 
             if (item.cartItemId && !item.cartItemId.toString().startsWith('temp-')) {
                 await cartService.updateCartItem(item.cartItemId, newQty);
@@ -235,12 +298,12 @@ export const CartProvider = ({ children }) => {
 
     // Check if item is in cart
     const isInCart = (id) => {
-        return cartItems.some((item) => item.id === id);
+        return Boolean(findCartItemByClientId(cartItems, id));
     };
 
     // Get item from cart by id
     const getCartItem = (id) => {
-        return cartItems.find((item) => item.id === id);
+        return findCartItemByClientId(cartItems, id);
     };
 
     const value = {

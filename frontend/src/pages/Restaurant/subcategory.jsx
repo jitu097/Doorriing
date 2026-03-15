@@ -4,6 +4,7 @@ import ItemCard from './itemcard';
 import EmptyState from '../../components/common/EmptyState';
 import './subcategory.css';
 import { getCategoryWithDetails } from '../../services/category.service.js';
+import { formatCount } from '../../utils/shopPresentation';
 
 const getGroupKey = (group) => (group?.subcategory_id ?? 'no-subcategory');
 
@@ -149,7 +150,8 @@ const SubCategory = () => {
               {items.map((item) => {
                 const numericStock = Number(item?.stock_quantity);
                 const stockValue = Number.isFinite(numericStock) ? numericStock : null;
-                const stockLabel = stockValue !== null ? `${stockValue} ready` : null;
+                const formattedStockValue = stockValue > 0 ? formatCount(stockValue) : null;
+                const stockLabel = formattedStockValue ? `${formattedStockValue} items` : null;
                 const halfPortionPrice = item?.half_portion_price;
                 const fullPortionPrice = item?.full_price ?? item?.price;
 

@@ -73,8 +73,10 @@ const ItemCard = ({
         },
       ]
     : null;
-  const itemId = getFallbackId(id, name, priceValue ?? price);
-  const cartItem = getCartItem(itemId);
+  const fallbackId = getFallbackId(id, name, priceValue ?? price);
+  const serverItemId = id ?? fallbackId;
+  const clientItemId = serverItemId;
+  const cartItem = getCartItem(clientItemId);
   const isInCart = Boolean(cartItem);
   const secondaryText = subtitle || description;
   const showVegIndicator = typeof isVeg === 'boolean';
@@ -97,7 +99,8 @@ const ItemCard = ({
 
     // If no variants, add directly to cart
     addToCart({
-      id: itemId,
+      id: serverItemId,
+      clientItemId,
       name,
       price: priceValue ?? price,
       image,
@@ -115,9 +118,12 @@ const ItemCard = ({
       return;
     }
 
-    const variantId = `${itemId}-${variant.key}`;
+    const variantSuffix = variant.key.toLowerCase();
+    const variantClientId = `${clientItemId}-${variantSuffix}`;
+    const variantServerId = `${serverItemId}-${variantSuffix}`;
     addToCart({
-      id: variantId,
+      id: variantServerId,
+      clientItemId: variantClientId,
       name: `${name} (${variant.label})`,
       price: variant.priceValue,
       image,
@@ -128,20 +134,20 @@ const ItemCard = ({
       shopId,
       shopType,
       portion: variant.label,
-      baseItemId: itemId,
     });
   };
 
   const handleVariantUpdate = (variant, changeAmount) => {
-    const variantId = `${itemId}-${variant.key}`;
+    const variantSuffix = variant.key.toLowerCase();
+    const variantId = `${clientItemId}-${variantSuffix}`;
     if (changeAmount > 0) {
       increaseQty(variantId);
     } else {
       decreaseQty(variantId);
       
       // Check if both Half and Full quantities are 0, if so collapse back to initial view
-      const halfVariantId = `${itemId}-half`;
-      const fullVariantId = `${itemId}-full`;
+      const halfVariantId = `${clientItemId}-half`;
+      const fullVariantId = `${clientItemId}-full`;
       const halfQty = getCartItem(halfVariantId)?.quantity || 0;
       const fullQty = getCartItem(fullVariantId)?.quantity || 0;
       
@@ -183,7 +189,7 @@ const ItemCard = ({
         {showVariantPricing && showVariants && variantOptions ? (
           <div className="portion-controls-container">
             {variantOptions.map((variant) => {
-              const variantId = `${itemId}-${variant.key}`;
+              const variantId = `${clientItemId}-${variant.key.toLowerCase()}`;
               const variantCartItem = getCartItem(variantId);
               const variantQty = variantCartItem ? variantCartItem.quantity : 0;
 
@@ -256,7 +262,7 @@ const ItemCard = ({
               <div className="item-card-qty-controls">
                 <button
                   className="qty-btn-small"
-                  onClick={() => decreaseQty(itemId)}
+                  onClick={() => decreaseQty(clientItemId)}
                   aria-label="Decrease quantity"
                 >
                   -
@@ -264,7 +270,7 @@ const ItemCard = ({
                 <span className="qty-display-small">{cartItem.quantity}</span>
                 <button
                   className="qty-btn-small"
-                  onClick={() => increaseQty(itemId)}
+                  onClick={() => increaseQty(clientItemId)}
                   aria-label="Increase quantity"
                 >
                   +
