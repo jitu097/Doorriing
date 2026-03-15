@@ -4,6 +4,7 @@ import GroceryItemCard from './itemcard';
 import EmptyState from '../../components/common/EmptyState';
 import './subcategoryitem.css';
 import { getCategoryWithDetails } from '../../services/category.service.js';
+import { computeFinalPrice } from '../../utils/pricing';
 
 const getGroupKey = (group) => (group?.subcategory_id ?? 'no-subcategory');
 
@@ -150,17 +151,19 @@ const SubCategoryItem = () => {
                 const numericStock = Number(item?.stock_quantity);
                 const stockValue = Number.isFinite(numericStock) ? numericStock : null;
                 const stockLabel = stockValue !== null ? `${stockValue} in stock` : null;
-                const halfPortionPrice = item?.half_portion_price;
-                const fullPortionPrice = item?.full_price ?? item?.price;
+                const baseOriginalPrice = item?.price ?? null;
+                const baseFinalPrice =
+                  item?.final_price ??
+                  computeFinalPrice(baseOriginalPrice, item?.discount_type, item?.discount_value) ??
+                  baseOriginalPrice;
 
                 return (
                   <GroceryItemCard
                     key={item.id}
                     id={item.id}
                     name={item.name}
-                    price={item.price}
-                    halfPortionPrice={halfPortionPrice}
-                    fullPortionPrice={fullPortionPrice}
+                    price={baseFinalPrice}
+                    originalPrice={baseOriginalPrice}
                     isVeg={item.is_veg}
                     isAvailable={item.is_available !== false}
                     description={item.description}

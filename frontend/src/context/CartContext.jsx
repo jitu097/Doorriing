@@ -34,6 +34,18 @@ const deriveClientItemId = (item, fallback = '') => {
     return ensureVariantSuffix(rawId, item.portion || item.variant || item.portion_label || item.selectedPortion);
 };
 
+const resolveApiItemId = (item, fallback = '') => {
+    const candidates = [
+        item?.id,
+        item?.item_id,
+        item?.serverItemId,
+        item?.itemId,
+        fallback,
+    ];
+
+    return candidates.find((candidate) => typeof candidate === 'string' && candidate.length > 0) || null;
+};
+
 const findCartItemByClientId = (items, targetId) => {
     const normalizedTarget = normalizeIdValue(targetId);
     if (!normalizedTarget) return null;
@@ -58,6 +70,44 @@ export const CartProvider = ({ children }) => {
     const { user, loading: authLoading } = useAuth();
     const isAuthenticated = !!user;
 
+    const applyCartPayload = useCallback((cartPayload) => {
+        const shopIdFromPayload = cartPayload?.shop_id ?? null;
+        const businessType = cartPayload?.business_type ?? null;
+        const items = cartPayload?.cart_items ?? [];
+
+        if (!items.length) {
+            setCartItems([]);
+            setCartMeta({ shopId: null, shopType: null });
+            return;
+        }
+
+        const mappedItems = items.map((ci) => {
+            const itemPayload = ci.items || {};
+            const fallbackId = itemPayload?.id ?? ci.item_id ?? ci.id;
+            const derivedVariant = itemPayload?.portion || ci.variant;
+            const enrichedPayload = {
+                ...itemPayload,
+                variant: derivedVariant,
+                shopType: itemPayload?.shopType || businessType || itemPayload?.shops?.business_type || null,
+                shopId: itemPayload?.shop_id || shopIdFromPayload,
+            };
+            const clientItemId = deriveClientItemId(enrichedPayload, fallbackId);
+
+            return {
+                ...enrichedPayload,
+                clientItemId,
+                cartItemId: ci.id,
+                quantity: ci.quantity,
+            };
+        });
+
+        setCartItems(mappedItems);
+        setCartMeta({
+            shopId: shopIdFromPayload,
+            shopType: mappedItems[0]?.shopType || businessType || null,
+        });
+    }, []);
+
     const fetchCart = useCallback(async () => {
         if (authLoading || !isAuthenticated) return;
         try {
@@ -65,31 +115,10 @@ export const CartProvider = ({ children }) => {
             setError(null);
             const response = await cartService.getCart();
             if (response && response.data) {
-                const { cart_items, shop_id } = response.data;
-                if (!cart_items || cart_items.length === 0) {
-                    setCartItems([]);
-                    setCartMeta({ shopId: null, shopType: null });
-                    return;
-                }
-
-                // Map backend structure to frontend structure
-                const mappedItems = cart_items.map((ci) => {
-                    const itemPayload = ci.items || {};
-                    const fallbackId = itemPayload?.id ?? ci.item_id ?? ci.id;
-                    const enrichedPayload = { ...itemPayload, variant: itemPayload?.portion || ci.variant };
-                    const clientItemId = deriveClientItemId(enrichedPayload, fallbackId);
-
-                    return {
-                        ...enrichedPayload,
-                        clientItemId,
-                        cartItemId: ci.id,
-                        quantity: ci.quantity,
-                        shopId: shop_id,
-                    };
-                });
-
-                setCartItems(mappedItems);
-                setCartMeta({ shopId: shop_id, shopType: mappedItems[0]?.shopType || null });
+                applyCartPayload(response.data);
+            } else {
+                setCartItems([]);
+                setCartMeta({ shopId: null, shopType: null });
             }
         } catch (err) {
             console.error('Error fetching cart:', err);
@@ -97,7 +126,7 @@ export const CartProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, [isAuthenticated, authLoading]);
+    }, [isAuthenticated, authLoading, applyCartPayload]);
 
     // Initial fetch when authenticated
     useEffect(() => {
@@ -178,11 +207,13 @@ export const CartProvider = ({ children }) => {
             // Only show loading if it's not an optimistic update (we want the UI to be fast, so we skip the global block)
             // setLoading(true);
 
-            // API Call in background
-            await cartService.addToCart(item.shopId, payloadItemId, 1);
-
-            // Re-fetch quietly to get real cartItemIds from DB
-            await fetchCart();
+            // API call; response already returns latest cart snapshot
+            const apiResponse = await cartService.addToCart(item.shopId, payloadItemId, 1);
+            if (apiResponse?.data) {
+                applyCartPayload(apiResponse.data);
+            } else {
+                await fetchCart();
+            }
         } catch (err) {
             console.error('Error adding to cart:', err);
             await fetchCart(); // Revert on failure
@@ -230,9 +261,20 @@ export const CartProvider = ({ children }) => {
                 deriveClientItemId(i) === targetClientId ? { ...i, quantity: newQty } : i
             ));
 
-            if (item.cartItemId && !item.cartItemId.toString().startsWith('temp-')) {
-                await cartService.updateCartItem(item.cartItemId, newQty);
+            const isTempId = !item.cartItemId || item.cartItemId.toString().startsWith('temp-');
+
+            if (isTempId) {
+                const apiItemId = resolveApiItemId(item, targetClientId);
+                if (item.shopId && apiItemId) {
+                    await cartService.addToCart(item.shopId, apiItemId, 1);
+                    await fetchCart();
+                } else {
+                    await fetchCart();
+                }
+                return;
             }
+
+            await cartService.updateCartItem(item.cartItemId, newQty);
         } catch (err) {
             console.error('Error increasing quantity:', err);
             await fetchCart(); // Revert on failure

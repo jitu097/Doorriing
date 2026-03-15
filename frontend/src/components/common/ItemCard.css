@@ -81,6 +81,12 @@
   background-color: #e74c3c;
 }
 
+.food-type-indicator {
+  font-size: 1.1rem;
+  line-height: 1;
+  margin-right: 4px;
+}
+
 .item-card-name {
   font-size: 0.95rem;
   font-weight: 600;
@@ -417,6 +423,242 @@
   }
 }
 
+.item-card.restaurant-card {
+  border-radius: 18px;
+  border: 1px solid #ffe1e7;
+  box-shadow: 0 15px 40px rgba(255, 95, 109, 0.12);
+}
+
+.restaurant-card .item-card-body {
+  gap: 14px;
+}
+
+.restaurant-price-chip-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.restaurant-price-chip {
+  padding: 10px 14px 12px;
+  border-radius: 18px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.restaurant-chip-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.restaurant-chip-price-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+}
+
+.restaurant-chip-original {
+  font-size: 0.8rem;
+  color: #b86a6a;
+  text-decoration: line-through;
+}
+
+.restaurant-chip-final {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1f1f24;
+}
+
+.restaurant-price-chip.half {
+  background: #ffecef;
+  color: #d43f5e;
+}
+
+.restaurant-price-chip.full {
+  background: #fff6da;
+  color: #a06a00;
+}
+
+.restaurant-footer-collapsed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.restaurant-price-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.restaurant-price-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #7a7a7a;
+}
+
+.restaurant-price-current {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1f1f24;
+}
+
+.restaurant-price-original {
+  font-size: 0.9rem;
+  color: #a3a3a3;
+  text-decoration: line-through;
+}
+
+.restaurant-add-main {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 12px 18px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #ff5f6d 0%, #ff344c 100%);
+  box-shadow: 0 12px 25px rgba(255, 94, 107, 0.28);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.restaurant-add-main:disabled {
+  background: #f0f0f0;
+  color: #9d9d9d;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.restaurant-add-main:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 30px rgba(255, 94, 107, 0.35);
+}
+
+.restaurant-variant-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.restaurant-variant-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 14px 16px;
+  border: 1px solid #f4f4f4;
+  box-shadow: 0 10px 25px rgba(27, 27, 27, 0.07);
+}
+
+.restaurant-variant-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.restaurant-variant-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a4a4a;
+}
+
+.restaurant-variant-price-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.restaurant-variant-original {
+  font-size: 0.85rem;
+  color: #b5b5b5;
+  text-decoration: line-through;
+}
+
+.restaurant-variant-final {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #e53945;
+}
+
+.restaurant-variant-add {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  background: #ffe4e8;
+  color: #e53945;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.restaurant-variant-add:not(:disabled):hover {
+  background: #ffd1d7;
+  transform: translateY(-1px);
+}
+
+.restaurant-variant-add:disabled {
+  background: #f0f0f0;
+  color: #b1b1b1;
+  cursor: not-allowed;
+}
+
+.restaurant-qty-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: #fff5f6;
+  border: 1px solid #ffc4ce;
+}
+
+.restaurant-qty-controls button {
+  border: none;
+  background: #ffffff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e53945;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.restaurant-qty-controls button:hover {
+  background: #ffeef1;
+}
+
+.restaurant-qty-controls span {
+  min-width: 20px;
+  text-align: center;
+  font-weight: 600;
+  color: #2b2b2b;
+}
+
+.restaurant-main-qty {
+  justify-content: space-between;
+}
+
+.restaurant-main-qty button {
+  width: 34px;
+  height: 34px;
+}
+
 @media (max-width: 480px) {
   .item-card-image {
     height: 115px;
@@ -459,5 +701,51 @@
 
   .qty-display-small {
     font-size: 0.85rem;
+  }
+
+  .restaurant-variant-row {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .restaurant-qty-controls {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+
+  .restaurant-price-chip-row {
+    display: flex;
+    gap: 14px;
+  }
+
+  .restaurant-price-chip {
+    flex: 1;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    align-items: flex-start;
+  }
+
+  .restaurant-chip-label {
+    font-size: 0.8rem;
+    color: #222;
+    letter-spacing: 0.05em;
+  }
+
+  .restaurant-chip-price-stack {
+    align-items: flex-start;
+  }
+
+  .restaurant-chip-original {
+    color: #7c7c7c;
+    font-size: 0.75rem;
+  }
+
+  .restaurant-chip-final {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #000;
   }
 }

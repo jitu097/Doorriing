@@ -5,6 +5,7 @@ import EmptyState from '../../components/common/EmptyState';
 import './subcategory.css';
 import { getCategoryWithDetails } from '../../services/category.service.js';
 import { formatCount } from '../../utils/shopPresentation';
+import { computeFinalPrice } from '../../utils/pricing';
 
 const getGroupKey = (group) => (group?.subcategory_id ?? 'no-subcategory');
 
@@ -152,18 +153,34 @@ const SubCategory = () => {
                 const stockValue = Number.isFinite(numericStock) ? numericStock : null;
                 const formattedStockValue = stockValue > 0 ? formatCount(stockValue) : null;
                 const stockLabel = formattedStockValue ? `${formattedStockValue} items` : null;
-                const halfPortionPrice = item?.half_portion_price;
-                const fullPortionPrice = item?.full_price ?? item?.price;
+
+                const foodType = (item?.food_type || '').toLowerCase();
+                const baseOriginalPrice = item?.full_price ?? item?.price ?? null;
+                const baseFinalPrice =
+                  item?.full_final_price ??
+                  item?.final_price ??
+                  computeFinalPrice(baseOriginalPrice, item?.full_discount_type, item?.full_discount_value) ??
+                  baseOriginalPrice;
+                const halfPortionOriginalPrice = item?.half_portion_price ?? null;
+                const halfPortionFinalPrice =
+                  item?.half_portion_final_price ??
+                  computeFinalPrice(halfPortionOriginalPrice, item?.half_discount_type, item?.half_discount_value) ??
+                  halfPortionOriginalPrice;
+                const derivedIsVeg = foodType === 'nonveg' ? false : true;
 
                 return (
                   <ItemCard
                     key={item.id}
                     id={item.id}
                     name={item.name}
-                    price={item.price}
-                    halfPortionPrice={halfPortionPrice}
-                    fullPortionPrice={fullPortionPrice}
-                    isVeg={item.is_veg}
+                    price={baseFinalPrice}
+                    originalPrice={baseOriginalPrice}
+                    halfPortionPrice={halfPortionOriginalPrice}
+                    halfPortionFinalPrice={halfPortionFinalPrice}
+                    fullPortionPrice={baseOriginalPrice}
+                    fullPortionFinalPrice={baseFinalPrice}
+                    foodType={foodType}
+                    isVeg={derivedIsVeg}
                     isAvailable={item.is_available !== false}
                     description={item.description}
                     stockQuantityLabel={stockLabel}

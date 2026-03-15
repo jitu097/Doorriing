@@ -91,7 +91,32 @@ class CategoryService {
       // IMPORTANT: We fetch ALL items for this category, regardless of subcategory
       const { data: items, error: itemsError } = await supabase
         .from('items')
-        .select('id, shop_id, category_id, subcategory_id, name, description, price, full_price, half_portion_price, has_variants, image_url, is_active, is_available, stock_quantity')
+        .select(`
+          id,
+          shop_id,
+          category_id,
+          subcategory_id,
+          name,
+          description,
+          price,
+          discount_type,
+          discount_value,
+          final_price,
+          full_price,
+          full_discount_type,
+          full_discount_value,
+          full_final_price,
+          half_portion_price,
+          half_discount_type,
+          half_discount_value,
+          half_portion_final_price,
+          food_type,
+          has_variants,
+          image_url,
+          is_active,
+          is_available,
+          stock_quantity
+        `)
         .eq('shop_id', shopId)
         .eq('category_id', categoryId)
         .eq('is_active', true)
