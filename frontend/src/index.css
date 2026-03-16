@@ -1,3 +1,46 @@
+/* Footer punchline for desktop */
+.footer-punchline-desktop {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	margin: 2.5rem 0 1.5rem 0;
+}
+.footer-punchline-main {
+	font-size: 2.6rem;
+	font-weight: 700;
+	color: #888;
+	letter-spacing: 0.01em;
+}
+.footer-punchline-sub {
+	font-size: 2rem;
+	font-weight: 600;
+	color: #888;
+	margin-top: 0.2rem;
+	margin-bottom: 0.2rem;
+}
+.footer-punchline-brand {
+	font-size: 1.2rem;
+	font-weight: 700;
+	color: #f5565c;
+	letter-spacing: 0.15em;
+	margin-top: 0.5rem;
+}
+@media (max-width: 900px) {
+	.footer-punchline-desktop {
+		font-size: 1.2rem;
+		margin: 1.2rem 0 1rem 0;
+	}
+	.footer-punchline-main {
+		font-size: 1.5rem;
+	}
+	.footer-punchline-sub {
+		font-size: 1.1rem;
+	}
+	.footer-punchline-brand {
+		font-size: 1rem;
+	}
+}
 /* Footer styles */
 .footer {
 	background: #fff;

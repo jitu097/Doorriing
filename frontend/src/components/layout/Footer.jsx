@@ -6,6 +6,11 @@ const Footer = () => {
 
   return (
     <footer className="footer">
+      <div className="footer-punchline-desktop">
+        <div className="footer-punchline-main">Shop Local</div>
+        <div className="footer-punchline-sub">Doorriing Delivers <span role="img" aria-label="heart">❤️</span></div>
+        <div className="footer-punchline-brand">DOORRIING</div>
+      </div>
       <div className="footer-topline">© {currentYear} Doorriing. All rights reserved.</div>
       <div className="footer-main-row">
         <div className="footer-copyright">

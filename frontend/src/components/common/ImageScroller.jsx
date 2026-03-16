@@ -2,8 +2,9 @@ import React, { useRef, useState } from 'react';
 import './ImageScroller.css';
 
 const images = [
+   '/two.png', 
   '/one.png',
-  '/two.png',
+ 
   '/three.jpeg',
   '/four.png',
 ];

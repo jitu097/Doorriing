@@ -175,13 +175,6 @@ const Home = () => {
 
         {renderItemsSection(title, activeItems, emptyMessage)}
       </div>
-      {/* Mobile-only punchline at page end */}
-      <div className="doorriing-punchline-mobile">
-        <div className="doorriing-punchline-main">Shop Local</div>
-        <div className="doorriing-punchline-sub">Doorriing Delivers ❤️</div>
-        <div className="doorriing-punchline-brand">DoorriinG</div>
-
-      </div>
     </div>
   );
 };

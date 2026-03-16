@@ -30,11 +30,21 @@ import CategoryItem from '../pages/Restaurant/categoryitem';
 import SubCategory from '../pages/Restaurant/subcategory';
 import SubCategoryItem from '../pages/Grocery/subcategoryitem';
 
+function isMobile() {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth <= 600;
+}
+
 const UserRoutes = () => {
   return (
     <Routes>
-      {/* Landing Page */}
-      <Route path="/" element={<Landingpage />} />
+      {/* Landing Page - Only show on mobile, redirect to /home on desktop */}
+      <Route
+        path="/"
+        element={
+          isMobile() ? <Landingpage /> : <Navigate to="/home" replace />
+        }
+      />
 
       {/* Public Routes */}
       <Route path="/login" element={<Login />} />

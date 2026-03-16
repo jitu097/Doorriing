@@ -1,3 +1,6 @@
+.button-text {
+  display: none;
+}
 .home-buttons-container {
   display: flex;
   justify-content: center;
@@ -102,17 +105,52 @@
 
 /* Grocery Button with background image */
 .grocery-button {
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.3)),
-    url('/Gbutton.png');
+  background: #2f580b;
+  background-image: none;
+  color: #fff;
+}
+
+.grocery-button .button-text {
+  display: block;
+  font-family: 'Poppins', 'Inter', Arial, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff;
+  margin-top: 28px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+.grocery-button img.store-icon {
+  width: 90px;
+  height: 79px;
+  margin-bottom: -30px;
+  display: block;
 }
 
 /* Restaurant Button with gradient */
 .restaurant-button {
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.3)),
-    url('/Rbutton.jpg');
+  background: #a44f13;
+  background-image: none;
+  color: #fff;
 }
+
+.restaurant-button .button-text {
+  display: block;
+  font-family: 'Poppins', 'Inter', Arial, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff;
+  margin-top:-23px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+.restaurant-button img.restaurant-icon {
+  width: 90px;
+  height: 90px;
+  margin-bottom: 1.1rem;
+  display: block;
+}
+
 
 .home-button img {
   width: 140px;
