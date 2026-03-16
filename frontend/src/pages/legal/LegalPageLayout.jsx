@@ -1,6 +1,7 @@
 import React from 'react';
 import './legalPages.css';
 import { COMPANY_DETAILS, COMPANY_MANAGED_NOTE } from '../../config/companyInfo';
+import Footer from '../../components/layout/Footer';
 
 const LegalPageLayout = ({ title, subtitle, intro, children }) => {
   return (
@@ -29,6 +30,7 @@ const LegalPageLayout = ({ title, subtitle, intro, children }) => {
           </div>
         </aside>
       </div>
+      <Footer />
     </div>
   );
 };
