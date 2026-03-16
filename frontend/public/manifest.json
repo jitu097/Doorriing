@@ -30,4 +30,10 @@
       "type": "image/png"
     }
   ]
+  ,
+  "serviceworker": {
+    "src": "sw.js",
+    "scope": "/",
+    "type": "classic"
+  }
 }

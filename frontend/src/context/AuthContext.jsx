@@ -21,13 +21,23 @@ export const AuthProvider = ({ children }) => {
     };
 
     // Login
-    const loginWithEmail = (email, password) => {
-        return signInWithEmailAndPassword(auth, email, password);
+    const loginWithEmail = async (email, password) => {
+        const result = await signInWithEmailAndPassword(auth, email, password);
+        if (result.user) {
+            const token = await result.user.getIdToken();
+            localStorage.setItem('token', token);
+        }
+        return result;
     };
 
     // Login with Google
-    const loginWithGoogle = () => {
-        return signInWithPopup(auth, googleProvider);
+    const loginWithGoogle = async () => {
+        const result = await signInWithPopup(auth, googleProvider);
+        if (result.user) {
+            const token = await result.user.getIdToken();
+            localStorage.setItem('token', token);
+        }
+        return result;
     };
 
     // Logout
@@ -43,20 +53,22 @@ export const AuthProvider = ({ children }) => {
             setUser(currentUser);
 
             if (currentUser) {
+                // Save token on auth state change
+                const token = await currentUser.getIdToken();
+                localStorage.setItem('token', token);
+
                 // Background sync - do not await
-                currentUser.getIdToken().then(token => {
-                    api.post('/auth/sync', {}, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }).then(response => {
-                        if (response.success && response.data) {
-                            setCustomerProfile(response.data);
-                        }
-                    }).catch(error => {
-                        console.error('Failed to sync customer profile with backend:', error);
-                        setCustomerProfile(null);
-                    });
+                api.post('/auth/sync', {}, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }).then(response => {
+                    if (response.success && response.data) {
+                        setCustomerProfile(response.data);
+                    }
+                }).catch(error => {
+                    console.error('Failed to sync customer profile with backend:', error);
+                    setCustomerProfile(null);
                 });
 
                 localStorage.setItem('user', JSON.stringify({

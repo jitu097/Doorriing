@@ -32,6 +32,7 @@ router.use('/subcategories', subcategoryRoutes);
 router.use('/items', itemRoutes);
 router.use('/cart', cartRoutes);
 router.use('/orders', orderRoutes);
+router.use('/order', userOrderRoutes);
 // Mount user order endpoints
 router.use('/user/orders', userOrderRoutes);
 router.use('/notifications', notificationRoutes);

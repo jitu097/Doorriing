@@ -65,6 +65,12 @@ const Login = () => {
 
     try {
       await loginWithEmail(formData.email, formData.password);
+      // Save Firebase ID token
+      const user = window.firebase?.auth?.currentUser || (await import('firebase/auth')).getAuth().currentUser;
+      if (user) {
+        const token = await user.getIdToken();
+        localStorage.setItem('token', token);
+      }
       navigate('/home');
     } catch (error) {
       console.error("Login error:", error);
@@ -85,6 +91,12 @@ const Login = () => {
     setServerError('');
     try {
       await loginWithGoogle();
+      // Save Firebase ID token
+      const user = window.firebase?.auth?.currentUser || (await import('firebase/auth')).getAuth().currentUser;
+      if (user) {
+        const token = await user.getIdToken();
+        localStorage.setItem('token', token);
+      }
       navigate('/home');
     } catch (error) {
       console.error("Google login error:", error);
