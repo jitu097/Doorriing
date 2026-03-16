@@ -1,27 +1,48 @@
+import { Link } from 'react-router-dom';
+import { COMPANY_DETAILS, COMPANY_MANAGED_NOTE } from '../../config/companyInfo';
+
 const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="footer">
+      <div className="footer-topline">© {currentYear} Doorriing. All rights reserved.</div>
       <div className="footer-main-row">
         <div className="footer-copyright">
-          &copy; Doorriing Technologies Pvt. Ltd., 2026
+          <span className="footer-brand-name">{COMPANY_DETAILS.name}</span>
+          <span className="footer-brand-note">{COMPANY_MANAGED_NOTE}</span>
+          <span className="footer-brand-copy">&copy; {currentYear} {COMPANY_DETAILS.name}. All rights reserved.</span>
         </div>
+
+        <div className="footer-links">
+          <span className="footer-links-title">Company</span>
+          <nav className="footer-links-list">
+            <Link to="/about">About Us</Link>
+            <Link to="/contact">Contact Us</Link>
+            <Link to="/privacy-policy">Privacy Policy</Link>
+            <Link to="/terms">Terms & Conditions</Link>
+            <Link to="/refund-policy">Refund / Cancellation</Link>
+          </nav>
+        </div>
+
         <div className="footer-download-app">
           <span className="footer-download-label">Download App</span>
-          <a href="#" className="footer-app-btn appstore" style={{padding: 0, background: 'none'}}>
-            <img src="/play.png" alt="Play Store" style={{height: '38px', width: 'auto', display: 'block'}} />
+          <a href="#" className="footer-app-btn appstore" style={{ padding: 0, background: 'none' }}>
+            <img src="/play.png" alt="Play Store" style={{ height: '38px', width: 'auto', display: 'block' }} />
           </a>
-          <a href="#" className="footer-app-btn playstore" style={{padding: 0, background: 'none'}}>
-            <img src="/apple.png" alt="App Store" style={{height: '38px', width: 'auto', display: 'block'}} />
+          <a href="#" className="footer-app-btn playstore" style={{ padding: 0, background: 'none' }}>
+            <img src="/apple.png" alt="App Store" style={{ height: '38px', width: 'auto', display: 'block' }} />
           </a>
         </div>
+
         <div className="footer-socials">
-          <a href="#" className="footer-social-icon"><img src="/F.png" alt="Facebook" style={{height: '36px', width: '36px', borderRadius: '50%'}} /></a>
-          <a href="#" className="footer-social-icon"><img src="/i.png" alt="Instagram" style={{height: '36px', width: '36px', borderRadius: '50%'}} /></a>
-          <a href="#" className="footer-social-icon"><img src="/L.png" alt="LinkedIn" style={{height: '36px', width: '36px', borderRadius: '50%'}} /></a>
+          <a href="#" className="footer-social-icon"><img src="/F.png" alt="Facebook" style={{ height: '36px', width: '36px', borderRadius: '50%' }} /></a>
+          <a href="#" className="footer-social-icon"><img src="/i.png" alt="Instagram" style={{ height: '36px', width: '36px', borderRadius: '50%' }} /></a>
+          <a href="#" className="footer-social-icon"><img src="/L.png" alt="LinkedIn" style={{ height: '36px', width: '36px', borderRadius: '50%' }} /></a>
         </div>
       </div>
       <div className="footer-disclaimer">
-        “Doorriing” is owned & managed by "Doorriing Technologies Pvt. Ltd." and is not related, linked or interconnected in whatsoever manner or nature, to any other business or entity.
+        {COMPANY_DETAILS.name} {COMPANY_MANAGED_NOTE} — Registered Office: {COMPANY_DETAILS.addressLine1}, {COMPANY_DETAILS.addressLine2}, {COMPANY_DETAILS.country}.
       </div>
     </footer>
   );

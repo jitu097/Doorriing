@@ -11,7 +11,11 @@ import OrdersList from '../pages/orders/OrdersList';
 import OrderDetails from '../pages/orders/OrderDetails';
 import Profile from '../pages/profile/Profile';
 import Address from '../pages/Address/Address';
-import AboutUs from '../pages/Aboutus/aboutus';
+import About from '../pages/legal/About';
+import Contact from '../pages/legal/Contact';
+import PrivacyPolicy from '../pages/legal/PrivacyPolicy';
+import TermsConditions from '../pages/legal/TermsConditions';
+import RefundPolicy from '../pages/legal/RefundPolicy';
 
 import ShopsList from '../pages/shop/ShopsList';
 import ShopDetails from '../pages/shop/ShopDetails';
@@ -41,7 +45,11 @@ const UserRoutes = () => {
         <Route path="/home" element={<Home />} />
         <Route path="/shops" element={<ShopsList />} />
         <Route path="/shop/:shopId" element={<ShopDetails />} />
-        <Route path="/about" element={<AboutUs />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsConditions />} />
+        <Route path="/refund-policy" element={<RefundPolicy />} />
       </Route>
 
       {/* Public Grocery & Restaurant Pages - Browse without navbar */}
