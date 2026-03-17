@@ -59,7 +59,18 @@ class OrderController {
         parseInt(page_size)
       );
 
-      return sendPaginated(res, result.orders, result.pagination, 'Orders fetched successfully');
+      // Add remaining_time for each order
+      const now = new Date();
+      const ordersWithTime = (result.orders || []).map(order => {
+        let remaining_time = 0;
+        if (order.acceptance_deadline) {
+          const deadline = new Date(order.acceptance_deadline);
+          remaining_time = Math.max(0, Math.floor((deadline - now) / 1000));
+        }
+        return { ...order, remaining_time };
+      });
+
+      return sendPaginated(res, ordersWithTime, result.pagination, 'Orders fetched successfully');
     } catch (error) {
       logger.error('GetOrders controller error', { error: error.message });
       next(error);
@@ -76,7 +87,17 @@ class OrderController {
       const { id } = req.params;
 
       const order = await orderService.getOrderById(id, customerId);
-      return sendSuccess(res, order, 'Order fetched successfully');
+      if (!order) {
+        return sendError(res, 'Order not found', 404);
+      }
+      // Calculate remaining_time
+      let remaining_time = 0;
+      if (order.acceptance_deadline) {
+        const now = new Date();
+        const deadline = new Date(order.acceptance_deadline);
+        remaining_time = Math.max(0, Math.floor((deadline - now) / 1000));
+      }
+      return sendSuccess(res, { ...order, remaining_time }, 'Order fetched successfully');
     } catch (error) {
       if (error.message === 'Order not found') {
         return sendError(res, 'Order not found', 404);

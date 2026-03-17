@@ -12,10 +12,12 @@ const OrderDetails = () => {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
   const [cancelling, setCancelling] = useState(false);
+  const [remainingTime, setRemainingTime] = useState(null);
+  const [pollInterval, setPollInterval] = useState(null);
 
   useEffect(() => {
-    let polling = true;
-    let timeoutId;
+    let intervalId;
+    let pollId;
 
     const fetchOrderDetails = async (showLoading = true) => {
       try {
@@ -41,7 +43,7 @@ const OrderDetails = () => {
             tax: 0,
             discount: 0,
             totalAmount: o.total_amount,
-            status: o.status || 'placed',
+            status: o.status,
             orderDate: o.created_at,
             estimatedDelivery: o.status !== 'delivered' && o.status !== 'cancelled' && o.status !== 'rejected' && o.status !== 'expired' ? '45 mins' : null,
             paymentMethod: o.payment_method === 'cod' ? 'Cash on Delivery' : 'Online',
@@ -60,13 +62,7 @@ const OrderDetails = () => {
               { status: 'Delivered', time: '', completed: o.status === 'delivered' }
             ]
           });
-
-          // Polling logic: keep polling every 10s if status is pending
-          if (o.status === 'pending' && polling) {
-            timeoutId = setTimeout(() => fetchOrderDetails(false), 10000);
-          } else {
-            polling = false;
-          }
+          setRemainingTime(o.remaining_time ?? null);
         }
       } catch (err) {
         console.error('Error fetching order details', err);
@@ -78,11 +74,20 @@ const OrderDetails = () => {
 
     if (orderId) {
       fetchOrderDetails(true);
+      // Poll order API every 3 seconds
+      pollId = setInterval(() => fetchOrderDetails(false), 3000);
+      intervalId = setInterval(() => {
+        setRemainingTime(prev => {
+          if (prev === null) return null;
+          if (prev <= 0) return 0;
+          return prev - 1;
+        });
+      }, 1000);
     }
 
     return () => {
-      polling = false;
-      clearTimeout(timeoutId);
+      clearInterval(pollId);
+      clearInterval(intervalId);
     };
   }, [orderId]);
 
@@ -105,6 +110,14 @@ const OrderDetails = () => {
 
   const statusInfo = getStatusLabel(order.status);
 
+  // Timer formatting
+  const formatTimer = (seconds) => {
+    if (seconds === null) return '--:--';
+    const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const ss = String(seconds % 60).padStart(2, '0');
+    return `${mm}:${ss}`;
+  };
+
   return (
     <div className="order-details-container">
       <div className="order-details-wrapper">
@@ -112,167 +125,38 @@ const OrderDetails = () => {
           ← Back to Orders
         </button>
 
+        {/* Real-time order acceptance tracking UI */}
+        {order.status === 'pending' && (
+          <div className="order-status-section" style={{ textAlign: 'center', margin: '30px 0' }}>
+            <h2 style={{ color: '#ff9800' }}>Waiting for seller to accept your order</h2>
+            <div className="timer-box" style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ff9800', margin: '10px 0' }}>
+              Time remaining: {formatTimer(remainingTime)} ⏳
+            </div>
+          </div>
+        )}
+        {order.status === 'accepted' && (
+          <div className="order-status-section" style={{ textAlign: 'center', margin: '30px 0' }}>
+            <h2 style={{ color: '#4caf50' }}>Your order has been accepted ✅</h2>
+          </div>
+        )}
+        {order.status === 'expired' && (
+          <div className="order-status-section" style={{ textAlign: 'center', margin: '30px 0' }}>
+            <h2 style={{ color: '#f44336' }}>Sorry, the seller was unable to accept your order. Please try another shop or try again later.</h2>
+            <button className="browse-shops-btn" style={{ marginTop: '20px', background: '#ff9800', color: '#fff', padding: '12px 24px', borderRadius: '6px', fontSize: '1.1rem', border: 'none' }} onClick={() => navigate('/shops')}>Browse Shops</button>
+          </div>
+        )}
+        {order.status === 'rejected' && (
+          <div className="order-status-section" style={{ textAlign: 'center', margin: '30px 0' }}>
+            <h2 style={{ color: '#f44336' }}>Your order was rejected by the seller. Please try another shop.</h2>
+          </div>
+        )}
+
+        {/* ...existing code... */}
         <div className="order-header-section">
-          <div className="order-header-main">
-            <div>
-              <h1>Order Details</h1>
-              <p className="order-number">Order #{order.id}</p>
-            </div>
-            <div className={`order-status-badge ${statusInfo.colorClass}`}>
-              {statusInfo.label.toUpperCase()}
-            </div>
-          </div>
-          <div className="order-time-info">
-            <div className="time-item">
-              <span className="time-label">Ordered on</span>
-              <span className="time-value">
-                {new Date(order.orderDate).toLocaleString()}
-              </span>
-            </div>
-            {order.estimatedDelivery && (
-              <div className="time-item">
-                <span className="time-label">Estimated Delivery</span>
-                <span className="time-value highlight">{order.estimatedDelivery}</span>
-              </div>
-            )}
-          </div>
+          {/* ...existing code... */}
         </div>
-
         <div className="order-main-content">
-          <div className="left-column">
-            {/* Order Tracking */}
-            <div className="detail-card tracking-card">
-              <h2>Order Tracking</h2>
-              <div className="tracking-timeline">
-                {order.tracking.map((step, index) => (
-                  <div key={index} className={`tracking-step ${step.completed ? 'completed' : ''}`}>
-                    <div className="step-marker">
-                      {step.completed ? (
-                        <div className="marker-dot completed">✓</div>
-                      ) : (
-                        <div className="marker-dot"></div>
-                      )}
-                      {index < order.tracking.length - 1 && (
-                        <div className={`step-line ${step.completed ? 'completed' : ''}`}></div>
-                      )}
-                    </div>
-                    <div className="step-content">
-                      <h4>{step.status}</h4>
-                      <p>{step.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Order Items */}
-            <div className="detail-card items-card">
-              <h2>Items Ordered</h2>
-              <div className="items-list-detailed">
-                {order.items.map(item => (
-                  <div key={item.id} className="item-detailed">
-                    <img src={item.image} alt={item.name} className="item-image" />
-                    <div className="item-info">
-                      <h4>{item.name}</h4>
-                      <p className="item-qty">Quantity: {item.quantity}</p>
-                    </div>
-                    <div className="item-price">₹{item.price}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="price-breakdown">
-                <div className="price-row">
-                  <span>Subtotal</span>
-                  <span>₹{order.subtotal}</span>
-                </div>
-                <div className="price-row">
-                  <span>Delivery Fee</span>
-                  <span>₹{order.deliveryFee}</span>
-                </div>
-                <div className="price-row">
-                  <span>Tax</span>
-                  <span>₹{order.tax}</span>
-                </div>
-                {order.discount > 0 && (
-                  <div className="price-row discount">
-                    <span>Discount</span>
-                    <span>-₹{order.discount}</span>
-                  </div>
-                )}
-                <div className="price-row total">
-                  <span>Total Amount</span>
-                  <span>₹{order.totalAmount}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="right-column">
-            {/* Shop Information */}
-            <div className="detail-card shop-card">
-              <h2>Shop Details</h2>
-              <div className="shop-info">
-                <h3>{order.shopName}</h3>
-                <p>{order.shopAddress}</p>
-                <p className="shop-phone">📞 {order.shopPhone}</p>
-                <button className="contact-shop-btn">Contact Shop</button>
-              </div>
-            </div>
-
-            {/* Delivery Address */}
-            <div className="detail-card address-card">
-              <h2>Delivery Address</h2>
-              <div className="address-info">
-                <h4>{order.deliveryAddress.name}</h4>
-                <p>{order.deliveryAddress.address}</p>
-                <p>{order.deliveryAddress.city} - {order.deliveryAddress.postalCode}</p>
-                <p className="address-phone">📞 {order.deliveryAddress.phone}</p>
-              </div>
-            </div>
-
-            {/* Payment Information */}
-            <div className="detail-card payment-card">
-              <h2>Payment Details</h2>
-              <div className="payment-info">
-                <div className="payment-row">
-                  <span className="payment-label">Payment Method</span>
-                  <span className="payment-value">{order.paymentMethod}</span>
-                </div>
-                {order.transactionId && (
-                  <div className="payment-row">
-                    <span className="payment-label">Transaction ID</span>
-                    <span className="payment-value transaction-id">{order.transactionId}</span>
-                  </div>
-                )}
-                <div className="payment-row">
-                  <span className="payment-label">Amount Paid</span>
-                  <span className="payment-value amount">₹{order.totalAmount}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="detail-card actions-card">
-              <button className="detail-action-btn primary">Need Help?</button>
-              <button className="detail-action-btn secondary">Download Invoice</button>
-
-              {order.status === 'delivered' && (
-                <button className="detail-action-btn secondary">Rate Order</button>
-              )}
-
-              {order.status === 'pending' && (
-                <button
-                  className="detail-action-btn"
-                  style={{ backgroundColor: '#fef2f2', color: '#991b1b', border: '1px solid #fca5a5' }}
-                  onClick={handleCancelOrder}
-                  disabled={cancelling}
-                >
-                  {cancelling ? 'Cancelling...' : 'Cancel Order'}
-                </button>
-              )}
-            </div>
-          </div>
+          {/* ...existing code... */}
         </div>
       </div>
     </div>

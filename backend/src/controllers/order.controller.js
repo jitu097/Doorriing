@@ -4,6 +4,14 @@ import { logger } from '../utils/logger.js';
 import crypto from 'crypto';
 import express from 'express';
 
+const parseDeadline = (deadlineStr) => {
+    if (!deadlineStr) return null;
+    if (typeof deadlineStr === 'string' && !deadlineStr.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(deadlineStr)) {
+        return new Date(deadlineStr.replace(' ', 'T') + 'Z');
+    }
+    return new Date(deadlineStr);
+};
+
 export const orderController = {
     /**
      * Create a new order via checkout
@@ -58,9 +66,21 @@ export const orderController = {
             const customerId = req.user.customerId;
             const orders = await orderService.getOrders(customerId);
 
+            // Add remaining_time for each order
+            const now = new Date();
+            const ordersWithTime = (orders || []).map(order => {
+                let remaining_time = 0;
+                if (order.acceptance_deadline) {
+                    const deadline = parseDeadline(order.acceptance_deadline);
+                    const now = new Date();
+                    remaining_time = Math.max(0, Math.floor((deadline - now) / 1000));
+                }
+                return { ...order, remaining_time };
+            });
+
             res.status(200).json({
                 success: true,
-                data: orders
+                data: ordersWithTime
             });
         } catch (error) {
             logger.error('Get orders error', { error: error.message });
@@ -89,9 +109,20 @@ export const orderController = {
                 });
             }
 
+            // Calculate remaining_time
+            let remaining_time = 0;
+            if (order.acceptance_deadline) {
+                const now = new Date();
+                const deadline = parseDeadline(order.acceptance_deadline);
+                remaining_time = Math.max(0, Math.floor((deadline - now) / 1000)); // seconds
+            }
+
             res.status(200).json({
                 success: true,
-                data: order
+                data: {
+                    ...order,
+                    remaining_time,
+                }
             });
         } catch (error) {
             logger.error('Get order by ID error', { error: error.message });

@@ -1,6 +1,15 @@
 import { supabase } from '../config/supabaseClient.js';
 import { logger } from '../utils/logger.js';
 
+const parseDeadline = (deadlineStr) => {
+    if (!deadlineStr) return null;
+    // Ensure deadline is treated as UTC if it's missing timezone info
+    if (typeof deadlineStr === 'string' && !deadlineStr.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(deadlineStr)) {
+        return new Date(deadlineStr.replace(' ', 'T') + 'Z');
+    }
+    return new Date(deadlineStr);
+};
+
 export const orderService = {
     /**
      * Process Checkout
@@ -112,6 +121,12 @@ export const orderService = {
             const orderNumber = `BZ-${datePart}-${randomPart}`;
 
             // STEP 6: Insert into orders
+            const now = new Date();
+            let acceptance_deadline = new Date(now.getTime() + 5 * 60 * 1000);
+            // Fallback: if for any reason acceptance_deadline is not set, set it to 5 min from now
+            if (!acceptance_deadline || isNaN(acceptance_deadline.getTime())) {
+                acceptance_deadline = new Date(Date.now() + 5 * 60 * 1000);
+            }
             const orderData = {
                 shop_id: shopId,
                 customer_id: customerId,
@@ -125,8 +140,14 @@ export const orderService = {
                 total_amount: totalAmount,
                 status: 'pending',
                 payment_method: 'cod',
-                payment_status: 'pending'
+                payment_status: 'pending',
+                acceptance_deadline: acceptance_deadline.toISOString(),
             };
+
+            // Validation: acceptance_deadline must be defined
+            if (!orderData.acceptance_deadline) {
+                throw new Error('acceptance_deadline must be set for new orders');
+            }
 
             const { data: newOrder, error: orderInsertError } = await supabase
                 .from('orders')
@@ -203,7 +224,7 @@ export const orderService = {
     async getOrders(customerId) {
         const { data, error } = await supabase
             .from('orders')
-            .select('id, order_number, shop_id, total_amount, status, created_at')
+            .select('id, order_number, shop_id, total_amount, status, created_at, acceptance_deadline')
             .eq('customer_id', customerId)
             .order('created_at', { ascending: false });
 
@@ -212,6 +233,15 @@ export const orderService = {
             throw new Error('Failed to fetch orders');
         }
 
+        // Expiry enforcement
+        const now = new Date();
+        for (const order of data || []) {
+            const deadline = parseDeadline(order.acceptance_deadline);
+            if (order.status === 'pending' && deadline && deadline < now) {
+                await supabase.from('orders').update({ status: 'expired' }).eq('id', order.id);
+                order.status = 'expired';
+            }
+        }
         return data || [];
     },
 
@@ -236,6 +266,16 @@ export const orderService = {
             throw new Error('Failed to fetch order details');
         }
 
+        // Expiry enforcement
+        const now = new Date();
+        if (order && order.status === 'pending' && order.acceptance_deadline) {
+            const deadline = parseDeadline(order.acceptance_deadline);
+            logger.info(`Checking expiry for order ${order.id}: now=${now.toISOString()}, deadline=${deadline ? deadline.toISOString() : 'null'}, isExpired=${deadline ? deadline < now : 'false'}`);
+            if (deadline && deadline < now) {
+                await supabase.from('orders').update({ status: 'expired' }).eq('id', order.id);
+                order.status = 'expired';
+            }
+        }
         return order;
     },
 

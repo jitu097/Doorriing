@@ -77,7 +77,15 @@ const Checkout = () => {
     const handleEditAddress = (e, addr) => {
         e.stopPropagation();
         setEditingAddress(addr.id);
-        setAddressFormData(addr);
+        // Ensure all fields have at least empty strings to avoid uncontrolled input warnings
+        setAddressFormData({
+            ...addr,
+            landmark: addr.landmark || '',
+            name: addr.name || '',
+            phone: addr.phone || '',
+            building: addr.building || '',
+            area: addr.area || ''
+        });
         setShowAddressModal(true);
     };
 
@@ -131,7 +139,8 @@ const Checkout = () => {
                                     <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>Loading addresses...</div>
                                 ) : (
                                     <div className="address-grid-horizontal">
-                                        {addresses.map(addr => {
+                                        {Array.from(new Set(addresses.map(a => a.id))).map(id => {
+                                            const addr = addresses.find(a => a.id === id);
                                             const normalizedId = String(addr.id);
                                             const isSelected = selectedAddressId && String(selectedAddressId) === normalizedId;
                                             const primaryLine = [addr.building, addr.area, addr.landmark]
@@ -154,7 +163,7 @@ const Checkout = () => {
                                                         <input 
                                                             type="radio" 
                                                             className="address-radio"
-                                                            checked={isSelected}
+                                                            checked={!!isSelected}
                                                             onChange={() => setSelectedAddressId(normalizedId)}
                                                         />
                                                         <div className="address-details-text">

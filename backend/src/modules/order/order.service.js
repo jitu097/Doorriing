@@ -51,7 +51,11 @@ class OrderService {
 
       // Create order
       const orderNumber = this.generateOrderNumber();
-
+      const now = new Date();
+      let acceptance_deadline = new Date(now.getTime() + 5 * 60 * 1000);
+      if (!acceptance_deadline || isNaN(acceptance_deadline.getTime())) {
+        acceptance_deadline = new Date(Date.now() + 5 * 60 * 1000);
+      }
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -67,9 +71,15 @@ class OrderService {
           status: ORDER_STATUS.PENDING,
           payment_method,
           payment_status: PAYMENT_STATUS.PENDING,
+          acceptance_deadline: acceptance_deadline.toISOString(),
         })
         .select()
         .single();
+
+      // Validation: acceptance_deadline must be defined
+      if (!order?.acceptance_deadline) {
+        throw new Error('acceptance_deadline must be set for new orders');
+      }
 
       if (orderError) {
         logger.error('Failed to create order', { error: orderError });
@@ -122,7 +132,7 @@ class OrderService {
 
       let query = supabase
         .from('orders')
-        .select('id, shop_id, order_number, customer_name, customer_phone, delivery_address, items_total, delivery_charge, total_amount, status, payment_method, payment_status, created_at, updated_at', { count: 'exact' })
+        .select('id, shop_id, order_number, customer_name, customer_phone, delivery_address, items_total, delivery_charge, total_amount, status, payment_method, payment_status, created_at, updated_at, acceptance_deadline', { count: 'exact' })
         .eq('customer_id', customerId);
 
       // Filter by status
@@ -143,6 +153,15 @@ class OrderService {
       if (error) {
         logger.error('Failed to fetch orders', { error, customerId });
         throw new Error('Failed to fetch orders');
+      }
+
+      // Expiry enforcement
+      const now = new Date();
+      for (const order of data || []) {
+        if (order.status === ORDER_STATUS.PENDING && order.acceptance_deadline && new Date(order.acceptance_deadline) < now) {
+          await supabase.from('orders').update({ status: ORDER_STATUS.EXPIRED }).eq('id', order.id);
+          order.status = ORDER_STATUS.EXPIRED;
+        }
       }
 
       return {
@@ -182,6 +201,7 @@ class OrderService {
           payment_status,
           created_at,
           updated_at,
+          acceptance_deadline,
           order_items (
             id,
             item_id,
@@ -203,6 +223,12 @@ class OrderService {
         throw new Error('Failed to fetch order');
       }
 
+      // Expiry enforcement
+      const now = new Date();
+      if (order && order.status === ORDER_STATUS.PENDING && order.acceptance_deadline && new Date(order.acceptance_deadline) < now) {
+        await supabase.from('orders').update({ status: ORDER_STATUS.EXPIRED }).eq('id', order.id);
+        order.status = ORDER_STATUS.EXPIRED;
+      }
       return order;
     } catch (error) {
       logger.error('Error in getOrderById', { error: error.message });

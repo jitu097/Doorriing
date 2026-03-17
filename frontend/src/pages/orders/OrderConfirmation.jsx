@@ -13,27 +13,58 @@ const OrderConfirmation = () => {
     const [loading, setLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState(null);
 
+    const [remainingTime, setRemainingTime] = useState(null);
+
     useEffect(() => {
         if (!orderId) {
             navigate('/home');
             return;
         }
 
-        const fetchOrder = async () => {
+        let intervalId;
+        let pollId;
+
+        const fetchOrder = async (showLoading = true) => {
             try {
-                setLoading(true);
+                if (showLoading) setLoading(true);
                 const response = await orderService.getOrderById(orderId);
-                setOrder(response.data);
+                const o = response.data;
+                setOrder(o);
+                if (o) {
+                    setRemainingTime(o.remaining_time ?? null);
+                }
             } catch (err) {
                 console.error('Failed to load order confirmation:', err);
                 setErrorMsg('Could not load order details.');
             } finally {
-                setLoading(false);
+                if (showLoading) setLoading(false);
             }
         };
 
-        fetchOrder();
+        fetchOrder(true);
+        // Poll every 3 seconds
+        pollId = setInterval(() => fetchOrder(false), 3000);
+        // Countdown timer
+        intervalId = setInterval(() => {
+            setRemainingTime(prev => {
+                if (prev === null) return null;
+                if (prev <= 0) return 0;
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => {
+            clearInterval(pollId);
+            clearInterval(intervalId);
+        };
     }, [orderId, navigate]);
+
+    const formatTimer = (seconds) => {
+        if (seconds === null) return '--:--';
+        const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const ss = String(seconds % 60).padStart(2, '0');
+        return `${mm}:${ss}`;
+    };
 
     if (loading) {
         return (
@@ -77,6 +108,22 @@ const OrderConfirmation = () => {
                     <strong>Status: {statusInfo.label}</strong>
                     <p>{statusInfo.message}</p>
                 </div>
+
+                {order.status === 'pending' && (
+                    <div className="order-timer-section" style={{ 
+                        margin: '20px 0', 
+                        padding: '15px', 
+                        background: '#fff9e6', 
+                        border: '1px solid #ffeeba', 
+                        borderRadius: '8px',
+                        textAlign: 'center' 
+                    }}>
+                        <h3 style={{ color: '#856404', margin: '0 0 10px 0' }}>Waiting for seller acceptance</h3>
+                        <div className="timer-display" style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ff9800' }}>
+                            {formatTimer(remainingTime)} ⏳
+                        </div>
+                    </div>
+                )}
 
                 <div className="order-summary-card">
                     <div className="summary-header">

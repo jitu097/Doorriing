@@ -11,6 +11,8 @@ export const ORDER_STATUS = {
   OUT_FOR_DELIVERY: 'out_for_delivery',
   DELIVERED: 'delivered',
   CANCELLED: 'cancelled',
+  EXPIRED: 'expired',
+  REJECTED: 'rejected',
 };
 
 export const PAYMENT_METHOD = {
