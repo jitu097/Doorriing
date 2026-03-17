@@ -121,9 +121,9 @@
 }
 
 .grocery-button img.store-icon {
-  width: 90px;
-  height: 79px;
-  margin-bottom: -30px;
+  width: 220px;
+  height: 200px;
+  margin-bottom: -27px;
   display: block;
 }
 
@@ -145,9 +145,9 @@
 }
 
 .restaurant-button img.restaurant-icon {
-  width: 90px;
-  height: 90px;
-  margin-bottom: 1.1rem;
+  width: 220px;
+  height: 210px;
+  margin-bottom:-20px;
   display: block;
 }
 

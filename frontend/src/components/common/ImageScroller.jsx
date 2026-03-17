@@ -62,25 +62,8 @@ const ImageScroller = () => {
           </div>
         ))}
       </div>
-      <div className="scroller-dots">
-        {images.map((_, idx) => (
-          <span
-            key={idx}
-            className={idx === current ? 'dot active' : 'dot'}
-            onClick={() => setCurrent(idx)}
-          />
-        ))}
-      </div>
-      <button
-        className="scroller-arrow left"
-        onClick={() => setCurrent(Math.max(0, current - 1))}
-        disabled={current === 0}
-      >&#8592;</button>
-      <button
-        className="scroller-arrow right"
-        onClick={() => setCurrent(Math.min(images.length - 1, current + 1))}
-        disabled={current === images.length - 1}
-      >&#8594;</button>
+      {/* Removed scroller dots */}
+      {/* Removed scroller arrows */}
     </div>
   );
 };
