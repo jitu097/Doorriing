@@ -42,6 +42,15 @@ export const orderService = {
     cancelOrder: async (orderId) => {
         const authHeader = await getAuthHeader();
         return api.patch(`/user/orders/${orderId}/cancel`, {}, authHeader);
+    },
+
+    /**
+     * Verify payment with Razorpay
+     * @param {Object} paymentData - { razorpay_order_id, razorpay_payment_id, razorpay_signature }
+     */
+    verifyPayment: async (paymentData) => {
+        const authHeader = await getAuthHeader();
+        return api.post('/order/verify-payment', paymentData, authHeader);
     }
 };
 

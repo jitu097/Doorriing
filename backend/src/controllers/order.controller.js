@@ -1,5 +1,8 @@
 import { orderService } from '../services/order.service.js';
+
 import { logger } from '../utils/logger.js';
+import crypto from 'crypto';
+import express from 'express';
 
 export const orderController = {
     /**
@@ -124,5 +127,22 @@ export const orderController = {
             }
             res.status(500).json({ success: false, message: 'Failed to cancel order' });
         }
+    },
+
+    verifyPayment(req, res) {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const key_secret = process.env.RAZORPAY_KEY_SECRET || 'F6b8cIOG8LNbAsXX29lPIylk';
+
+        const generated_signature = crypto
+            .createHmac('sha256', key_secret)
+            .update(razorpay_order_id + '|' + razorpay_payment_id)
+            .digest('hex');
+
+        if (generated_signature === razorpay_signature) {
+            return res.json({ success: true, message: 'Payment verified successfully' });
+        } else {
+            return res.status(400).json({ success: false, message: 'Payment verification failed' });
+        }
     }
 };
+
