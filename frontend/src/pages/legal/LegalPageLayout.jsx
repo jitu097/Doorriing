@@ -30,7 +30,6 @@ const LegalPageLayout = ({ title, subtitle, intro, children }) => {
           </div>
         </aside>
       </div>
-      <Footer />
     </div>
   );
 };

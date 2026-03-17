@@ -53,6 +53,7 @@ const TermsConditions = () => {
         </p>
       </section>
 
+
       <section className="legal-section">
         <h2>Restricted Activities</h2>
         <p>Users must not attempt to reverse engineer the platform, create fraudulent orders, interfere with deliveries, or violate applicable laws. Such actions can result in immediate suspension.</p>

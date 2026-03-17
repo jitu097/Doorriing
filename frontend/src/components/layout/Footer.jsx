@@ -13,23 +13,6 @@ const Footer = () => {
       </div>
       <div className="footer-topline">© {currentYear} Doorriing. All rights reserved.</div>
       <div className="footer-main-row">
-        <div className="footer-copyright">
-          <span className="footer-brand-name">{COMPANY_DETAILS.name}</span>
-          <span className="footer-brand-note">{COMPANY_MANAGED_NOTE}</span>
-          <span className="footer-brand-copy">&copy; {currentYear} {COMPANY_DETAILS.name}. All rights reserved.</span>
-        </div>
-
-        <div className="footer-links">
-          <span className="footer-links-title">Company</span>
-          <nav className="footer-links-list">
-            <Link to="/about">About Us</Link>
-            <Link to="/contact">Contact Us</Link>
-            <Link to="/privacy-policy">Privacy Policy</Link>
-            <Link to="/terms">Terms & Conditions</Link>
-            <Link to="/refund-policy">Refund / Cancellation</Link>
-          </nav>
-        </div>
-
         <div className="footer-download-app">
           <span className="footer-download-label">Download App</span>
           <a href="#" className="footer-app-btn appstore" style={{ padding: 0, background: 'none' }}>
@@ -39,7 +22,6 @@ const Footer = () => {
             <img src="/apple.png" alt="App Store" style={{ height: '38px', width: 'auto', display: 'block' }} />
           </a>
         </div>
-
         <div className="footer-socials">
           <a href="#" className="footer-social-icon"><img src="/F.png" alt="Facebook" style={{ height: '36px', width: '36px', borderRadius: '50%' }} /></a>
           <a href="#" className="footer-social-icon"><img src="/i.png" alt="Instagram" style={{ height: '36px', width: '36px', borderRadius: '50%' }} /></a>
@@ -48,6 +30,16 @@ const Footer = () => {
       </div>
       <div className="footer-disclaimer">
         {COMPANY_DETAILS.name} {COMPANY_MANAGED_NOTE} — Registered Office: {COMPANY_DETAILS.addressLine1}, {COMPANY_DETAILS.addressLine2}, {COMPANY_DETAILS.country}.
+      </div>
+      <div className="footer-links">
+        <span className="footer-links-title">Company</span>
+        <nav className="footer-links-list">
+          <Link to="/about">About Us</Link>
+          <Link to="/contact">Contact Us</Link>
+          <Link to="/privacy-policy">Privacy Policy</Link>
+          <Link to="/terms">Terms & Conditions</Link>
+          <Link to="/refund-policy">Refund / Cancellation</Link>
+        </nav>
       </div>
     </footer>
   );
