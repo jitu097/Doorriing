@@ -20,7 +20,7 @@ const LoadingScreen = () => {
         <Lottie 
           animationData={shoppingAnimation} 
           loop={true} 
-          style={{ width: 400, height: 500, marginTop: 100 }} 
+          style={{backgroundColor:"yellow", width: 345, height: 500, marginTop: 100, marginleft: -500 }} 
         />
       </div>
 
