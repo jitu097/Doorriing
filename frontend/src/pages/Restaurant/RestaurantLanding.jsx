@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Lottie from "lottie-react";
+import foodAnimation from "../../assets/food.json";
 import './RestaurantLanding.css';
 
 const RestaurantLanding = () => {
@@ -9,25 +11,18 @@ const RestaurantLanding = () => {
     // Auto-navigate to Restaurant.jsx after 3 seconds
     const timer = setTimeout(() => {
       navigate('/restaurant/browse');
-    }, 3000);
+    }, 5000);
 
     return () => clearTimeout(timer);
   }, [navigate]);
 
   return (
     <div className="restaurant-landing-page">
-      {/* Plate drops in */}
-      <img src="/plate.png" alt="Plate" className="plate-drop-img" />
-      {/* Burger drops in */}
-      <img src="/burger.png" alt="Burger" className="burger-drop-img" />
-      {/* Pizza drops in */}
-      <img src="/pizza.png" alt="Pizza" className="pizza-drop-img" />
-      {/* Fries drops in at the same time as pizza */}
-      <img src="/fries.png" alt="Fries" className="fries-drop-img" />
-      {/* Drink slides in */}
-      <img src="/drink.png" alt="Drink" className="drink-slide-img" />
-      {/* Steam or sparkle effect */}
-      <img src="/steam.png" alt="Steam" className="steam-fade-img" />
+      <Lottie 
+        animationData={foodAnimation} 
+        loop={true} 
+        style={{ width: 300, height: 300 }} 
+      />
     </div>
   );
 };
