@@ -463,7 +463,11 @@ const ItemCard = ({
               aria-label={derivedIsVeg ? 'Vegetarian item' : 'Non-vegetarian item'}
               title={derivedIsVeg ? 'Vegetarian' : 'Non-Vegetarian'}
             >
-              {foodIndicatorSymbol}
+              <img
+                src={derivedIsVeg ? '/vegy.png' : '/nonveg.png'}
+                alt={derivedIsVeg ? 'Vegetarian' : 'Non-Vegetarian'}
+                style={{ width: 18, height: 18, verticalAlign: 'middle' }}
+              />
             </span>
           ) : legacyVegIndicator ? (
             <span className={`item-card-veg-badge ${isVeg ? 'veg' : 'non-veg'}`}>

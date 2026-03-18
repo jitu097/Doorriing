@@ -1,34 +1,35 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Login from '../pages/auth/Login';
-import Signup from '../pages/auth/Signup';
-import Landingpage from '../pages/Landingpage/Landingpage';
-import Home from '../pages/home/Home';
-import Checkout from '../pages/cart/Checkout';
-import CheckoutPayment from '../pages/cart/CheckoutPayment';
-import OrderSuccess from '../pages/cart/OrderSuccess';
-import OrderConfirmation from '../pages/orders/OrderConfirmation';
-import OrdersList from '../pages/orders/OrdersList';
-import OrderDetails from '../pages/orders/OrderDetails';
-import Profile from '../pages/profile/Profile';
-import Address from '../pages/Address/Address';
-import About from '../pages/legal/About';
-import Contact from '../pages/legal/Contact';
-import PrivacyPolicy from '../pages/legal/PrivacyPolicy';
-import TermsConditions from '../pages/legal/TermsConditions';
-import RefundPolicy from '../pages/legal/RefundPolicy';
 
-import ShopsList from '../pages/shop/ShopsList';
-import ShopDetails from '../pages/shop/ShopDetails';
-import ProtectedRoute from './ProtectedRoute';
-import PageLayout from '../components/layout/PageLayout';
-import Grocery from '../pages/Grocery/Grocery';
-import GroceryLanding from '../pages/Grocery/GroceryLanding';
-import Restaurant from '../pages/Restaurant/Restaurant';
-import RestaurantLanding from '../pages/Restaurant/RestaurantLanding';
-import ItemCategory from '../pages/Grocery/itemcategory';
-import CategoryItem from '../pages/Restaurant/categoryitem';
-import SubCategory from '../pages/Restaurant/subcategory';
-import SubCategoryItem from '../pages/Grocery/subcategoryitem';
+import React, { Suspense, lazy } from 'react';
+const Login = lazy(() => import('../pages/auth/Login'));
+const Signup = lazy(() => import('../pages/auth/Signup'));
+const Landingpage = lazy(() => import('../pages/Landingpage/Landingpage'));
+const Home = lazy(() => import('../pages/home/Home'));
+const Checkout = lazy(() => import('../pages/cart/Checkout'));
+const CheckoutPayment = lazy(() => import('../pages/cart/CheckoutPayment'));
+const OrderSuccess = lazy(() => import('../pages/cart/OrderSuccess'));
+const OrderConfirmation = lazy(() => import('../pages/orders/OrderConfirmation'));
+const OrdersList = lazy(() => import('../pages/orders/OrdersList'));
+const OrderDetails = lazy(() => import('../pages/orders/OrderDetails'));
+const Profile = lazy(() => import('../pages/profile/Profile'));
+const Address = lazy(() => import('../pages/Address/Address'));
+const About = lazy(() => import('../pages/legal/About'));
+const Contact = lazy(() => import('../pages/legal/Contact'));
+const PrivacyPolicy = lazy(() => import('../pages/legal/PrivacyPolicy'));
+const TermsConditions = lazy(() => import('../pages/legal/TermsConditions'));
+const RefundPolicy = lazy(() => import('../pages/legal/RefundPolicy'));
+const ShopsList = lazy(() => import('../pages/shop/ShopsList'));
+const ShopDetails = lazy(() => import('../pages/shop/ShopDetails'));
+const ProtectedRoute = lazy(() => import('./ProtectedRoute'));
+const PageLayout = lazy(() => import('../components/layout/PageLayout'));
+const Grocery = lazy(() => import('../pages/Grocery/Grocery'));
+const GroceryLanding = lazy(() => import('../pages/Grocery/GroceryLanding'));
+const Restaurant = lazy(() => import('../pages/Restaurant/Restaurant'));
+const RestaurantLanding = lazy(() => import('../pages/Restaurant/RestaurantLanding'));
+const ItemCategory = lazy(() => import('../pages/Grocery/itemcategory'));
+const CategoryItem = lazy(() => import('../pages/Restaurant/categoryitem'));
+const SubCategory = lazy(() => import('../pages/Restaurant/subcategory'));
+const SubCategoryItem = lazy(() => import('../pages/Grocery/subcategoryitem'));
 
 function isMobile() {
   if (typeof window === 'undefined') return false;
@@ -37,7 +38,8 @@ function isMobile() {
 
 const UserRoutes = () => {
   return (
-    <Routes>
+    <Suspense fallback={<div>Loading...</div>}>
+      <Routes>
       {/* Landing Page - Only show on mobile, redirect to /home on desktop */}
       <Route
         path="/"
@@ -92,7 +94,8 @@ const UserRoutes = () => {
 
       {/* Catch all - redirect to home */}
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 };
 
