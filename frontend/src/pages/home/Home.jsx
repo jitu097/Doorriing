@@ -155,7 +155,6 @@ const Home = () => {
       <ImageScroller />
       <HomeButtons />
       <div className="home-content">
-        <h1 className="home-main-title">Welcome to Doorriing</h1>
         <div className="home-section-toggle">
           <button
             type="button"
