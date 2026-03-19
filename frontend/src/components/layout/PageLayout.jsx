@@ -16,13 +16,14 @@ const PageLayout = () => {
   const hideFloatingCart =
     location.pathname.startsWith('/cart') || location.pathname.startsWith('/checkout');
 
+  const isHomePage = location.pathname === '/' || location.pathname === '/home';
   return (
     <div className="page-layout">
       <Navbar onCartClick={handleCartOpen} />
       <main className="main-content">
         <Outlet />
       </main>
-      <Footer />
+      {isHomePage && <Footer />}
       {!hideFloatingCart && <FloatingCart onCartClick={handleCartOpen} />}
       <CartDrawer isOpen={showCart} onClose={handleCartClose} />
     </div>

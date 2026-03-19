@@ -128,9 +128,9 @@ const Signup = () => {
         {/* Top Section with Image and Logo */}
         <div className="signup-top-section">
           <div className="signup-bg-shape"></div>
-          <img src="/family.png" alt="Boy" className="signup-boy-image" />
+                <img src="/family.webp" alt="Boy" className="signup-boy-image" loading="lazy" />
           <div className="signup-logo-badge">
-            <img src="/Doorriing.png" alt="Logo" className="logo-image" style={{ width: '70px', height: '70px', objectFit: 'contain' }} />
+                  <img src="/Doorriing.webp" alt="Logo" className="logo-image" style={{ width: '70px', height: '70px', objectFit: 'contain' }} loading="lazy" />
           </div>
         </div>
 

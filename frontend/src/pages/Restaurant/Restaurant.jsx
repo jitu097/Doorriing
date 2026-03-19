@@ -144,7 +144,7 @@ const Restaurant = () => {
           <div className="carousel-track" style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}>
             {carouselImages.map((image, index) => (
               <div key={index} className="carousel-slide">
-                <img src={image} alt={`Slide ${index + 1}`} className="carousel-image" />
+                <img src={image} alt={`Slide ${index + 1}`} className="carousel-image" loading="lazy" />
               </div>
             ))}
           </div>

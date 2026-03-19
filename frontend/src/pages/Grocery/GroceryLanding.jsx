@@ -17,24 +17,28 @@ const GroceryLanding = () => {
   return (
     <div className="grocery-landing-page">
       <img 
-        src="/bas.png" 
+        src="/bas.webp" 
         alt="Bas" 
         className="bas-drop-img"
+        loading="lazy"
       />
       <img 
-        src="/veg.png" 
+        src="/veg.webp" 
         alt="Veg" 
         className="veg-drop-img"
+        loading="lazy"
       />
       <img 
-        src="/gross.png" 
+        src="/gross.webp" 
         alt="Gross" 
         className="gross-drop-img"
+        loading="lazy"
       />
       <img 
-        src="/fru.png" 
+        src="/fru.webp" 
         alt="Fru" 
         className="fru-drop-img"
+        loading="lazy"
       />
     </div>
   );

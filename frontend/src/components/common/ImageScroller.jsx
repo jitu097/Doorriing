@@ -2,11 +2,11 @@ import React, { useRef, useState } from 'react';
 import './ImageScroller.css';
 
 const images = [
-   '/two.png', 
-  '/one.png',
+   '/two.webp', 
+  '/one.webp',
  
-  '/three.jpeg',
-  '/four.png',
+  '/three.webp',
+  '/four.webp',
 ];
 
 const ImageScroller = () => {
@@ -58,7 +58,7 @@ const ImageScroller = () => {
       >
         {images.map((img, idx) => (
           <div className="scroller-img-container" key={idx}>
-            <img src={img} alt={`slide-${idx+1}`} className="scroller-img" />
+            <img src={img} alt={`slide-${idx+1}`} className="scroller-img" loading="lazy" />
           </div>
         ))}
       </div>

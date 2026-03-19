@@ -1,25 +1,4 @@
-/* Global Styles for Landing Page */
-.landing-page {
-  min-height: 100vh;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  position: relative;
-  overflow-x: hidden;
-  /* Prevent horizontal scroll only */
-}
 
-/* Desktop Background - LandingPg.png */
-@media (min-width: 601px) {
-  .landing-page {
-    background-image: url('/LandingPg.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-  }
-}
 
 /* Tablet responsiveness */
 @media (min-width: 601px) and (max-width: 1024px) {
@@ -326,7 +305,7 @@
 /* Standard Mobile View Styles - Reverted to Original */
 @media (max-width: 600px) {
   .signup-btn {
-    margin-top: -120px;
+    margin-top: -60px;
   }
 
   /* Disable animations for mobile */

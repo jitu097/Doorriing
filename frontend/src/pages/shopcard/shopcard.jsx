@@ -56,7 +56,7 @@ const ShopCard = ({ shop, routePrefix = 'grocery' }) => {
     >
       <div className="shop-card-image">
         {image ? (
-          <img src={image} alt={title} />
+          <img src={image} alt={title} loading="lazy" />
         ) : (
           <div className="shop-card-placeholder">{initials}</div>
         )}

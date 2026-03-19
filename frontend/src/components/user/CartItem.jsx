@@ -11,7 +11,7 @@ const CartItem = ({ item, showControls = true, compact = false }) => {
         <div className={`cart-item ${compact ? 'compact' : ''}`}>
             {item.image && (
                 <div className="cart-item-image">
-                    <img src={item.image} alt={item.name} />
+                    <img src={item.image} alt={item.name} loading="lazy" />
                 </div>
             )}
 

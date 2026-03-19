@@ -112,9 +112,9 @@ const Login = () => {
         {/* Top Section with Image and Logo */}
         <div className="login-top-section">
           <div className="login-bg-shape"></div>
-          <img src="/boy.png" alt="Boy" className="login-boy-image" />
+                <img src="/boy.webp" alt="Boy" className="login-boy-image" loading="lazy" />
           <div className="login-logo-badge">
-            <img src="/Doorriing.png" alt="Logo" className="logo-image" style={{ width: '70px', height: '70px', objectFit: 'contain' }} />
+                  <img src="/Doorriing.webp" alt="Logo" className="logo-image" style={{ width: '70px', height: '70px', objectFit: 'contain' }} loading="lazy" />
           </div>
         </div>
 

@@ -77,7 +77,7 @@ const RestaurantCard = ({ shop }) => {
       >
         <div className="restaurant-card-image">
           {image ? (
-            <img src={image} alt={title} />
+                  <img src={image} alt={title} loading="lazy" />
           ) : (
             <div className="restaurant-card-placeholder">{initials}</div>
           )}

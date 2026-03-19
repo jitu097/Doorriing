@@ -16,16 +16,16 @@ const Footer = () => {
         <div className="footer-download-app">
           <span className="footer-download-label">Download App</span>
           <a href="#" className="footer-app-btn appstore" style={{ padding: 0, background: 'none' }}>
-            <img src="/play.png" alt="Play Store" style={{ height: '38px', width: 'auto', display: 'block' }} />
+            <img src="/play.webp" alt="Play Store" style={{ height: '38px', width: 'auto', display: 'block' }} loading="lazy" />
           </a>
           <a href="#" className="footer-app-btn playstore" style={{ padding: 0, background: 'none' }}>
-            <img src="/apple.png" alt="App Store" style={{ height: '38px', width: 'auto', display: 'block' }} />
+            <img src="/apple.webp" alt="App Store" style={{ height: '38px', width: 'auto', display: 'block' }} loading="lazy" />
           </a>
         </div>
         <div className="footer-socials">
-          <a href="#" className="footer-social-icon"><img src="/F.png" alt="Facebook" style={{ height: '36px', width: '36px', borderRadius: '50%' }} /></a>
-          <a href="#" className="footer-social-icon"><img src="/i.png" alt="Instagram" style={{ height: '36px', width: '36px', borderRadius: '50%' }} /></a>
-          <a href="#" className="footer-social-icon"><img src="/L.png" alt="LinkedIn" style={{ height: '36px', width: '36px', borderRadius: '50%' }} /></a>
+          <a href="#" className="footer-social-icon"><img src="/F.webp" alt="Facebook" style={{ height: '36px', width: '36px', borderRadius: '50%' }} loading="lazy" /></a>
+          <a href="#" className="footer-social-icon"><img src="/i.webp" alt="Instagram" style={{ height: '36px', width: '36px', borderRadius: '50%' }} loading="lazy" /></a>
+          <a href="#" className="footer-social-icon"><img src="/L.webp" alt="LinkedIn" style={{ height: '36px', width: '36px', borderRadius: '50%' }} loading="lazy" /></a>
         </div>
       </div>
       <div className="footer-disclaimer">

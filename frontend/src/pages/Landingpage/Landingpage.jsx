@@ -29,7 +29,7 @@ const Landingpage = () => {
                   Signin
                 </button>
               </div>
-              <img src="/Arrow.png" alt="Arrow" className="arrow-decoration" />
+                  <img src="/Arrow.png" alt="Arrow" className="arrow-decoration" loading="lazy" />
             </div>
             
             <div className="landing-image">
@@ -40,7 +40,7 @@ const Landingpage = () => {
                     Signin
                   </button>
                 </div>
-                <img src="/mobile.png" alt="Mobile View" className="mobile-image-full" />
+                    <img src="/mobile.webp" alt="Mobile View" className="mobile-image-full" loading="lazy" />
                 <div className="mobile-btn-group">
                   <button className="signup-btn" onClick={() => navigate('/signup')}>
                     Signup

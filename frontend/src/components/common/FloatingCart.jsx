@@ -19,9 +19,10 @@ const FloatingCart = ({ onCartClick }) => {
         <div className="floating-cart-info">
           <div className="cart-icon-wrapper">
             <img 
-              src="/shoppingbag.png" 
+              src="/shoppingbag.webp" 
               alt="Cart" 
               className="cart-icon"
+              loading="lazy"
             />
           </div>
           <div className="cart-details">

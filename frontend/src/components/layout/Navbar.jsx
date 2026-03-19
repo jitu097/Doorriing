@@ -72,7 +72,7 @@ const Navbar = ({ onCartClick }) => {
       <div className="navbar-container">
         {/* Logo */}
         <Link to="/home" className="navbar-logo">
-          <img src="/Doorriing.png" alt="DoorRing" className="logo-image" />
+          <img src="/Doorriing.webp" alt="DoorRing" className="logo-image" loading="lazy" />
         </Link>
 
         {/* Location */}
@@ -104,7 +104,7 @@ const Navbar = ({ onCartClick }) => {
           onClick={() => setShowSearch(true)}
           aria-label="Open search"
         >
-          <img src="/search.png" alt="Search" className="searchbar-icon" />
+          <img src="/search.webp" alt="Search" className="searchbar-icon" loading="lazy" />
         </button>
 
         {/* Search - Mobile Overlay */}
@@ -132,7 +132,7 @@ const Navbar = ({ onCartClick }) => {
         {user && (
           <div className="navbar-account-wrapper">
             <div className="navbar-account" onClick={handleAccountClick} tabIndex={0}>
-              <img src="/account.png" alt="Account" className="account-icon" />
+              <img src="/account.webp" alt="Account" className="account-icon" loading="lazy" />
             </div>
             {showAccount && (
               <div className="account-dropdown">

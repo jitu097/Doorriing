@@ -72,7 +72,6 @@ const Grocery = () => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % carouselImages.length);
     }, 3000); // Change image every 3 seconds
-
     return () => clearInterval(interval);
   }, []);
 

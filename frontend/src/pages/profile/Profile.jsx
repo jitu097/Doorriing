@@ -49,7 +49,7 @@ const Profile = () => {
         <div className="profile-header">
           <div className="profile-avatar">
             {user?.photoURL ? (
-              <img src={user.photoURL} alt="Profile" />
+                    <img src={user.photoURL} alt="Profile" loading="lazy" />
             ) : (
               <div className="avatar-placeholder">
                 {getInitials(profileData.displayName)}

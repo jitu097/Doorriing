@@ -451,7 +451,7 @@ const ItemCard = ({
     <div className={`item-card${!isAvailable ? ' item-card-disabled' : ''}${isRestaurantCard ? ' restaurant-card' : ''}`}>
       {image && (
         <div className="item-card-image">
-          <img src={image} alt={name} />
+          <img src={image} alt={name} loading="lazy" />
         </div>
       )}
 
@@ -464,7 +464,7 @@ const ItemCard = ({
               title={derivedIsVeg ? 'Vegetarian' : 'Non-Vegetarian'}
             >
               <img
-                src={derivedIsVeg ? '/vegy.png' : '/nonveg.png'}
+                src={derivedIsVeg ? '/vegy.webp' : '/nonveg.webp'}
                 alt={derivedIsVeg ? 'Vegetarian' : 'Non-Vegetarian'}
                 style={{ width: 18, height: 18, verticalAlign: 'middle' }}
               />
