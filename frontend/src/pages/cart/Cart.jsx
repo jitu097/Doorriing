@@ -9,8 +9,8 @@ const Cart = () => {
   const { cartItems, getCartTotal } = useCart();
 
   const subtotal = getCartTotal();
-  const deliveryFee = 20;
-  const handlingCharge = 2;
+  const deliveryFee = 0;
+  const handlingCharge = 0;
   const grandTotal = subtotal + deliveryFee + handlingCharge;
 
   const handleCheckout = () => {

@@ -24,8 +24,8 @@ const CheckoutPayment = () => {
   });
 
   const subtotal = getCartTotal();
-  const deliveryFee = 20;
-  const handlingCharge = 2;
+  const deliveryFee = 0;
+  const handlingCharge = 0;
   const grandTotal = subtotal + deliveryFee + handlingCharge;
 
   useEffect(() => {
@@ -97,7 +97,7 @@ const CheckoutPayment = () => {
         }
 
         const options = {
-          key: "rzp_test_SRq38VoKVT5feD",
+          key: "rzp_live_ST90zfYrJRTjmh",
           amount: order.amount,
           currency: order.currency,
           name: "Doorriing",
