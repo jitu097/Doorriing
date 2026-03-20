@@ -33,7 +33,7 @@ const FloatingCart = ({ onCartClick }) => {
           </div>
         </div>
         <button className="view-cart-btn" onClick={onCartClick}>
-          View Cart
+          checkout
           <svg 
             className="arrow-icon" 
             width="16" 

@@ -9,19 +9,15 @@ const Footer = () => {
       <nav className="mobile-footer-nav">
         <button className="footer-btn" onClick={() => navigate('/home')}>
           <img src="/home.webp" alt="Home" className="footer-icon" />
-          <span>Home</span>
         </button>
         <button className="footer-btn" onClick={() => navigate('/orders')}>
           <img src="/order.webp" alt="Orders" className="footer-icon" />
-          <span>Orders</span>
         </button>
         <button className="footer-btn" onClick={() => navigate('/shops')}>
-          <img src="/categories.webp" alt="Categories" className="footer-icon" />
-          <span>Categories</span>
+          <img src="/apps.webp" alt="Categories" className="footer-icon" />
         </button>
-        <button className="footer-btn" onClick={() => navigate('/profile')}>
-          <img src="/profile.webp" alt="Profile" className="footer-icon" />
-          <span>Profile</span>
+        <button className="footer-btn" onClick={() => navigate('/FloatingCart')}>
+          <img src="/carty.webp" alt="Profile" className="footer-icon" />
         </button>
       </nav>
     </footer>
