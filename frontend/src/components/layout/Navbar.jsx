@@ -71,16 +71,19 @@ const Navbar = ({ onCartClick }) => {
     <nav className="navbar">
       <div className="navbar-container">
         {/* Logo */}
-        <Link to="/home" className="navbar-logo">
-          <img src="/Doorriing.webp" alt="DoorRing" className="logo-image" loading="lazy" />
-        </Link>
+        {/* Doorriing logo removed as per request */}
 
         {/* Location */}
         {user && (
           <div className="navbar-location" onClick={handleLocationClick} title="Manage delivery addresses" style={{ cursor: 'pointer' }}>
-            <div className="location-address">
-              {activeAddress?.area || 'Select Location'}
-              <img src="/location.webp" alt="Location" className="account-caret location-caret-img" />
+            <div className="location-address-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: 0 }}>
+              <span style={{ fontWeight: 'normal', fontSize: '1.1em', marginBottom: '0.4em', marginTop: '-10px', letterSpacing: '0.5px', lineHeight: 1 }}>DoorriinG</span>
+              <span className="location-address" style={{ display: 'flex', alignItems: 'center', padding: 0 }}>
+                {activeAddress?.area || 'Select Location'}
+                <span className="account-caret">
+                  <img src="/location.webp" alt="Location" className="location-caret-img" style={{ width: '1em', height: '1em', marginLeft: '0.2em', verticalAlign: 'middle' }} />
+                </span>
+              </span>
             </div>
           </div>
         )}
@@ -140,6 +143,7 @@ const Navbar = ({ onCartClick }) => {
             {showAccount && (
               <div className="account-dropdown">
                 <ul>
+                  <li><Link to="/home">Home</Link></li>
                   <li><Link to="/orders">My Orders</Link></li>
                   <li><Link to="/address">Address</Link></li>
                   <li><Link to="/profile">Profile</Link></li>

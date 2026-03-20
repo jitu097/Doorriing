@@ -1,4 +1,3 @@
-
 .navbar-cart-ui {
 	display: flex;
 	align-items: center;
@@ -231,12 +230,6 @@
 	text-decoration: none;
 	cursor: pointer;
 }
-
-@media (max-width: 768px) {
-	.navbar-logo {
-		display: none !important;
-	}
-}
 .logo-image {
 	height: 60px;
 	width: 100px;
@@ -244,27 +237,11 @@
 }
 .navbar-location {
 	cursor: pointer;
-	margin-left: 2.5rem;
+	margin-right: 2rerm;
 	min-width: 220px;
 	display: flex;
 	align-items: center;
 	flex-shrink: 0;
-}
-
-@media (max-width: 1024px) {
-	.navbar-location {
-		margin-left: 1.5rem;
-	}
-}
-@media (max-width: 768px) {
-	.navbar-location {
-		margin-left: 1rem;
-	}
-}
-@media (max-width: 600px) {
-	.navbar-location {
-		margin-left: 0.9rem;
-	}
 }
 .location-title {
 	font-weight: 600;
@@ -277,6 +254,11 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	max-width: 200px;
+	display: flex;
+	align-items: center;
+	gap: 0 !important;
+	margin-left: 0.7em !important;
+	margin-bottom: -20px !important;
 }
 .navbar-search {
 	flex: 1;
@@ -342,7 +324,10 @@
 
 .account-caret {
 	font-size: 0.8rem;
-	margin-left: 40px!important;
+	margin-left: 0.3rem;
+	display: inline-flex !important;
+	align-items: center !important;
+	margin-left: 0.2em !important;
 }
 .account-dropdown {
 	position: absolute;
@@ -636,6 +621,10 @@
 	.location-address {
 		font-size: 0.8rem;
 		max-width: 110px;
+		display: flex;
+		align-items: center;
+		gap: 0 !important;
+		
 	}
 
 	.searchbar-icon {
@@ -657,23 +646,17 @@
 	}
 
 	.account-caret {
-		font-size: 0.8rem;
-		margin-left: 0.3rem;
-		vertical-align: middle;
+		font-size: 0.7rem;
+		margin-left: 0.2rem;
+		display: inline-flex !important;
+		align-items: center !important;
+		margin-left: 0.15em !important;
 	}
-	.location-caret-img {
-		width: 2.2em;
-		height: 2.2em;
-		object-fit: contain;
-		margin-left: 0.3em;
-		display: inline-block;
-	}
-	.account-dropdown {
+.account-dropdown {
 		min-width: 200px;
 		right: -10px;
 	}
-
-	.navbar-cart-ui {
+.navbar-cart-ui {
 		padding: 0.1rem 0.7rem 0.1rem 0.45rem;
 		font-size: 0.95rem;
 		min-width: 75px;
@@ -729,6 +712,9 @@
 	.location-address {
 		font-size: 0.75rem;
 		max-width: 100px;
+		display: flex;
+		align-items: center;
+		gap: 0 !important;
 	}
 
 	.navbar-account-wrapper {
@@ -835,6 +821,9 @@
 	.location-address {
 		font-size: 0.7rem;
 		max-width: 85px;
+		display: flex;
+		align-items: center;
+		gap: 0 !important;
 	}
 
 	.navbar-account-wrapper {
@@ -853,9 +842,11 @@
 	.account-caret {
 		font-size: 0.65rem;
 		margin-left: 0.2rem;
+		display: inline-flex !important;
+		align-items: center !important;
+		margin-left: 0.15em !important;
 	}
-
-	.account-dropdown {
+.account-dropdown {
 		min-width: 160px;
 		right: -20px;
 		font-size: 0.8rem;
@@ -941,4 +932,27 @@
 			font-size: 0.75rem;
 		}
 	}
+
+@media (max-width: 900px) {
+  .location-address {
+    max-width: 180px !important;
+    font-size: 0.9rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0 !important;
+  }
+  .account-caret {
+    margin-left: 0.15em !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+  .location-caret-img {
+    width: 1.3em !important;
+    height: 1.3em !important;
+    margin-left: 0.15em !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+  }
+}
 
