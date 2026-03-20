@@ -1,7 +1,8 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import Navbar from './Navbar';
-import Footer from './Footer';
+import MainFooter from './Footer';
+import MobileFooter from '../common/Footer';
 import FloatingCart from '../common/FloatingCart';
 import CartDrawer from '../common/CartDrawer';
 
@@ -23,7 +24,8 @@ const PageLayout = () => {
       <main className="main-content">
         <Outlet />
       </main>
-      {isHomePage && <Footer />}
+      {isHomePage && <MainFooter />}
+      {!hideFloatingCart && <MobileFooter />}
       {!hideFloatingCart && <FloatingCart onCartClick={handleCartOpen} />}
       <CartDrawer isOpen={showCart} onClose={handleCartClose} />
     </div>
