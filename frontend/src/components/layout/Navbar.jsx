@@ -78,7 +78,10 @@ const Navbar = ({ onCartClick }) => {
         {/* Location */}
         {user && (
           <div className="navbar-location" onClick={handleLocationClick} title="Manage delivery addresses" style={{ cursor: 'pointer' }}>
-            <div className="location-address">{activeAddress?.area || 'Select Location'} <span className="account-caret">▼</span></div>
+            <div className="location-address">
+              {activeAddress?.area || 'Select Location'}
+              <img src="/location.webp" alt="Location" className="account-caret location-caret-img" />
+            </div>
           </div>
         )}
 

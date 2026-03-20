@@ -657,9 +657,17 @@
 	}
 
 	.account-caret {
-		font-size: 0.7rem;
+		font-size: 0.8rem;
+		margin-left: 0.3rem;
+		vertical-align: middle;
 	}
-
+	.location-caret-img {
+		width: 2.2em;
+		height: 2.2em;
+		object-fit: contain;
+		margin-left: 0.3em;
+		display: inline-block;
+	}
 	.account-dropdown {
 		min-width: 200px;
 		right: -10px;
