@@ -77,7 +77,6 @@ const Navbar = ({ onCartClick }) => {
         {user && (
           <div className="navbar-location" onClick={handleLocationClick} title="Manage delivery addresses" style={{ cursor: 'pointer' }}>
             <div className="location-address-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: 0 }}>
-              <span style={{ fontWeight: 'normal', fontSize: '1.1em', marginBottom: '0.4em', marginTop: '-10px', letterSpacing: '0.5px', lineHeight: 1 }}>DoorriinG</span>
               <span className="location-address" style={{ display: 'flex', alignItems: 'center', padding: 0 }}>
                 {activeAddress?.area || 'Select Location'}
                 <span className="account-caret">
