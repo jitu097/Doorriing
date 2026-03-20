@@ -231,6 +231,12 @@
 	text-decoration: none;
 	cursor: pointer;
 }
+
+@media (max-width: 768px) {
+	.navbar-logo {
+		display: none !important;
+	}
+}
 .logo-image {
 	height: 60px;
 	width: 100px;
@@ -238,11 +244,27 @@
 }
 .navbar-location {
 	cursor: pointer;
-	margin-right: 2rerm;
+	margin-left: 2.5rem;
 	min-width: 220px;
 	display: flex;
 	align-items: center;
 	flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+	.navbar-location {
+		margin-left: 1.5rem;
+	}
+}
+@media (max-width: 768px) {
+	.navbar-location {
+		margin-left: 1rem;
+	}
+}
+@media (max-width: 600px) {
+	.navbar-location {
+		margin-left: 0.9rem;
+	}
 }
 .location-title {
 	font-weight: 600;
@@ -320,7 +342,7 @@
 
 .account-caret {
 	font-size: 0.8rem;
-	margin-left: 0.3rem;
+	margin-left: 40px!important;
 }
 .account-dropdown {
 	position: absolute;
