@@ -2,10 +2,10 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Footer.css';
 
-const Footer = () => {
+const Footer = ({ visible = true }) => {
   const navigate = useNavigate();
   return (
-    <footer className="mobile-footer">
+    <footer className={`mobile-footer${visible ? ' visible' : ' hidden'}`}>
       <nav className="mobile-footer-nav">
         <button className="footer-btn" onClick={() => navigate('/home')}>
           <img src="/home.webp" alt="Home" className="footer-icon" />

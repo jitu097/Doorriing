@@ -2,7 +2,7 @@ import React from 'react';
 import { useCart } from '../../context/CartContext';
 import './FloatingCart.css';
 
-const FloatingCart = ({ onCartClick }) => {
+const FloatingCart = ({ onCartClick, footerVisible = true }) => {
   const { getCartCount, getCartTotal } = useCart();
 
   const itemCount = getCartCount();
@@ -14,7 +14,7 @@ const FloatingCart = ({ onCartClick }) => {
   }
 
   return (
-    <div className="floating-cart">
+    <div className={`floating-cart${footerVisible ? '' : ' at-bottom'}`}>
       <div className="floating-cart-content">
         <div className="floating-cart-info">
           <div className="cart-icon-wrapper">
