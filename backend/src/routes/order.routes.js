@@ -12,44 +12,17 @@ const router = Router();
 router.use(authenticate);
 
 // ---------------------------
-// Payment Routes (Move to top)
+// Payment Routes
 // ---------------------------
 
 // POST /api/user/orders/initiate-payment
-router.post('/initiate-payment', async (req, res) => {
-	const { amount, currency = 'INR', receipt = `receipt_${Date.now()}` } = req.body;
-	
-	console.log('[Razorpay Debug] Creating order:', { amount, currency, receipt });
+router.post('/initiate-payment', orderController.initiatePayment);
 
-	if (!amount || isNaN(amount) || amount <= 0) {
-		return res.status(400).json({
-			success: false,
-			error: 'Invalid amount. Amount must be a positive number.'
-		});
-	}
-
-	try {
-		const options = {
-			amount: Math.round(amount * 100),
-			currency,
-			receipt,
-			payment_capture: 1
-		};
-
-		const order = await razorpay.orders.create(options);
-		res.json(order);
-	} catch (error) {
-		console.error('[Razorpay Error] Creation error:', error);
-		res.status(500).json({ 
-			success: false,
-			error: error.message || 'Failed to create Razorpay order'
-		});
-	}
-});
+// GET /api/user/orders/initiate-payment (Test route)
+router.get('/initiate-payment', (req, res) => res.json({ message: 'Payment router is reachable via GET' }));
 
 // POST /api/user/orders/verify-payment
 router.post('/verify-payment', orderController.verifyPayment);
-
 
 // ---------------------------
 // Standard Order Routes

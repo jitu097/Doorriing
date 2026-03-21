@@ -160,6 +160,40 @@ export const orderController = {
         }
     },
 
+    /**
+     * Initiate a Razorpay payment order
+     * POST /api/user/orders/initiate-payment
+     */
+    async initiatePayment(req, res) {
+        const { amount, currency = 'INR', receipt = `rcpt_${Date.now()}` } = req.body;
+        const { default: razorpay } = await import('../utils/razorpay.js');
+
+        if (!amount || isNaN(amount) || amount <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid amount. Amount must be a positive number.'
+            });
+        }
+
+        try {
+            const options = {
+                amount: Math.round(amount * 100),
+                currency,
+                receipt,
+                payment_capture: 1
+            };
+
+            const order = await razorpay.orders.create(options);
+            res.status(200).json(order);
+        } catch (error) {
+            console.error('[Razorpay Controller Error]', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to create payment order'
+            });
+        }
+    },
+
     verifyPayment(req, res) {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
         const key_secret = process.env.RAZORPAY_KEY_SECRET;
