@@ -1,5 +1,6 @@
 import { supabase } from '../../config/supabaseClient.js';
 import { logger } from '../../utils/logger.js';
+import { firebaseAuth } from '../../config/firebaseAdmin.js';
 
 class AuthService {
   /**
@@ -163,6 +164,55 @@ class AuthService {
       return data;
     } catch (error) {
       logger.error('Error in updateCustomerProfile', { error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Delete account and all associated data
+   */
+  async deleteAccount(customerId, firebaseUid) {
+    try {
+      logger.info('Starting account deletion', { customerId, firebaseUid });
+
+      // 1. Delete cart data
+      const { data: cart } = await supabase
+        .from('carts')
+        .select('id')
+        .eq('customer_id', customerId)
+        .maybeSingle();
+
+      if (cart) {
+        await supabase.from('cart_items').delete().eq('cart_id', cart.id);
+        await supabase.from('carts').delete().eq('id', cart.id);
+      }
+
+      // 2. Delete addresses
+      await supabase.from('customer_addresses').delete().eq('customer_id', customerId);
+
+      // 3. Delete orders
+      await supabase.from('orders').delete().eq('customer_id', customerId);
+
+      // 4. Delete notifications
+      await supabase.from('notifications').delete().eq('customer_id', customerId);
+
+      // 5. Delete profile
+      const { error: profileError } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', customerId);
+
+      if (profileError) {
+        throw new Error(`Failed to delete profile: ${profileError.message}`);
+      }
+
+      // 6. Delete from Firebase Auth
+      await firebaseAuth.deleteUser(firebaseUid);
+
+      logger.info('Account deleted successfully', { customerId });
+      return true;
+    } catch (error) {
+      logger.error('Error in deleteAccount', { error: error.message, customerId });
       throw error;
     }
   }

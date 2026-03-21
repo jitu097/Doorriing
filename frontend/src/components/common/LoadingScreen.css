@@ -1,4 +1,3 @@
-
 @media (max-width: 600px) {
 	.loading-screen-map {
 		width: 100vw;
@@ -11,6 +10,7 @@
 		padding-top: 32px;
 		box-sizing: border-box;
 	}
+
 	.title {
 		font-size: 1.2rem;
 		font-weight: 600;
@@ -19,6 +19,7 @@
 		text-align: center;
 		letter-spacing: 0.5px;
 	}
+
 	.map-container {
 		position: relative;
 		width: 100%;
@@ -26,45 +27,54 @@
 		margin: auto;
 		aspect-ratio: 2/3;
 	}
+
 	.map-bg {
-		width:400px;
+		width: 400px;
 		height: 900px;
 		object-fit: cover;
 		border-radius: 18px;
-        margin-top: -140px;
-		box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+		margin-top: -140px;
+		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 	}
+
 	.shop {
 		position: absolute;
 		width: 990px;
 		max-width: 240px;
-		filter: drop-shadow(0 8px 10px rgba(0,0,0,0.2));
+		filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.2));
 		transition: transform 0.2s;
 		z-index: 2;
 	}
+
 	.shop:hover {
 		transform: scale(1.05);
 	}
+
 	.grocery {
 		top: 9%;
 		left: 50%;
 	}
+
 	.hotel {
 		top: 5%;
 		right: 40%;
 	}
+
 	.restaurant {
-		top:-10%;
+		top: -10%;
 		left: 10%;
 	}
+
 	.cosmetic {
 		top: 20%;
 		right: 10%;
 	}
+
 	.dairy {
 		bottom: 30%;
 		right: 60%;
 	}
+
 	.electric {
 		top: 90%;
 		left: 35%;

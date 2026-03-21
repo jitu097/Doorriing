@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import React, { Suspense, lazy } from 'react';
 const Login = lazy(() => import('../pages/auth/Login'));
 const Signup = lazy(() => import('../pages/auth/Signup'));
+const DeleteAccount = lazy(() => import('../pages/auth/DeleteAccount'));
 const Landingpage = lazy(() => import('../pages/Landingpage/Landingpage'));
 const Home = lazy(() => import('../pages/home/Home'));
 const Checkout = lazy(() => import('../pages/cart/Checkout'));
@@ -89,6 +90,7 @@ const UserRoutes = () => {
           <Route path="/orders/:orderId" element={<OrderDetails />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/address" element={<Address />} />
+          <Route path="/delete-account" element={<DeleteAccount />} />
         </Route>
       </Route>
 

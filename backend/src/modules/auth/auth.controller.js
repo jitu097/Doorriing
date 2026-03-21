@@ -102,6 +102,27 @@ class AuthController {
       next(error);
     }
   }
+
+  /**
+   * Delete current user account
+   * DELETE /api/auth/account
+   */
+  async deleteAccount(req, res, next) {
+    try {
+      const { customerId, firebaseUid } = req.user;
+
+      if (!customerId || !firebaseUid) {
+        return sendError(res, 'Authentication context missing', 400);
+      }
+
+      await authService.deleteAccount(customerId, firebaseUid);
+
+      return sendSuccess(res, null, 'Account deleted successfully', 200);
+    } catch (error) {
+      logger.error('DeleteAccount controller error', { error: error.message });
+      next(error);
+    }
+  }
 }
 
 export default new AuthController();

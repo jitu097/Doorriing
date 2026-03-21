@@ -16,4 +16,7 @@ router.get('/me', authenticate, authController.getProfile);
 // Update profile
 router.put('/profile', authenticate, authController.updateProfile);
 
+// Delete account
+router.delete('/account', authenticate, authController.deleteAccount);
+
 export default router;
