@@ -1,11 +1,13 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useContext } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { auth } from '../../config/firebase';
+import { AuthContext } from '../../context/AuthContext';
 import api from '../../services/api';
 import './DeleteAccount.css';
 
 const DeleteAccount = () => {
+  const { user, loading: authLoading } = useContext(AuthContext);
   const [confirmText, setConfirmText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -39,49 +41,78 @@ const DeleteAccount = () => {
     }
   };
 
+  if (authLoading) {
+    return <div className="delete-account-page">Loading...</div>;
+  }
+
   return (
     <div className="delete-account-page">
       <div className="delete-account-container">
         <h1>Delete Account</h1>
-        <p className="warning-text">
-          <strong>Warning:</strong> This action is irreversible. All your orders, 
-          addresses, and personal information will be permanently removed.
-        </p>
-
-        <form onSubmit={handleDelete} className="delete-confirm-form">
-          <label htmlFor="confirm">
-            To confirm, please type <strong>DELETE</strong> in the box below:
-          </label>
-          <input
-            id="confirm"
-            type="text"
-            value={confirmText}
-            onChange={(e) => setConfirmText(e.target.value)}
-            placeholder="Type DELETE here"
-            disabled={loading}
-            autoComplete="off"
-          />
-
-          {error && <div className="error-msg">{error}</div>}
-
-          <div className="action-buttons">
-            <button
-              type="button"
-              className="cancel-btn"
-              onClick={() => navigate('/profile')}
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="confirm-delete-btn"
-              disabled={loading || confirmText !== 'DELETE'}
-            >
-              {loading ? 'Deleting...' : 'Permanently Delete My Account'}
-            </button>
+        
+        {!user ? (
+          <div className="login-required-view">
+            <p className="intro-text">
+              To delete your account and all associated data, you must first be logged in to verify your identity.
+            </p>
+            <div className="action-buttons">
+              <button 
+                className="cancel-btn" 
+                onClick={() => navigate('/home')}
+              >
+                Go Home
+              </button>
+              <button 
+                className="confirm-delete-btn" 
+                onClick={() => navigate('/login', { state: { from: '/delete-account' } })}
+              >
+                Login to Continue
+              </button>
+            </div>
           </div>
-        </form>
+        ) : (
+          <>
+            <p className="warning-text">
+              <strong>Warning:</strong> This action is irreversible. All your orders, 
+              addresses, and personal information will be permanently removed.
+            </p>
+
+            <form onSubmit={handleDelete} className="delete-confirm-form">
+              <label htmlFor="confirm">
+                To confirm, please type <strong>DELETE</strong> in the box below:
+              </label>
+              <input
+                id="confirm"
+                type="text"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="Type DELETE here"
+                disabled={loading}
+                autoComplete="off"
+              />
+
+              {error && <div className="error-msg">{error}</div>}
+
+              <div className="action-buttons">
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={() => navigate('/profile')}
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="confirm-delete-btn"
+                  disabled={loading || confirmText !== 'DELETE'}
+                >
+                  {loading ? 'Deleting...' : 'Permanently Delete My Account'}
+                </button>
+              </div>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );

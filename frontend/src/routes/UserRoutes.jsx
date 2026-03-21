@@ -63,6 +63,7 @@ const UserRoutes = () => {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsConditions />} />
         <Route path="/refund-policy" element={<RefundPolicy />} />
+        <Route path="/delete-account" element={<DeleteAccount />} />
       </Route>
 
       {/* Public Grocery & Restaurant Pages - Browse without navbar */}
@@ -90,7 +91,6 @@ const UserRoutes = () => {
           <Route path="/orders/:orderId" element={<OrderDetails />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/address" element={<Address />} />
-          <Route path="/delete-account" element={<DeleteAccount />} />
         </Route>
       </Route>
 
