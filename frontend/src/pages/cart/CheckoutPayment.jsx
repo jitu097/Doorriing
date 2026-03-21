@@ -1,8 +1,80 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useCart } from "../../context/CartContext";
+import { useAddress } from "../../context/AddressContext";
+import { orderService } from "../../services/order.service.js";
 import { api } from "../../services/api";
+import "./Checkout.css";
 
 const CheckoutPayment = () => {
-  // ... (rest of component remains same until handlePlaceOrder)
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  const { cartItems, getCartTotal, clearCart } = useCart();
+  const { addresses } = useAddress();
+
+  const [paymentMethod, setPaymentMethod] = useState("COD");
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const [selectedAddressId] = useState(() => {
+    const initial =
+      location.state?.selectedAddressId ||
+      sessionStorage.getItem("checkoutSelectedAddressId");
+    return initial ? String(initial) : null;
+  });
+
+  const subtotal = getCartTotal();
+  const deliveryFee = 0;
+  const handlingCharge = 0;
+  const grandTotal = subtotal + deliveryFee + handlingCharge;
+
+  useEffect(() => {
+    if (!cartItems || cartItems.length === 0) {
+      navigate("/home", { replace: true });
+    }
+  }, [cartItems, navigate]);
+
+  useEffect(() => {
+    if (!selectedAddressId) {
+      navigate("/checkout", { replace: true });
+    }
+  }, [selectedAddressId, navigate]);
+
+  const selectedAddress = useMemo(() => {
+    if (!addresses) return null;
+    return addresses.find(
+      (addr) => String(addr.id) === String(selectedAddressId)
+    );
+  }, [addresses, selectedAddressId]);
+
+  const formatPrimaryLine = (addr) => {
+    if (!addr) return "";
+    return [addr.building, addr.area, addr.landmark]
+      .filter(Boolean)
+      .join(", ");
+  };
+
+  const formatSecondaryLine = (addr) => {
+    if (!addr) return "";
+    const secondaryParts = [addr.city, addr.state].filter(Boolean).join(", ");
+    return addr.postalCode
+      ? `${secondaryParts}${secondaryParts ? " - " : ""}${addr.postalCode}`
+      : secondaryParts;
+  };
+
+  const handlePlaceOrder = async (e) => {
+    e.preventDefault();
+    setErrorMsg(null);
+
+    if (!selectedAddressId) {
+      setErrorMsg(
+        "Missing delivery address. Please go back and select one."
+      );
+      return;
+    }
+
+    // -------- Razorpay Payment --------
     if (paymentMethod === "Card") {
       try {
         setLoading(true);
@@ -43,33 +115,11 @@ const CheckoutPayment = () => {
               setErrorMsg(err.message || "Payment verification failed.");
             }
           },
-              await clearCart();
-              sessionStorage.removeItem(
-                "checkoutSelectedAddressId"
-              );
-
-              navigate(
-                `/order-confirmation?orderId=${order.id}`
-              );
-            } else {
-              setErrorMsg(
-                "Payment verification failed. Please try again."
-              );
-            }
-          },
 
           prefill: {
-            name: selectedAddress?.name || "Test User",
-            email: "test@example.com",
-            contact: selectedAddress?.phone || "9999999999",
-          },
-
-          method: {
-            netbanking: true,
-            card: true,
-            upi: true,
-            wallet: true,
-            paylater: true,
+            name: selectedAddress?.name || "Customer",
+            email: "customer@example.com",
+            contact: selectedAddress?.phone || "0000000000",
           },
 
           theme: {
@@ -224,5 +274,3 @@ const CheckoutPayment = () => {
 };
 
 export default CheckoutPayment;
-
-//jitu
