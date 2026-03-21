@@ -12,6 +12,14 @@ class OrderService {
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
     return `ORD-${timestamp}-${random}`;
   }
+  
+  normalizeTimestamp(value) {
+    if (!value) return null;
+    if (typeof value !== 'string') return value;
+    if (value.includes('Z') || value.includes('+')) return value;
+    // For "YYYY-MM-DD HH:mm:ss" or "YYYY-MM-DDTHH:mm:ss"
+    return value.replace(' ', 'T') + 'Z';
+  }
 
   /**
    * Create order from cart
@@ -158,7 +166,8 @@ class OrderService {
       // Expiry enforcement
       const now = new Date();
       for (const order of data || []) {
-        if (order.status === ORDER_STATUS.PENDING && order.acceptance_deadline && new Date(order.acceptance_deadline) < now) {
+        const normalizedDeadline = this.normalizeTimestamp(order.acceptance_deadline);
+        if (order.status === ORDER_STATUS.PENDING && normalizedDeadline && new Date(normalizedDeadline) < now) {
           await supabase.from('orders').update({ status: ORDER_STATUS.EXPIRED }).eq('id', order.id);
           order.status = ORDER_STATUS.EXPIRED;
         }
@@ -225,7 +234,8 @@ class OrderService {
 
       // Expiry enforcement
       const now = new Date();
-      if (order && order.status === ORDER_STATUS.PENDING && order.acceptance_deadline && new Date(order.acceptance_deadline) < now) {
+      const normalizedDeadline = this.normalizeTimestamp(order.acceptance_deadline);
+      if (order && order.status === ORDER_STATUS.PENDING && normalizedDeadline && new Date(normalizedDeadline) < now) {
         await supabase.from('orders').update({ status: ORDER_STATUS.EXPIRED }).eq('id', order.id);
         order.status = ORDER_STATUS.EXPIRED;
       }
