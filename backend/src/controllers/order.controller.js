@@ -162,7 +162,7 @@ export const orderController = {
 
     verifyPayment(req, res) {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-        const key_secret = process.env.RAZORPAY_KEY_SECRET || 'F6b8cIOG8LNbAsXX29lPIylk';
+        const key_secret = process.env.RAZORPAY_KEY_SECRET;
 
         const generated_signature = crypto
             .createHmac('sha256', key_secret)

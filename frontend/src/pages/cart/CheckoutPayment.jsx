@@ -97,7 +97,7 @@ const CheckoutPayment = () => {
         }
 
         const options = {
-          key: "rzp_live_ST90zfYrJRTjmh",
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: order.amount,
           currency: order.currency,
           name: "Doorriing",
@@ -160,7 +160,7 @@ const CheckoutPayment = () => {
       } catch (error) {
         setErrorMsg(
           error.message ||
-            "Failed to create payment order. Please try again."
+          "Failed to create payment order. Please try again."
         );
       } finally {
         setLoading(false);
@@ -191,7 +191,7 @@ const CheckoutPayment = () => {
       console.error("Checkout failed:", error);
       setErrorMsg(
         error.message ||
-          "Failed to place order. Please try again."
+        "Failed to place order. Please try again."
       );
     } finally {
       setLoading(false);
