@@ -11,6 +11,50 @@ const router = Router();
 // All order endpoints require auth middleware
 router.use(authenticate);
 
+// ---------------------------
+// Payment Routes (Move to top)
+// ---------------------------
+
+// POST /api/user/orders/initiate-payment
+router.post('/initiate-payment', async (req, res) => {
+	const { amount, currency = 'INR', receipt = `receipt_${Date.now()}` } = req.body;
+	
+	console.log('[Razorpay Debug] Creating order:', { amount, currency, receipt });
+
+	if (!amount || isNaN(amount) || amount <= 0) {
+		return res.status(400).json({
+			success: false,
+			error: 'Invalid amount. Amount must be a positive number.'
+		});
+	}
+
+	try {
+		const options = {
+			amount: Math.round(amount * 100),
+			currency,
+			receipt,
+			payment_capture: 1
+		};
+
+		const order = await razorpay.orders.create(options);
+		res.json(order);
+	} catch (error) {
+		console.error('[Razorpay Error] Creation error:', error);
+		res.status(500).json({ 
+			success: false,
+			error: error.message || 'Failed to create Razorpay order'
+		});
+	}
+});
+
+// POST /api/user/orders/verify-payment
+router.post('/verify-payment', orderController.verifyPayment);
+
+
+// ---------------------------
+// Standard Order Routes
+// ---------------------------
+
 // POST /api/user/orders/checkout
 router.post('/checkout', orderController.checkout);
 
@@ -22,51 +66,6 @@ router.get('/:id', orderController.getOrderById);
 
 // PATCH /api/user/orders/:id/cancel
 router.patch('/:id/cancel', orderController.cancelOrder);
-
-// POST /api/order/verify-payment
-router.post('/verify-payment', orderController.verifyPayment);
-
-// POST /api/order/create-payment-order
-router.post('/create-payment-order', async (req, res) => {
-	const { amount, currency = 'INR', receipt = `receipt_${Date.now()}` } = req.body;
-	
-	console.log('[Razorpay Debug] Creating order:', { amount, currency, receipt });
-
-	// 1. Validate request body
-	if (!amount || isNaN(amount) || amount <= 0) {
-		console.error('[Razorpay Error] Invalid amount:', amount);
-		return res.status(400).json({
-			success: false,
-			error: 'Invalid amount. Amount must be a positive number.'
-		});
-	}
-
-	try {
-		// 2. Fix order creation: ensure amount is an integer (paise)
-		const options = {
-			amount: Math.round(amount * 100), // Amount in paise
-			currency,
-			receipt,
-			payment_capture: 1
-		};
-
-		console.log('[Razorpay Debug] Options sent to Razorpay:', options);
-
-		const order = await razorpay.orders.create(options);
-		
-		console.log('[Razorpay Debug] Order created successfully:', order.id);
-		res.json(order);
-	} catch (error) {
-		console.error('[Razorpay Error] Detailed creation error:', error);
-		
-		// 3. Ensure response always returns valid JSON
-		res.status(500).json({ 
-			success: false,
-			error: error.message || 'Failed to create Razorpay order',
-			details: error
-		});
-	}
-});
 
 
 // Razorpay webhook endpoint (no auth middleware)

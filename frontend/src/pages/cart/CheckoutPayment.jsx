@@ -80,7 +80,7 @@ const CheckoutPayment = () => {
 
         const token = localStorage.getItem("token");
 
-        const res = await fetch("/api/user/orders/create-payment-order", {
+        const res = await fetch("/api/user/orders/initiate-payment", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
