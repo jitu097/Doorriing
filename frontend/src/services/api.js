@@ -1,7 +1,7 @@
 import { auth } from '../config/firebase';
 
 const PROD_API_BASE_URL = 'https://doorriing.onrender.com/api';
-const DEV_API_BASE_URL = 'https://localhost:5002/api';
+const DEV_API_BASE_URL = 'http://localhost:5002/api';
 const DEFAULT_API_BASE_URL = import.meta.env.MODE === 'production'
 	? PROD_API_BASE_URL
 	: DEV_API_BASE_URL;
