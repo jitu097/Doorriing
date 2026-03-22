@@ -39,7 +39,7 @@ const Footer = () => {
           <Link to="/privacy-policy">Privacy Policy</Link>
           <Link to="/terms">Terms & Conditions</Link>
           <Link to="/refund-policy">Refund / Cancellation</Link>
-          <Link to="/delete-account" style={{ color: '#d32f2f' }}>Delete Account</Link>
+          <Link to="/settings/delete-account" style={{ color: '#d32f2f' }}>Delete Account</Link>
         </nav>
       </div>
     </footer>

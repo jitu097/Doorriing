@@ -19,6 +19,8 @@ const Contact = lazy(() => import('../pages/legal/Contact'));
 const PrivacyPolicy = lazy(() => import('../pages/legal/PrivacyPolicy'));
 const TermsConditions = lazy(() => import('../pages/legal/TermsConditions'));
 const RefundPolicy = lazy(() => import('../pages/legal/RefundPolicy'));
+const DeleteAccountInfo = lazy(() => import('../pages/legal/DeleteAccountInfo'));
+
 const ShopsList = lazy(() => import('../pages/shop/ShopsList'));
 const ShopDetails = lazy(() => import('../pages/shop/ShopDetails'));
 const ProtectedRoute = lazy(() => import('./ProtectedRoute'));
@@ -63,7 +65,8 @@ const UserRoutes = () => {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsConditions />} />
         <Route path="/refund-policy" element={<RefundPolicy />} />
-        <Route path="/delete-account" element={<DeleteAccount />} />
+        <Route path="/delete-account" element={<DeleteAccountInfo />} />
+        <Route path="/settings/delete-account" element={<DeleteAccount />} />
       </Route>
 
       {/* Public Grocery & Restaurant Pages - Browse without navbar */}

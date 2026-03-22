@@ -147,6 +147,7 @@ const Navbar = ({ onCartClick }) => {
                   <li><Link to="/address">Address</Link></li>
                   <li><Link to="/profile">Profile</Link></li>
                   <li><Link to="/about">About Us</Link></li>
+                  <li><Link to="/settings/delete-account" style={{ color: '#d32f2f' }}>Delete Account</Link></li>
                   <li><button onClick={handleLogout} className="logout-btn">Logout</button></li>
                 </ul>
               </div>
