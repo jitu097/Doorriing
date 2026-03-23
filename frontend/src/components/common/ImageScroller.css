@@ -95,7 +95,7 @@
 }
 @media (max-width: 600px) {
   .scroller-img-container, .scroller-img {
-    height: 130px;
+    height: 135px;
     min-width: 100vw;
     margin-bottom: -10px;
     width: 100vw;
