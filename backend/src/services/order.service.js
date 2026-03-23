@@ -224,7 +224,17 @@ export const orderService = {
     async getOrders(customerId) {
         const { data, error } = await supabase
             .from('orders')
-            .select('id, order_number, shop_id, total_amount, status, created_at, acceptance_deadline')
+            .select(`
+                id, 
+                order_number, 
+                shop_id, 
+                total_amount, 
+                status, 
+                created_at, 
+                acceptance_deadline,
+                shops ( name ),
+                order_items ( id, item_name, quantity, item_price )
+            `)
             .eq('customer_id', customerId)
             .order('created_at', { ascending: false });
 
@@ -253,6 +263,11 @@ export const orderService = {
             .from('orders')
             .select(`
            *,
+           shops (
+             name,
+             address,
+             phone
+           ),
            order_items (
              id, item_id, item_name, quantity, item_price, subtotal
            )

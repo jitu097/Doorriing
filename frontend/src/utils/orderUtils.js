@@ -1,7 +1,7 @@
 export const getStatusLabel = (status) => {
     switch (status?.toLowerCase()) {
         case 'pending':
-            return { label: 'Pending', colorClass: 'badge-yellow', message: 'Seller is reviewing your order.' };
+            return { label: 'Order Placed', colorClass: 'badge-yellow', message: 'Seller is reviewing your order.' };
         case 'accepted':
             return { label: 'Accepted', colorClass: 'badge-blue', message: 'Order accepted by seller.' };
         case 'confirmed':
@@ -18,9 +18,9 @@ export const getStatusLabel = (status) => {
         case 'rejected':
             return { label: 'Rejected', colorClass: 'badge-red', message: 'Order rejected by seller.' };
         case 'expired':
-            return { label: 'Expired', colorClass: 'badge-gray', message: 'Seller did not respond in time.' };
+            return { label: 'Order Expired', colorClass: 'badge-gray', message: 'Seller did not respond in time.' };
         case 'cancelled':
-            return { label: 'Cancelled', colorClass: 'badge-dark-red', message: 'Order has been cancelled.' };
+            return { label: 'Order Cancelled', colorClass: 'badge-dark-red', message: 'Order has been cancelled.' };
         default:
             return { label: status || 'Unknown', colorClass: 'badge-gray', message: '' };
     }
