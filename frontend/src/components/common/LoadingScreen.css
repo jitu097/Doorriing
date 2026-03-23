@@ -49,8 +49,8 @@ html, body {
 
 	.shop {
 		position: absolute;
-		width: 990px;
-		max-width: 240px;
+		width: 200px;
+		max-width: 200px;
 		filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.2));
 		transition: transform 0.2s;
 		z-index: 2;
@@ -71,12 +71,12 @@ html, body {
 	}
 
 	.restaurant {
-		top: 40%;
-		left: 10%;
+		top: 20%;
+		left: 40%;
 	}
 
 	.cosmetic {
-		top: 20%;
+		top: 30%;
 		right: 10%;
 	}
 
@@ -87,6 +87,8 @@ html, body {
 
 	.electric {
 		top: 50%;
-		left: 35%;
+		left: 25%;
+
+		
 	}
 }
