@@ -1,5 +1,6 @@
 package com.doorriing.user
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -9,20 +10,24 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.webkit.*
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.doorriing.user.databinding.ActivityMainBinding
 import com.doorriing.user.utils.NetworkUtils
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessaging
-import android.Manifest
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val BASE_URL = "https://doorriing.com"
+    
+    private lateinit var auth: FirebaseAuth
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -39,9 +44,10 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        auth = FirebaseAuth.getInstance()
+
         askNotificationPermission()
         setupWebView()
-        setupBottomNavigation()
         setupOnBackPressed()
         fetchFcmToken()
         handleIntent(intent)
@@ -105,6 +111,16 @@ class MainActivity : AppCompatActivity() {
             }
 
             webViewClient = object : WebViewClient() {
+                override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                    val url = request?.url.toString()
+                    if (url.contains("accounts.google.com")) {
+                        val intent = Intent(Intent.ACTION_VIEW, request?.url)
+                        startActivity(intent)
+                        return true
+                    }
+                    return false
+                }
+
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                     binding.progressBar.visibility = View.VISIBLE
                 }
@@ -129,26 +145,6 @@ class MainActivity : AppCompatActivity() {
                         binding.progressBar.progress = newProgress
                     }
                 }
-            }
-        }
-    }
-
-    private fun setupBottomNavigation() {
-        binding.bottomNavigation.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> {
-                    binding.webView.loadUrl("$BASE_URL/")
-                    true
-                }
-                R.id.nav_orders -> {
-                    binding.webView.loadUrl("$BASE_URL/orders")
-                    true
-                }
-                R.id.nav_profile -> {
-                    binding.webView.loadUrl("$BASE_URL/profile")
-                    true
-                }
-                else -> false
             }
         }
     }

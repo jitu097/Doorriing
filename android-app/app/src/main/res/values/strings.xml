@@ -6,4 +6,6 @@
     <string name="loading">Loading...</string>
     <string name="error_no_internet">No internet connection</string>
     <string name="retry">Retry</string>
+    <string name="default_web_client_id">1049973675081-tqglq1ml83fkei8nnheo2foq68nbl603.apps.googleusercontent.com</string>
+    <string name="sign_in_google">Sign in with Google</string>
 </resources>
