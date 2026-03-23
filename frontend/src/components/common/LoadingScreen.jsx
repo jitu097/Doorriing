@@ -10,7 +10,7 @@ const drop = {
     opacity: 1,
     scale: 1,
     transition: {
-      delay: i * 0.3,
+      delay: i * 0.20,
       type: "spring",
       stiffness: 120,
       damping: 10,
@@ -30,9 +30,9 @@ const shops = [
 export default function LoadingScreen() {
   return (
     <div className="loading-screen-map">
-      <div className="title" style={{lineHeight: 1.2, }}>
-        <span style={{display: 'block'}}>From local shops</span>
-        <span style={{display: 'block'}}>to your doorstep</span>
+      <div className="title" style={{lineHeight: 1.2, marginBottom: '20px'}}>
+        <span style={{display: 'block'}}>From local shops to your doorstep</span>
+      
         <span style={{display: 'block', color: '#ff4d4f', fontWeight: 'bold', letterSpacing: '2px', fontSize: '1.3em'}}>DOORRIING</span>
       </div>
       <div className="map-container">

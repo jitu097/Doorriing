@@ -24,6 +24,19 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Toggle body scroll based on loading state
+  useEffect(() => {
+    if (loading) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    // Clean up on unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [loading]);
+
   if (loading) {
     return <LoadingScreen />;
   }
