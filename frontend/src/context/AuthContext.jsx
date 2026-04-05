@@ -21,23 +21,13 @@ export const AuthProvider = ({ children }) => {
     };
 
     // Login
-    const loginWithEmail = async (email, password) => {
-        const result = await signInWithEmailAndPassword(auth, email, password);
-        if (result.user) {
-            const token = await result.user.getIdToken();
-            localStorage.setItem('token', token);
-        }
-        return result;
+    const loginWithEmail = (email, password) => {
+        return signInWithEmailAndPassword(auth, email, password);
     };
 
     // Login with Google
-    const loginWithGoogle = async () => {
-        const result = await signInWithPopup(auth, googleProvider);
-        if (result.user) {
-            const token = await result.user.getIdToken();
-            localStorage.setItem('token', token);
-        }
-        return result;
+    const loginWithGoogle = () => {
+        return signInWithPopup(auth, googleProvider);
     };
 
     // Logout
