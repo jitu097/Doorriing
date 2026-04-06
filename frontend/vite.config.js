@@ -32,8 +32,8 @@ export default defineConfig(({ mode }) => {
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    // Use esbuild minifier for compatibility with newer Node versions
-    minify: 'esbuild',
+    // Use terser with safe defaults
+    minify: 'terser',
     
     // Code splitting configuration with tree-shaking optimization
     rollupOptions: {
@@ -72,8 +72,15 @@ export default defineConfig(({ mode }) => {
       }
     },
     
-    esbuild: {
-      drop: dropConsole ? ['console', 'debugger'] : ['debugger'],
+    terserOptions: {
+      compress: {
+        drop_console: dropConsole,
+        drop_debugger: true,
+      },
+      mangle: true,
+      format: {
+        comments: false,
+      },
     },
     
     // CSS minification (aggressive)
