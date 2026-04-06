@@ -61,7 +61,8 @@ export const itemService = {
             config.params = { limit };
         }
 
-        return api.get('/home/items', config);
+        const response = await api.get('/home/items', config);
+        return response.data?.data || { grocery_items: [], restaurant_items: [] };
     }
 };
 
