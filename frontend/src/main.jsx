@@ -22,10 +22,17 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 )
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/sw.js')
-      .then(reg => console.log('SW registered', reg))
-      .catch(err => console.log('SW failed', err))
-  })
+  if (import.meta.env.PROD) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then(reg => console.log('SW registered', reg))
+        .catch(err => console.log('SW failed', err))
+    })
+  } else {
+    // Prevent dev-time caching/HMR issues from a previously registered SW.
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(reg => reg.unregister())
+    })
+  }
 }
