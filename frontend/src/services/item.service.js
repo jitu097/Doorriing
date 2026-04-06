@@ -61,8 +61,16 @@ export const itemService = {
             config.params = { limit };
         }
 
-        const response = await api.get('/home/items', config);
-        return response.data?.data || { grocery_items: [], restaurant_items: [] };
+        console.log('[itemService] Fetching home items...');
+        const payload = await api.get('/home/items', config);
+        console.log('[itemService] Full API Response:', payload);
+        console.log('[itemService] payload.data:', payload.data);
+        
+        const result = payload.data || { grocery_items: [], restaurant_items: [] };
+        console.log('[itemService] Final result:', result);
+        console.log('[itemService] Grocery count:', result.grocery_items ? result.grocery_items.length : 0);
+        console.log('[itemService] Restaurant count:', result.restaurant_items ? result.restaurant_items.length : 0);
+        return result;
     }
 };
 

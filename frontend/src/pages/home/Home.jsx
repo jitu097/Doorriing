@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import ImageScroller from '../../components/common/ImageScroller';
 import HomeButtons from './HomeButtons';
 import ItemCard from '../../components/common/ItemCard';
@@ -80,7 +80,8 @@ const Home = () => {
         setLoading(true);
         setError('');
 
-        const payload = await itemService.getHomeItems();
+        const response = await itemService.getHomeItems();
+        const payload = response?.data || {};
 
         setGroceryItems(normalizeItems(payload.grocery_items));
         setRestaurantItems(normalizeItems(payload.restaurant_items));
@@ -149,41 +150,29 @@ const Home = () => {
   const activeItems = activeSection === SECTION_CONFIG.grocery.key ? groceryItems : restaurantItems;
   const { title, emptyMessage } = SECTION_CONFIG[activeSection];
 
-  // Memoize the rendered section to avoid recalculation
-  const renderedSection = useMemo(
-    () => renderItemsSection(title, activeItems, emptyMessage),
-    [activeItems, emptyMessage, error, loading, title]
-  );
-
-  // Memoize the toggle buttons
-  const toggleButtons = useMemo(
-    () => (
-      <div className="home-section-toggle">
-        <button
-          type="button"
-          className={`home-toggle-btn ${activeSection === SECTION_CONFIG.grocery.key ? 'is-active' : ''}`}
-          onClick={() => setActiveSection(SECTION_CONFIG.grocery.key)}
-        >
-          Fresh Grocery Items
-        </button>
-        <button
-          type="button"
-          className={`home-toggle-btn ${activeSection === SECTION_CONFIG.restaurant.key ? 'is-active' : ''}`}
-          onClick={() => setActiveSection(SECTION_CONFIG.restaurant.key)}
-        >
-          Restaurant Specials
-        </button>
-      </div>
-    ),
-    [activeSection]
-  );
   return (
     <div className="home-page">
       <ImageScroller />
       <HomeButtons />
       <div className="home-content">
-        {toggleButtons}
-        {renderedSection}
+        <div className="home-section-toggle">
+          <button
+            type="button"
+            className={`home-toggle-btn ${activeSection === SECTION_CONFIG.grocery.key ? 'is-active' : ''}`}
+            onClick={() => setActiveSection(SECTION_CONFIG.grocery.key)}
+          >
+            Fresh Grocery Items
+          </button>
+          <button
+            type="button"
+            className={`home-toggle-btn ${activeSection === SECTION_CONFIG.restaurant.key ? 'is-active' : ''}`}
+            onClick={() => setActiveSection(SECTION_CONFIG.restaurant.key)}
+          >
+            Restaurant Specials
+          </button>
+        </div>
+
+        {renderItemsSection(title, activeItems, emptyMessage)}
       </div>
     </div>
   );
