@@ -32,40 +32,29 @@ export default defineConfig(({ mode }) => {
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    // Use terser with safe defaults
     minify: 'terser',
     
-    // Code splitting configuration with tree-shaking optimization
     rollupOptions: {
-      // Advanced tree-shaking configuration
-      treeshake: {
-        moduleSideEffects: false, // Assume modules have no side effects
-        propertyReadSideEffects: false, // Don't assume property reads have side effects
-        tryCatchDeoptimization: false, // Don't disable optimization in try-catch
-      },
-      
       output: {
         // Name format for chunks
-        chunkFileNames: 'chunk-[name]-[hash].js',
+        chunkFileNames: 'assets/chunk-[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash][extname]',
         
-        // Improved chunking strategy
+        // Chunking strategy - keep it simple to prevent empty chunks
         manualChunks(id) {
           // Split node modules into separate chunks
           if (id.includes('node_modules')) {
             if (id.includes('react')) {
-              return 'vendor-react';
+              return 'vendor-react'
             } else if (id.includes('firebase')) {
-              return 'vendor-firebase';
+              return 'vendor-firebase'
             } else if (id.includes('framer-motion') || id.includes('lottie-react')) {
-              return 'vendor-ui';
-            } else if (id.includes('zustand')) {
-              return 'vendor-state';
-            } else if (id.includes('axios')) {
-              return 'vendor-http';
+              return 'vendor-ui'
+            } else if (id.includes('zustand') || id.includes('axios') || id.includes('date-fns') || id.includes('jwt-decode')) {
+              return 'vendor-common'
             } else {
-              return 'vendor-common';
+              return 'vendor-misc'
             }
           }
         }
@@ -83,19 +72,10 @@ export default defineConfig(({ mode }) => {
       },
     },
     
-    // CSS minification (aggressive)
-    cssMinify: true, // Use default CSS minification
-    
-    // No source maps needed in production
+    cssMinify: true,
     sourcemap: false,
-    
-    // Chunk size warnings threshold
-    chunkSizeWarningLimit: 600, // Increased slightly due to features
-    
-    // Report compressed size
+    chunkSizeWarningLimit: 600,
     reportCompressedSize: true,
-    
-    // Target modern browsers for smaller output
     target: 'es2020',
   },
 

@@ -8,21 +8,42 @@ import { CartProvider } from './context/CartContext'
 import { AddressProvider } from './context/AddressContext'
 import { startLogStream } from './utils/logStream'
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <CartProvider>
-          <AddressProvider>
-            <App />
-          </AddressProvider>
-        </CartProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  </React.StrictMode>,
-)
+// Safety check for root element
+const rootElement = document.getElementById('root')
+if (!rootElement) {
+  console.error('❌ CRITICAL ERROR: Root element not found in DOM!')
+  console.error('Expected: <div id="root"></div> in index.html')
+  console.error('HTML content:', document.documentElement.innerHTML.substring(0, 500))
+  // Create root div as fallback
+  const fallbackRoot = document.createElement('div')
+  fallbackRoot.id = 'root'
+  document.body.appendChild(fallbackRoot)
+  console.warn('⚠️ Created fallback root element in body')
+}
 
-console.log('App mounted')
+try {
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      <BrowserRouter>
+        <AuthProvider>
+          <CartProvider>
+            <AddressProvider>
+              <App />
+            </AddressProvider>
+          </CartProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </React.StrictMode>,
+  )
+  console.log('✅ App mounted successfully')
+} catch (error) {
+  console.error('❌ Failed to render app:', error)
+  document.body.innerHTML = `<div style="padding: 20px; color: red; font-family: Arial;">
+    <h1>Error Loading App</h1>
+    <p>${error.message}</p>
+    <p style="color: gray; font-size: 12px;">Check browser console for details</p>
+  </div>`
+}
 
 startLogStream()
 
