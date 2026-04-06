@@ -32,8 +32,8 @@ export default defineConfig(({ mode }) => {
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    // Enable minification with terser
-    minify: 'terser',
+    // Use esbuild minifier for compatibility with newer Node versions
+    minify: 'esbuild',
     
     // Code splitting configuration with tree-shaking optimization
     rollupOptions: {
@@ -47,7 +47,7 @@ export default defineConfig(({ mode }) => {
       output: {
         // Name format for chunks
         chunkFileNames: 'chunk-[name]-[hash].js',
-        entryFileNames: '[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash][extname]',
         
         // Improved chunking strategy
@@ -72,29 +72,8 @@ export default defineConfig(({ mode }) => {
       }
     },
     
-    // Stage 5: Aggressive compression settings
-    terserOptions: {
-      compress: {
-        drop_console: dropConsole, // Remove console outputs
-        drop_debugger: true, // Remove debugger statements
-        passes: 3, // Multiple compression passes for better results
-        pure_funcs: ['console.log', 'console.info', 'console.warn', 'console.debug'],
-        pure_getters: true, // Assume getters are pure
-        reduce_vars: true, // Reduce variables
-        toplevel: true, // Enable when you're not using an IIFE
-        unused: true, // Drop unused variables/functions
-        unsafe: true, // Enable unsafe optimizations (for performance)
-        unsafe_comps: true, // Optimize comparisons
-        unsafe_methods: true, // Optimize method calls
-      },
-      mangle: {
-        properties: false, // Don't mangle property names (could break things)
-        toplevel: true, // Mangle top-level variable names
-      },
-      output: {
-        comments: false, // Remove all comments
-        beautify: false, // Don't beautify output
-      }
+    esbuild: {
+      drop: dropConsole ? ['console', 'debugger'] : ['debugger'],
     },
     
     // CSS minification (aggressive)
