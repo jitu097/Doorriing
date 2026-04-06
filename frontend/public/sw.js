@@ -66,10 +66,14 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {
         return cachedResponse || fetch(request).then((response) => {
-          // Cache successful responses
+          // Cache successful responses (must clone before consuming)
           if (response.status === 200) {
-            const cache = caches.open(RUNTIME_CACHE);
-            cache.then((c) => c.put(request, response.clone()));
+            const clonedResponse = response.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => {
+              cache.put(request, clonedResponse);
+            }).catch((err) => {
+              console.warn('[SW] Cache write failed:', err);
+            });
           }
           return response;
         }).catch(() => {
@@ -84,11 +88,15 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Cache successful responses
+          // Cache successful responses (must clone before consuming)
           if (response.status === 200 && 
               (request.destination === 'document' || request.url.includes('/api/'))) {
-            const cache = caches.open(RUNTIME_CACHE);
-            cache.then((c) => c.put(request, response.clone()));
+            const clonedResponse = response.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => {
+              cache.put(request, clonedResponse);
+            }).catch((err) => {
+              console.warn('[SW] Cache write failed:', err);
+            });
           }
           return response;
         })
