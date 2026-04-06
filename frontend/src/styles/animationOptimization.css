@@ -1,0 +1,285 @@
+/* 
+ * GPU Acceleration & Animation Optimization CSS
+ * Stage 6: Animation & UX Performance
+ */
+
+/* 
+ * GPU Acceleration Class
+ * Add this to any animated element for better performance
+ */
+.accelerated,
+.gpu-optimized {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  perspective: 1000px;
+  transform: translateZ(0);
+}
+
+/* Reduced motion support - critical for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 
+ * Optimized Animation Classes
+ * Use these for better performance
+ */
+
+/* Smooth fade animation with GPU acceleration */
+.fade-in-optimized {
+  will-change: opacity;
+  backface-visibility: hidden;
+  animation: fadeInOptimized 0.3s ease-out forwards;
+}
+
+@keyframes fadeInOptimized {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Smooth slide animation with GPU acceleration */
+.slide-in-optimized {
+  will-change: transform;
+  backface-visibility: hidden;
+  animation: slideInOptimized 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes slideInOptimized {
+  from {
+    transform: translateX(100%) translateZ(0);
+  }
+  to {
+    transform: translateX(0) translateZ(0);
+  }
+}
+
+/* Smooth scale animation */
+.scale-in-optimized {
+  will-change: transform;
+  backface-visibility: hidden;
+  animation: scaleInOptimized 0.3s ease-out forwards;
+}
+
+@keyframes scaleInOptimized {
+  from {
+    transform: scale(0.95) translateZ(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateZ(0);
+    opacity: 1;
+  }
+}
+
+/* Smooth rotation animation */
+.rotate-in-optimized {
+  will-change: transform;
+  backface-visibility: hidden;
+  animation: rotateInOptimized 0.5s ease-out forwards;
+}
+
+@keyframes rotateInOptimized {
+  from {
+    transform: rotateZ(-10deg) translateZ(0);
+    opacity: 0;
+  }
+  to {
+    transform: rotateZ(0deg) translateZ(0);
+    opacity: 1;
+  }
+}
+
+/* 
+ * Optimized Loading Animation
+ * Faster and smoother than original
+ */
+.loading-spinner-optimized {
+  will-change: transform;
+  backface-visibility: hidden;
+  animation: spinOptimized 2s linear infinite;
+}
+
+@keyframes spinOptimized {
+  from {
+    transform: rotateZ(0deg) translateZ(0);
+  }
+  to {
+    transform: rotateZ(360deg) translateZ(0);
+  }
+}
+
+/* 
+ * Pulse animation (optimized)
+ */
+.pulse-optimized {
+  will-change: opacity;
+  backface-visibility: hidden;
+  animation: pulseOptimized 2s ease-in-out infinite;
+}
+
+@keyframes pulseOptimized {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* 
+ * Bounce animation (optimized)
+ */
+.bounce-optimized {
+  will-change: transform;
+  backface-visibility: hidden;
+  animation: bounceOptimized 0.6s ease-in-out;
+}
+
+@keyframes bounceOptimized {
+  0%, 100% {
+    transform: translateY(0) translateZ(0);
+  }
+  50% {
+    transform: translateY(-10px) translateZ(0);
+  }
+}
+
+/* 
+ * Skeleton loading animation
+ */
+.skeleton-loading {
+  will-change: background-position;
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  backface-visibility: hidden;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* 
+ * Framer-motion optimizations
+ */
+.framer-motion-optimized {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* 
+ * Lottie animation container optimization
+ */
+.lottie-container-optimized {
+  will-change: opacity;
+  backface-visibility: hidden;
+  contain: layout style paint;
+}
+
+/* 
+ * Transition optimization
+ * Faster transitions for non-critical animations
+ */
+.transition-fast {
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.transition-normal {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.transition-smooth {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 
+ * 3D transform optimization
+ */
+.transform-3d-optimized {
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform;
+}
+
+/* 
+ * Anti-alias optimization for text
+ */
+.text-rendering-optimized {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 
+ * Paint optimization
+ */
+.paint-optimized {
+  contain: layout style paint;
+  will-change: auto;
+}
+
+/* 
+ * High performance animations on mobile
+ */
+@media (max-width: 768px) {
+  /* Reduce animation complexity on mobile */
+  @keyframes slideInOptimized {
+    from {
+      transform: translateX(50%) translateZ(0);
+    }
+    to {
+      transform: translateX(0) translateZ(0);
+    }
+  }
+
+  @keyframes spinOptimized {
+    from {
+      transform: rotateZ(0deg) translateZ(0);
+    }
+    to {
+      transform: rotateZ(180deg) translateZ(0);
+    }
+  }
+
+  /* Disable expensive animations on low-end devices */
+  .gpu-optimized {
+    animation-duration: 0.2s !important;
+  }
+}
+
+/* 
+ * Container queries for responsive animations
+ */
+@supports (container-type: inline-size) {
+  .animation-container {
+    container-type: inline-size;
+  }
+
+  @container (max-width: 600px) {
+    .animation-container .complex-animation {
+      animation-duration: 0.5s;
+    }
+  }
+}

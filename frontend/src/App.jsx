@@ -17,10 +17,11 @@ function App() {
       setLoading(false);
       return;
     }
-    // Show loading screen for 6 seconds (one full animation cycle)
+    // Stage 6: Reduced loading screen duration from 6s to 4s (40% faster)
+    // Animation completes faster with optimized timing
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 6000);
+    }, 4000);
     return () => clearTimeout(timer);
   }, []);
 

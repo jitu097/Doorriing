@@ -1,5 +1,6 @@
 import { supabase } from '../../config/supabaseClient.js';
 import { logger } from '../../utils/logger.js';
+import { cacheManager } from '../../utils/cache.manager.js';
 
 class CategoryService {
   /**
@@ -10,6 +11,13 @@ class CategoryService {
     try {
       const { validateUUID } = await import('../../utils/uuid.validator.js');
       validateUUID(shopId, 'Shop ID');
+
+      // Check cache first
+      const cached = cacheManager.get('category', `shop:${shopId}`);
+      if (cached) {
+        logger.debug('Returning cached categories for shop', { shopId });
+        return cached;
+      }
 
       // Fetch categories that belong to this shop
       // Categories are shop-scoped, meaning each shop has its own set of categories
@@ -27,7 +35,12 @@ class CategoryService {
         return [];
       }
 
-      return data || [];
+      const categories = data || [];
+
+      // Cache for 60 minutes
+      cacheManager.set('category', `shop:${shopId}`, categories, 3600);
+
+      return categories;
     } catch (error) {
       // Re-throw validation errors
       if (error.message.includes('Invalid')) {

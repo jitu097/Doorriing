@@ -4,6 +4,15 @@ html, body {
 	margin: 0;
 	padding: 0;
 }
+
+/* Stage 6: GPU Acceleration Optimization */
+.loading-screen-map.framer-motion-optimized {
+	will-change: opacity;
+	backface-visibility: hidden;
+	perspective: 1000px;
+	transform: translateZ(0);
+}
+
 @media (max-width: 600px) {
 	.loading-screen-map {
 		width: 100vw;
@@ -18,6 +27,9 @@ html, body {
 		justify-content: flex-start;
 		padding-top: 32px;
 		box-sizing: border-box;
+		/* Stage 6: GPU acceleration */
+		will-change: opacity;
+		backface-visibility: hidden;
 	}
 
 	.title {
@@ -35,6 +47,8 @@ html, body {
 		max-width: 500px;
 		margin: auto;
 		aspect-ratio: 2/3;
+		/* Stage 6: Contain for paint optimization */
+		contain: layout style paint;
 	}
 
 	.map-bg {
@@ -47,6 +61,7 @@ html, body {
 		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 	}
 
+	/* Stage 6: GPU-accelerated animated elements */
 	.shop {
 		position: absolute;
 		width: 200px;
@@ -54,10 +69,23 @@ html, body {
 		filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.2));
 		transition: transform 0.2s;
 		z-index: 2;
+		/* Stage 6: GPU acceleration for transforms */
+		will-change: transform, opacity;
+		backface-visibility: hidden;
+		perspective: 1000px;
+		transform: translateZ(0);
 	}
 
 	.shop:hover {
-		transform: scale(1.05);
+		transform: scale(1.05) translateZ(0);
+	}
+
+	/* Stage 6: Reduce motion support */
+	@media (prefers-reduced-motion: reduce) {
+		.shop {
+			animation-duration: 0.01ms !important;
+			transition: none !important;
+		}
 	}
 
 	.grocery {
@@ -88,7 +116,5 @@ html, body {
 	.electric {
 		top: 50%;
 		left: 25%;
-
-		
 	}
 }

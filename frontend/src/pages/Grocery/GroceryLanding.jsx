@@ -1,21 +1,32 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { enableGPUAcceleration } from '../../utils/animationOptimization';
 import './GroceryLanding.css';
 
 const GroceryLanding = () => {
   const navigate = useNavigate();
+  const containerRef = useRef();
 
   useEffect(() => {
-    // Auto-navigate to Grocery.jsx after 3 seconds
+    // Stage 6: Enable GPU acceleration for all animated images
+    if (containerRef.current) {
+      const animatedImages = containerRef.current.querySelectorAll('[class*="drop-img"]');
+      animatedImages.forEach(img => {
+        enableGPUAcceleration(img);
+        img.classList.add('gpu-optimized');
+      });
+    }
+
+    // Auto-navigate after animation (reduced from 3s to 2.5s - 17% faster)
     const timer = setTimeout(() => {
       navigate('/grocery/browse');
-    }, 3000);
+    }, 2500);
 
     return () => clearTimeout(timer);
   }, [navigate]);
 
   return (
-    <div className="grocery-landing-page">
+    <div className="grocery-landing-page gpu-optimized" ref={containerRef}>
       <img 
         src="/bas.webp" 
         alt="Bas" 

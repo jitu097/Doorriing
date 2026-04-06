@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import './Grocery.css';
 import ShopCard from '../shopcard/shopcard';
 import EmptyState from '../../components/common/EmptyState';
@@ -135,6 +135,22 @@ const Grocery = () => {
     });
   }, [shops, selectedFilter]);
 
+  // Memoize filter change handler
+  const handleFilterChange = useCallback((category) => {
+    setSelectedFilter(category);
+  }, []);
+
+  // Memoize carousel slide change handler
+  const handleCarouselSlideChange = useCallback((index) => {
+    setCurrentImageIndex(index);
+  }, []);
+
+  // Memoize retry handler
+  const handleRetry = useCallback(() => {
+    setSelectedFilter('All');
+    setReloadKey((prev) => prev + 1);
+  }, []);
+
   return (
     <div>
       <div className="grocery-curve-bg">
@@ -151,7 +167,7 @@ const Grocery = () => {
               <span
                 key={index}
                 className={`dot ${index === currentImageIndex ? 'active' : ''}`}
-                onClick={() => setCurrentImageIndex(index)}
+                onClick={() => handleCarouselSlideChange(index)}
               ></span>
             ))}
           </div>
@@ -170,7 +186,7 @@ const Grocery = () => {
                 <button
                   key={category}
                   className={`category-btn ${selectedFilter === category ? 'active' : ''} ${category === 'All' ? 'all-btn' : ''}`}
-                  onClick={() => setSelectedFilter(category)}
+                  onClick={() => handleFilterChange(category)}
                 >
                   <span className="category-name">{displayText}</span>
                 </button>
@@ -188,10 +204,7 @@ const Grocery = () => {
               title="We couldn't load shops"
               description={error}
               actionLabel="Retry"
-              onAction={() => {
-                setSelectedFilter('All');
-                setReloadKey((prev) => prev + 1);
-              }}
+              onAction={handleRetry}
             />
           )}
 

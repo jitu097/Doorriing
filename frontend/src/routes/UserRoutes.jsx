@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 import React, { Suspense, lazy } from 'react';
+import { SuspenseFallback } from '../components/common/SuspenseFallback';
+
 const Login = lazy(() => import('../pages/auth/Login'));
 const Signup = lazy(() => import('../pages/auth/Signup'));
 const DeleteAccount = lazy(() => import('../pages/auth/DeleteAccount'));
@@ -42,7 +44,7 @@ function isMobile() {
 
 const UserRoutes = () => {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<SuspenseFallback />}>
       <Routes>
       {/* Landing Page - Only show on mobile, redirect to /home on desktop */}
       <Route

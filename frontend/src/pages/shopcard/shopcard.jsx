@@ -84,4 +84,5 @@ const ShopCard = ({ shop, routePrefix = 'grocery' }) => {
   );
 };
 
-export default ShopCard;
+// Wrap with React.memo to prevent unnecessary re-renders
+export default React.memo(ShopCard);

@@ -16,4 +16,5 @@ const HomeButtons = () => {
   );
 };
 
-export default HomeButtons;
+// Wrap with React.memo to prevent unnecessary re-renders
+export default React.memo(HomeButtons);

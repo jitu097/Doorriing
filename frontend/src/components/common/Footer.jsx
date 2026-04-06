@@ -24,4 +24,5 @@ const Footer = ({ visible = true }) => {
   );
 };
 
-export default Footer;
+// Wrap with React.memo to prevent unnecessary re-renders
+export default React.memo(Footer);

@@ -1,6 +1,7 @@
 import { supabase } from '../../config/supabaseClient.js';
 import { logger } from '../../utils/logger.js';
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../../utils/constants.js';
+import { cacheManager } from '../../utils/cache.manager.js';
 
 const SHOP_IMAGE_KEYS = [
   'image_url',
@@ -150,7 +151,7 @@ class ShopService {
 
       let query = supabase
         .from('shops')
-        .select('id, name, description, business_type, address, city, latitude, longitude, is_active, created_at', { count: 'exact' })
+        .select('id, name, description, business_type, address, city, is_active, created_at', { count: 'exact' })
         .eq('is_active', true);
 
       // Filter by business type
@@ -204,6 +205,16 @@ class ShopService {
         throw new Error('Shop ID is required');
       }
 
+      // Generate cache key
+      const cacheKey = `${shopId}:${includeCategories ? 'cat:' : ''}${includeInventory ? 'inv' : ''}`;
+
+      // Check cache first
+      const cachedShop = cacheManager.get('shop', cacheKey);
+      if (cachedShop) {
+        logger.debug('Returning cached shop', { shopId });
+        return cachedShop;
+      }
+
       const { data, error } = await supabase
         .from('shops')
         .select('*')
@@ -235,7 +246,12 @@ class ShopService {
         extras.total_stock_quantity = data?.total_stock_quantity ?? inventorySummary.stockTotalByShop.get(shopId) ?? null;
       }
 
-      return formatShopRecord(data, extras);
+      const formattedShop = formatShopRecord(data, extras);
+
+      // Cache the result for 30 minutes
+      cacheManager.set('shop', cacheKey, formattedShop, 1800);
+
+      return formattedShop;
 
     } catch (err) {
       console.error('getShopById service error:', err);

@@ -12,6 +12,7 @@ import notificationRoutes from '../modules/notification/notification.routes.js';
 import addressRoutes from '../modules/address/address.routes.js';
 import bookingRoutes from '../modules/booking/booking.routes.js';
 import homeRoutes from '../modules/home/home.routes.js';
+import monitoringRoutes from './monitoring.routes.js';
 
 const router = Router();
 
@@ -23,6 +24,9 @@ router.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// Monitoring and debugging endpoints
+router.use('/monitoring', monitoringRoutes);
 
 // API routes
 router.use('/auth', authRoutes);

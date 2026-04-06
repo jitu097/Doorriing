@@ -486,4 +486,4 @@ const ItemCard = ({
   );
 };
 
-export default ItemCard;
+export default React.memo(ItemCard);
