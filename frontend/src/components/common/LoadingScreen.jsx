@@ -28,12 +28,12 @@ const drop = {
 };
 
 const shops = [
-  { src: "/shop1.png", className: "shop grocery", label: "Grocery" },
-  { src: "/shop2.png", className: "shop restaurant", label: "Restaurant" },
-  { src: "/shop3.png", className: "shop hotel", label: "Hotel" },
-  { src: "/shop4.png", className: "shop dairy", label: "Dairy" },
-  { src: "/shop5.png", className: "shop electric", label: "Electric" },
-  { src: "/shop4.png", className: "shop cosmetic", label: "Cosmetic" },
+  { src: "/shop1.webp", className: "shop grocery", label: "Grocery" },
+  { src: "/shop2.webp", className: "shop restaurant", label: "Restaurant" },
+  { src: "/shop3.webp", className: "shop hotel", label: "Hotel" },
+  { src: "/shop4.webp", className: "shop dairy", label: "Dairy" },
+  { src: "/shop5.webp", className: "shop electric", label: "Electric" },
+  { src: "/shop4.webp", className: "shop cosmetic", label: "Cosmetic" },
 ];
 
 export default function LoadingScreen() {
