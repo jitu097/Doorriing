@@ -6,6 +6,7 @@ import './index.css'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { AddressProvider } from './context/AddressContext'
+import { startLogStream } from './utils/logStream'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -20,6 +21,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </React.StrictMode>,
 )
+
+startLogStream()
 
 if ('serviceWorker' in navigator) {
   if (import.meta.env.PROD) {

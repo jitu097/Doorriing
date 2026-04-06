@@ -39,6 +39,7 @@ lerna-debug.log*
 .vite
 dist-ssr
 *.local
+stats.html
 
 # Firebase
 .firebase/
