@@ -5,11 +5,10 @@ import { visualizer } from 'rollup-plugin-visualizer';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const base = env.VITE_BASE_PATH || '/';
   const dropConsole = env.VITE_DROP_CONSOLE !== 'false';
 
   return {
-  base,
+  base: '/',
   plugins: [
     react(),
     visualizer({
@@ -31,6 +30,8 @@ export default defineConfig(({ mode }) => {
   },
 
   build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
     // Enable minification with terser
     minify: 'terser',
     
