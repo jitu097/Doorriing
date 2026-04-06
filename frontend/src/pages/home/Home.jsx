@@ -80,8 +80,7 @@ const Home = () => {
         setLoading(true);
         setError('');
 
-        const response = await itemService.getHomeItems();
-        const payload = response?.data || {};
+        const payload = await itemService.getHomeItems();
 
         setGroceryItems(normalizeItems(payload.grocery_items));
         setRestaurantItems(normalizeItems(payload.restaurant_items));
