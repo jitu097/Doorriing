@@ -1,9 +1,15 @@
 
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const base = env.VITE_BASE_PATH || '/';
+  const dropConsole = env.VITE_DROP_CONSOLE !== 'false';
+
+  return {
+  base,
   plugins: [
     react(),
     visualizer({
@@ -68,7 +74,7 @@ export default defineConfig({
     // Stage 5: Aggressive compression settings
     terserOptions: {
       compress: {
-        drop_console: true, // Remove console outputs
+        drop_console: dropConsole, // Remove console outputs
         drop_debugger: true, // Remove debugger statements
         passes: 3, // Multiple compression passes for better results
         pure_funcs: ['console.log', 'console.info', 'console.warn', 'console.debug'],
@@ -127,4 +133,5 @@ export default defineConfig({
       keepNames: false, // Allow aggressive mangling
     }
   }
+  };
 })

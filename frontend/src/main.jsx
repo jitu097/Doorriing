@@ -22,10 +22,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </React.StrictMode>,
 )
 
+console.log('App mounted')
+
 startLogStream()
 
 if ('serviceWorker' in navigator) {
-  if (import.meta.env.PROD) {
+  const swEnabled = import.meta.env.PROD && import.meta.env.VITE_SW_DISABLED !== 'true'
+  if (swEnabled) {
     window.addEventListener('load', () => {
       navigator.serviceWorker
         .register('/sw.js')
