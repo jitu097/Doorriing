@@ -43,7 +43,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event: Network-first strategy with cache fallback
+// Fetch event: Simple network-first strategy to avoid stale cache issues
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   
@@ -56,59 +56,37 @@ self.addEventListener('fetch', (event) => {
   if (!request.url.startsWith(self.location.origin)) {
     return;
   }
-  
-  const url = new URL(request.url);
-  
-  // Strategy 1: Cache-first for static assets
-  if (request.destination === 'script' || 
-      request.destination === 'style' || 
-      url.pathname.startsWith('/assets/')) {
-    event.respondWith(
-      caches.match(request).then((cachedResponse) => {
-        return cachedResponse || fetch(request).then((response) => {
-          // Cache successful responses (must clone before consuming)
-          if (response.status === 200) {
-            const clonedResponse = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, clonedResponse);
-            }).catch((err) => {
+
+  // Network-first: Always try network first, fallback to cache only if offline
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        // Only cache successful responses
+        if (response && response.status === 200) {
+          const responseClone = response.clone();
+          caches.open(RUNTIME_CACHE).then((cache) => {
+            cache.put(request, responseClone).catch((err) => {
               console.warn('[SW] Cache write failed:', err);
             });
+          });
+        }
+        return response;
+      })
+      .catch(() => {
+        // Network failed, try cache
+        return caches.match(request).then((cachedResponse) => {
+          if (cachedResponse) {
+            console.log('[SW] Serving from cache (offline):', request.url);
+            return cachedResponse;
           }
-          return response;
-        }).catch(() => {
-          // Fallback for offline
-          return caches.match(request) || new Response('Offline', { status: 503 });
+          // No cache available, return offline response
+          return new Response('Offline - Content not available', {
+            status: 503,
+            statusText: 'Service Unavailable',
+          });
         });
       })
-    );
-  } 
-  // Strategy 2: Network-first for API calls and HTML
-  else {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          // Cache successful responses (must clone before consuming)
-          if (response.status === 200 && 
-              (request.destination === 'document' || request.url.includes('/api/'))) {
-            const clonedResponse = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, clonedResponse);
-            }).catch((err) => {
-              console.warn('[SW] Cache write failed:', err);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // Return cached response or offline page
-          return caches.match(request)
-            .then((cachedResponse) => {
-              return cachedResponse || caches.match('/index.html');
-            });
-        })
-    );
-  }
+  );
 });
 
 // Message event: Handle updates from client
