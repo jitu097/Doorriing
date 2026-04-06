@@ -10,7 +10,6 @@ function isMobile() {
 
 
 function App() {
-  console.log('✅ App component mounted');
   const [loading, setLoading] = useState(isMobile());
 
   useEffect(() => {
