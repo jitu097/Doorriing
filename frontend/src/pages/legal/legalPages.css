@@ -1,7 +1,15 @@
 .legal-page {
-  max-width: 1100px;
+  max-width: 1300px;
+  width: 90%;
   margin: 0 auto;
   padding: 2rem 1.5rem 3rem;
+}
+
+@media (max-width: 600px) {
+  .legal-page {
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 .legal-hero {

@@ -5,8 +5,16 @@
 }
 
 .address-wrapper {
-  max-width: 1200px;
+  max-width: 1300px;
+  width: 90%;
   margin: 0 auto;
+}
+
+@media (max-width: 600px) {
+  .address-wrapper {
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 .address-header {

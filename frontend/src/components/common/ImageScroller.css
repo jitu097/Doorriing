@@ -2,6 +2,7 @@
   position: relative;
   width: 100vw;
   overflow: hidden;
+  margin-top: 0;
   margin-bottom: 5px;
   box-sizing: border-box;
   border-bottom-left-radius: 20px;
@@ -93,6 +94,36 @@
   cursor: not-allowed;
   opacity: 0.5;
 }
+
+/* Desktop and Tablet View */
+@media (min-width: 601px) {
+  .image-scroller-wrapper {
+    max-width: 1300px;
+    width: 90%;
+    margin: 0 auto 12px auto;
+    border-radius: 12px;
+  }
+  .image-scroller {
+    width: 100%;
+  }
+  .scroller-img-container {
+    min-width: 100%;
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 16/5;
+    height: 260px;
+    max-height: 280px;
+  }
+  .scroller-img {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+    max-height: 280px;
+  }
+}
+
+/* Mobile View */
 @media (max-width: 600px) {
   .scroller-img-container, .scroller-img {
     height: 135px;

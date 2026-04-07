@@ -205,21 +205,35 @@
 	position: sticky;
 	top: 0;
 	z-index: 100;
-	margin-top: 0;
-	margin-left: 0;
-	margin-bottom: 1rem;
-	width: 100%;
+	margin: 0 auto 0 auto;
+	max-width: 1300px;
+	width: 90%;
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+	border-radius: 0;
+}
+
+@media (max-width: 600px) {
+	.navbar {
+		width: 100%;
+		max-width: 100%;
+		margin-bottom: 0;
+	}
 }
 .navbar-container {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	max-width: 1400px;
-	margin: 0 auto;
+	width: 100%;
 	padding: 0 2rem 0 0;
 	position: relative;
 	min-height: 60px;
+}
+
+@media (max-width: 600px) {
+  .navbar-container {
+    width: 100%;
+    padding: 0 2rem 0 0;
+  }
 }
 .navbar-logo {
 	display: flex;

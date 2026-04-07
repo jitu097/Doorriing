@@ -5,8 +5,16 @@
 }
 
 .track-wrapper {
-  max-width: 600px;
+  max-width: 1300px;
+  width: 90%;
   margin: 0 auto;
+}
+
+@media (max-width: 600px) {
+  .track-wrapper {
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 .track-header {
