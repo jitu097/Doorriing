@@ -5,10 +5,24 @@
   display: flex;
   justify-content: center;
   gap: 2rem;
-  margin: 0.5rem 0 1rem 0;
+  margin: 0;
   max-width: 1300px;
   width: 90%;
   margin: 0.5rem auto 1rem auto;
+  padding-bottom: 0;
+}
+
+/* Default image styles */
+.home-button img.mobile-image {
+  display: block;
+  width: 140px;
+  height: 140px;
+  margin-top: -15px;
+  margin-bottom: 0.5rem;
+}
+
+.home-button img.desktop-image {
+  display: none;
 }
 
 /* Desktop View */
@@ -17,6 +31,33 @@
     max-width: 1300px;
     width: 90%;
     margin: 0.5rem auto 1rem auto;
+  }
+
+  /* Hide mobile images on desktop */
+  .home-button img.mobile-image {
+    display: none !important;
+  }
+
+  /* Show and style desktop images */
+  .home-button img.desktop-image {
+    display: block !important;
+    width: 100%;
+    width:634px;
+    height: 100%;
+    margin: 0 !important;
+    padding: 0;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 0.8rem;
+  }
+
+  .home-button {
+    padding: 0;
+    height: 200px;
+    width: auto;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 1000px;
   }
 }
 
@@ -34,9 +75,17 @@
     padding: 0 2rem;
   }
 
-  .home-button img {
+  /* Show mobile images on tablet */
+  .home-button img.mobile-image {
+    display: block !important;
     width: 120px;
     height: 120px;
+    margin: 0;
+  }
+
+  /* Hide desktop images on tablet */
+  .home-button img.desktop-image {
+    display: none !important;
   }
 
   .button-text {
@@ -64,10 +113,17 @@
     background-size: cover;
   }
 
-  .home-button img {
+  /* Show mobile images on mobile */
+  .home-button img.mobile-image {
+    display: block !important;
     width: 100px;
     height: 100px;
-    margin-top: -10px;
+    margin: -10px 0 0 0;
+  }
+
+  /* Hide desktop images on mobile */
+  .home-button img.desktop-image {
+    display: none !important;
   }
 
   .button-text {
@@ -81,9 +137,15 @@
     padding: 0 0.5rem;
   }
 
-  .home-button img {
+  .home-button img.mobile-image {
+    display: block !important;
     width: 80px;
     height: 80px;
+    margin: 0;
+  }
+
+  .home-button img.desktop-image {
+    display: none !important;
   }
 
   .button-text {
@@ -120,6 +182,7 @@
   background-repeat: no-repeat;
   position: relative;
   overflow: hidden;
+  z-index: 1;
 }
 
 /* Grocery Button with background image */
@@ -139,11 +202,10 @@
   text-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }
 
-.grocery-button img.store-icon {
+.grocery-button img.store-icon.mobile-image {
   width: 220px;
   height: 200px;
   margin-bottom: -27px;
-  display: block;
 }
 
 /* Restaurant Button with gradient */
@@ -159,23 +221,14 @@
   font-size: 1.5rem;
   font-weight: 600;
   color: #fff;
-  margin-top:-23px;
+  margin-top: -23px;
   text-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }
 
-.restaurant-button img.restaurant-icon {
+.restaurant-button img.restaurant-icon.mobile-image {
   width: 220px;
   height: 210px;
-  margin-bottom:-20px;
-  display: block;
-}
-
-
-.home-button img {
-  width: 140px;
-  height: 140px;
-  margin-top: -15px;
-  margin-bottom: 0.5rem;
+  margin-bottom: -20px;
 }
 
 .button-text {

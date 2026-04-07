@@ -478,7 +478,6 @@ const ItemCard = ({
         </div>
 
         {secondaryText && <p className="item-card-subtitle">{secondaryText}</p>}
-        {hasStockLabel && <p className={stockLabelClass}>{stockDisplayLabel}</p>}
         
         {renderFooter()}
       </div>

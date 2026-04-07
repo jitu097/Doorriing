@@ -1,11 +1,64 @@
 @media (max-width: 600px) {
-  .item-card {
-    max-width: 100%;
-    min-width: 0;
-    padding: 4px;
+  .item-card,
+  .item-card.item-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 0 14px 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    height: 110px !important;
+    box-sizing: border-box !important;
   }
-  .item-card-image {
-    height: 100px;
+  .item-card-list,
+  .item-card-grid,
+  .item-card-container {
+    display: block !important;
+    grid-template-columns: none !important;
+  }
+  .item-card-image,
+  .item-card .item-card-image {
+    width: 34% !important;
+    min-width: 90px !important;
+    max-width: 120px !important;
+    height: 100% !important;
+    border-radius: 12px 0 0 12px !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+    background: #f8f8f8 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .item-card-image img,
+  .item-card .item-card-image img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 12px 0 0 12px !important;
+  }
+  .item-card-body,
+  .item-card .item-card-body {
+    flex: 1 !important;
+    padding: 10px 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+  }
+  .item-card-title-row,
+  .item-card .item-card-title-row {
+    gap: 6px !important;
+  }
+  .item-card-name,
+  .item-card .item-card-name {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 }
 @media (max-width: 600px) {
@@ -358,7 +411,7 @@
 }
 
 
-.qty-btn-small {
+ qty-btn-small {
   width: 32px;
   height: 32px;
   border: none !important;
@@ -450,35 +503,39 @@
 }
 
 .restaurant-price-chip-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
 }
 
 .restaurant-price-chip {
-  padding: 10px 14px 12px;
+  padding: 10px 14px;
   border-radius: 18px;
   font-weight: 600;
   font-size: 0.9rem;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
 }
 
 .restaurant-chip-label {
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 .restaurant-chip-price-stack {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 2px;
-  width: 100%;
+  gap: 6px;
+  width: auto;
 }
 
 .restaurant-chip-original {
@@ -537,11 +594,14 @@
 
 .restaurant-add-main {
   width: 100%;
+  width: 90px;
   border: none;
   border-radius: 14px;
   padding: 12px 18px;
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 200;
+  margin-left: 149px;
+  margin-top: -50px;
   color: #ffffff;
   background: linear-gradient(135deg, #ff5f6d 0%, #ff344c 100%);
   box-shadow: 0 12px 25px rgba(255, 94, 107, 0.28);
@@ -635,9 +695,9 @@
 .restaurant-qty-controls {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   border-radius: 999px;
-  padding: 4px 10px;
+  padding: 2px 6px;
   background: #fff5f6;
   border: 1px solid #ffc4ce;
 }
@@ -645,8 +705,8 @@
 .restaurant-qty-controls button {
   border: none;
   background: #ffffff;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   font-size: 1rem;
   font-weight: 700;
@@ -671,8 +731,8 @@
 }
 
 .restaurant-main-qty button {
-  width: 34px;
-  height: 34px;
+  width: 26px;
+  height: 26px;
 }
 
 @media (max-width: 480px) {
@@ -726,13 +786,20 @@
   }
 
   .restaurant-qty-controls {
-    align-self: stretch;
+    align-self: auto !important;
     justify-content: space-between;
+    width: auto !important;
+    max-width: 80px !important;
+    margin-top: -40px;
+    margin-left: 160px;
   }
 
   .restaurant-price-chip-row {
     display: flex;
-    gap: 14px;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    width: 90px;
   }
 
   .restaurant-price-chip {
