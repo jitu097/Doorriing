@@ -56,7 +56,10 @@ const Landingpage = () => {
           </div>
         </div>
       </div>
-      <Footer />
+      {/* Hide Footer on mobile view */}
+      <div className="footer-mobile-hide">
+        <Footer />
+      </div>
     </>
   );
 };
