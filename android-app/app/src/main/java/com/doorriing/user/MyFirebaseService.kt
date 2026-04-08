@@ -42,10 +42,9 @@ class MyFirebaseService : FirebaseMessagingService() {
         val shouldShowLocalNotification = isAppForeground || remoteMessage.data.isNotEmpty()
 
         if (shouldShowLocalNotification) {
-            NotificationHelper.showNotification(
-                context = this,
+            NotificationHelper(this).showNotification(
                 title = title,
-                message = body,
+                body = body,
                 type = type,
                 referenceId = referenceId,
                 url = url

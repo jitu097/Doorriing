@@ -195,3 +195,4 @@ const Navbar = ({ onCartClick }) => {
 };
 
 export default Navbar;
+//jitu
