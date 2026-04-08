@@ -12,6 +12,8 @@ class NotificationService {
         throw new Error('fcm_token is required');
       }
 
+      console.log('Saving FCM token:', fcmToken, 'for user:', customerId || shopId);
+
       const payload = {
         customer_id: customerId,
         shop_id: shopId,

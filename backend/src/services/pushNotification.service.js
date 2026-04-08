@@ -60,6 +60,7 @@ class PushNotificationService {
       const fcmToken = tokenRow.fcm_token;
 
       try {
+        console.log('Sending FCM to token:', fcmToken);
         await admin.messaging().send({
           token: fcmToken,
           notification: {

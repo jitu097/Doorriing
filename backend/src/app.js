@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import routes from './routes/index.js';
+import admin, { isFirebaseAdminConfigured } from './config/firebaseAdmin.js';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import { logger } from './utils/logger.js';
 import { createCompressionMiddleware } from './middlewares/compression.middleware.js';
@@ -51,6 +52,51 @@ app.get('/', (req, res) => {
 // 🔥 HEALTH CHECK ROUTE - Production monitoring
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
+});
+
+// FCM debug route for direct device token validation
+app.post('/test-push', async (req, res) => {
+  const { token } = req.body || {};
+
+  if (!token) {
+    return res.status(400).json({ success: false, error: 'token is required' });
+  }
+
+  if (!isFirebaseAdminConfigured) {
+    return res.status(503).json({
+      success: false,
+      error: 'Firebase Admin is not configured on server',
+    });
+  }
+
+  try {
+    const response = await admin.messaging().send({
+      token,
+      notification: {
+        title: 'Test Notification',
+        body: 'If you see this, FCM is working',
+      },
+      data: {
+        type: 'test',
+      },
+      android: {
+        priority: 'high',
+        notification: {
+          channelId: 'default_channel',
+        },
+      },
+    });
+
+    console.log('FCM SUCCESS:', response);
+    return res.json({ success: true, response });
+  } catch (error) {
+    console.error('FCM ERROR:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code,
+    });
+  }
 });
 
 // API routes

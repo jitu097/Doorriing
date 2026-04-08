@@ -22,6 +22,7 @@ class MyFirebaseService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
+        Log.d("FCM_DEBUG", "Received: ${remoteMessage.data}")
         Log.d("FCM", "Message received from: ${remoteMessage.from}")
         Log.d("FCM", "Data payload: ${remoteMessage.data}")
 
