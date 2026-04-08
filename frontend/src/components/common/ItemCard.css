@@ -747,6 +747,7 @@
   font-weight: 600;
   font-size: 0.85rem;
   background: #ffe4e8;
+  
   color: #e53945;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease;
@@ -764,23 +765,24 @@
 }
 
 .restaurant-qty-controls {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
   border-radius: 999px;
-  
-  padding: 2px 6px;
+  justify-content: space-between;
+  padding: 8px 16px;
   background: #fff5f6;
   border: 1px solid #ffc4ce;
+  width: 100%;
 }
 
 .restaurant-qty-controls button {
   border: none;
   background: #ffffff;
-  width: 24px;
-  height: 24px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  font-size: 1rem;
+  font-size: 1.2rem;
   font-weight: 700;
   
   color: #e53945;
@@ -793,10 +795,11 @@
 }
 
 .restaurant-qty-controls span {
-  min-width: 20px;
+  min-width: 30px;
   text-align: center;
   font-weight: 600;
   color: #2b2b2b;
+  font-size: 1.3rem;
 }
 
 .restaurant-main-qty {
@@ -804,8 +807,20 @@
 }
 
 .restaurant-main-qty button {
-  width: 26px;
-  height: 26px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: #ffffff;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #e53945;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.restaurant-main-qty button:hover {
+  background: #ffeef1;
 }
 
 @media (max-width: 480px) {
@@ -923,7 +938,7 @@
   }
 
   .variant-qty-compact button {
-    width: 20px;
+    width: 80px;
     height: 20px;
     font-size: 0.75rem;
   }

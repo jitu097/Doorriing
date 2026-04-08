@@ -97,7 +97,7 @@
   cursor: pointer;
   font-size: 16px;
   font-weight: 600;
-  color: #0c831f;
+  color: #E95322;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -105,7 +105,7 @@
 }
 
 .qty-btn:hover {
-  background: #0c831f;
+  background: #E95322;
   color: #fff;
 }
 
