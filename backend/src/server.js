@@ -7,7 +7,7 @@ import { logger } from './utils/logger.js';
 import { supabase } from './config/supabaseClient.js';
 import { WebSocketServer } from 'ws';
 
-const REQUESTED_PORT = Number(config.port) || 5001;
+const REQUESTED_PORT = Number(config.port) || 5000;
 const MAX_PORT_SEARCH = 20;
 const LOG_STREAM_ENABLED = process.env.LOG_STREAM_ENABLED === 'true';
 const LOG_STREAM_TOKEN = process.env.LOG_STREAM_TOKEN || '';
