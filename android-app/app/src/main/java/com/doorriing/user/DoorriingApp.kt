@@ -2,6 +2,7 @@ package com.doorriing.user
 
 import android.app.Application
 import com.doorriing.user.utils.PrefsManager
+import com.doorriing.user.utils.NotificationHelper
 
 class DoorriingApp : Application() {
     
@@ -13,5 +14,6 @@ class DoorriingApp : Application() {
     override fun onCreate() {
         super.onCreate()
         prefs = PrefsManager(this)
+        NotificationHelper.registerChannel(this)
     }
 }

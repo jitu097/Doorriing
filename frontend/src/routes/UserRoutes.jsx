@@ -23,6 +23,7 @@ const TermsConditions = lazy(() => import('../pages/legal/TermsConditions'));
 const RefundPolicy = lazy(() => import('../pages/legal/RefundPolicy'));
 const DeleteAccountInfo = lazy(() => import('../pages/legal/DeleteAccountInfo'));
 const TrackOrder = lazy(() => import('../pages/orders/TrackOrder'));
+const Notifications = lazy(() => import('../pages/Notifications'));
 
 const ShopsList = lazy(() => import('../pages/shop/ShopsList'));
 const ShopDetails = lazy(() => import('../pages/shop/ShopDetails'));
@@ -96,6 +97,7 @@ const UserRoutes = () => {
           <Route path="/orders" element={<OrdersList />} />
           <Route path="/orders/:orderId" element={<OrderDetails />} />
           <Route path="/track/:orderId" element={<TrackOrder />} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/address" element={<Address />} />
         </Route>

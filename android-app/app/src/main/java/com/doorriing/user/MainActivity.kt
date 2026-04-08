@@ -10,9 +10,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.webkit.*
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -50,6 +48,7 @@ class MainActivity : AppCompatActivity() {
         setupWebView()
         setupOnBackPressed()
         fetchFcmToken()
+        
         handleIntent(intent)
     }
 
@@ -78,22 +77,56 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent) // Always update the activity intent
         handleIntent(intent)
     }
 
     private fun handleIntent(intent: Intent?) {
-        val targetUrl = intent?.getStringExtra("target_url")
-        Log.d("MainActivity", "Handling intent, targetUrl: $targetUrl")
-        
-        if (targetUrl != null && targetUrl.isNotEmpty()) {
-            binding.webView.loadUrl(targetUrl)
-        } else if (binding.webView.url == null) {
-            if (NetworkUtils.isNetworkAvailable(this)) {
-                binding.webView.loadUrl(BASE_URL)
-            } else {
-                showNoInternetError()
+        intent?.let {
+            val type = it.getStringExtra("type")
+            val referenceId = it.getStringExtra("reference_id")
+            val targetUrl = it.getStringExtra("target_url")
+
+            Log.d("MainActivity", "Handling intent: type=$type, id=$referenceId, url=$targetUrl")
+
+            // Prioritize specific notification types
+            if (type != null) {
+                navigateFromNotification(type, referenceId)
+                // Clear extras to prevent re-handling on configuration changes if necessary
+                // but usually handled by checking if intent was already processed or using flags
+                it.removeExtra("type")
+                it.removeExtra("reference_id")
+            } else if (!targetUrl.isNullOrEmpty()) {
+                binding.webView.loadUrl(targetUrl)
+                it.removeExtra("target_url")
+            } else if (binding.webView.url == null) {
+                if (NetworkUtils.isNetworkAvailable(this)) {
+                    binding.webView.loadUrl(BASE_URL)
+                } else {
+                    showNoInternetError()
+                }
             }
         }
+    }
+
+    private fun navigateFromNotification(type: String, referenceId: String?) {
+        val urlToLoad = when (type) {
+            "order_placed",
+            "order_accepted",
+            "order_shipped",
+            "order_delivered" -> {
+                if (referenceId != null) {
+                    "$BASE_URL/orders/$referenceId"
+                } else {
+                    "$BASE_URL/orders"
+                }
+            }
+            "offer" -> "$BASE_URL/offers"
+            else -> BASE_URL
+        }
+        
+        Log.d("MainActivity", "Navigating to: $urlToLoad")
+        binding.webView.loadUrl(urlToLoad)
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -139,7 +172,6 @@ class MainActivity : AppCompatActivity() {
             }
 
             webChromeClient = object : WebChromeClient() {
-                // Handle file uploads, console logs, progress, etc.
                 override fun onProgressChanged(view: WebView?, newProgress: Int) {
                     if (newProgress < 100) {
                         binding.progressBar.progress = newProgress
@@ -162,8 +194,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showNoInternetError() {
-        Snackbar.make(binding.root, R.string.error_no_internet, Snackbar.LENGTH_INDEFINITE)
-            .setAction(R.string.retry) {
+        val message = try { getString(R.string.error_no_internet) } catch (e: Exception) { "No Internet Connection" }
+        val retry = try { getString(R.string.retry) } catch (e: Exception) { "Retry" }
+        
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_INDEFINITE)
+            .setAction(retry) {
                 if (NetworkUtils.isNetworkAvailable(this)) {
                     binding.webView.loadUrl(BASE_URL)
                 } else {

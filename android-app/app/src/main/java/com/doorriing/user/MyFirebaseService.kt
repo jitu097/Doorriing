@@ -19,32 +19,55 @@ class MyFirebaseService : FirebaseMessagingService() {
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
-        
+
         Log.d("FCM", "Message received from: ${remoteMessage.from}")
+        Log.d("FCM", "Data payload: ${remoteMessage.data}")
 
-        // Handle data payload
-        val title = remoteMessage.data["title"] ?: remoteMessage.notification?.title
-        val body = remoteMessage.data["body"] ?: remoteMessage.notification?.body
-        val url = remoteMessage.data["url"]
+        // If this is notification-only payload, let the OS handle display to avoid duplicates.
+        if (remoteMessage.notification != null && remoteMessage.data.isEmpty()) {
+            return
+        }
 
-        NotificationHelper(this).showNotification(title, body, url)
+        // Foreground/manual handling for hybrid data payloads.
+        if (remoteMessage.data.isNotEmpty()) {
+            val title = remoteMessage.data["title"] ?: "Doorriing"
+            val body = remoteMessage.data["body"] ?: ""
+            val type = remoteMessage.data["type"]
+            val referenceId = remoteMessage.data["reference_id"]
+            val url = remoteMessage.data["url"]
+
+            NotificationHelper.showNotification(
+                context = this,
+                title = title,
+                message = body,
+                type = type,
+                referenceId = referenceId,
+                url = url
+            )
+        }
     }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Log.d("FCM", "New token generated: $token")
-        
-        // Save token locally
-        sendTokenToBackend(token)
+
+        sendTokenToServer(token)
     }
 
-    private fun sendTokenToBackend(token: String) {
-        val userId = "current_user_id" // Ideally get this from prefs if logged in
-        
+    private fun sendTokenToServer(token: String) {
+        val authToken = DoorriingApp.prefs.getToken()
+        if (authToken.isNullOrBlank()) {
+            Log.w("FCM", "Skipping token sync: user auth token not found")
+            return
+        }
+
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val request = FcmTokenRequest(userId, token)
-                val response = authRepository.saveFcmToken(request)
+                val request = FcmTokenRequest(
+                    fcmToken = token,
+                    deviceType = "android"
+                )
+                val response = authRepository.saveFcmToken(authToken, request)
                 if (response.isSuccessful) {
                     Log.d("FCM", "Token saved to backend successfully")
                 } else {

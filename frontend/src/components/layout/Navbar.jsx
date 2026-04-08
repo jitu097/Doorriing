@@ -5,6 +5,7 @@ import AddressForm from '../common/AddressForm';
 import { useAddress } from '../../context/AddressContext';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../hooks/useAuth';
+import NotificationBell from '../NotificationBell';
 import './Navbar.css';
 
 const Navbar = ({ onCartClick }) => {
@@ -132,6 +133,9 @@ const Navbar = ({ onCartClick }) => {
             </button>
           </div>
         )}
+
+        {/* Account Dropdown - Only show when logged in */}
+        {user && <NotificationBell />}
 
         {/* Account Dropdown - Only show when logged in */}
         {user && (

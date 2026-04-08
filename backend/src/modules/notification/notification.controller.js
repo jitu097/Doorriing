@@ -5,6 +5,38 @@ import { DEFAULT_PAGE_SIZE } from '../../utils/constants.js';
 
 class NotificationController {
   /**
+   * Save or update FCM token
+   * POST /api/notification/save-token
+   */
+  async saveToken(req, res, next) {
+    try {
+      const customerId = req.user?.customerId || null;
+      const shopId = req.user?.shopId || null;
+      const { fcm_token, device_type } = req.body;
+
+      if (!fcm_token) {
+        return sendError(res, 'fcm_token is required', 400);
+      }
+
+      if (!customerId && !shopId) {
+        return sendError(res, 'Authenticated customer or shop account required', 403);
+      }
+
+      await notificationService.saveToken({
+        customerId,
+        shopId,
+        fcmToken: fcm_token,
+        deviceType: device_type || 'android',
+      });
+
+      return sendSuccess(res, null, 'FCM token saved successfully');
+    } catch (error) {
+      logger.error('SaveToken controller error', { error: error.message });
+      next(error);
+    }
+  }
+
+  /**
    * Get notifications
    * GET /api/notifications
    */

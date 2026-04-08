@@ -4,6 +4,65 @@ import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../../utils/constants.js';
 
 class NotificationService {
   /**
+   * Save or update a notification token by unique fcm_token.
+   */
+  async saveToken({ customerId = null, shopId = null, fcmToken, deviceType = 'android' }) {
+    try {
+      if (!fcmToken) {
+        throw new Error('fcm_token is required');
+      }
+
+      const payload = {
+        customer_id: customerId,
+        shop_id: shopId,
+        fcm_token: fcmToken,
+        device_type: deviceType,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('notification_tokens')
+        .upsert(payload, { onConflict: 'fcm_token' });
+
+      if (error) {
+        logger.error('Failed to save notification token', {
+          error,
+          customerId,
+          shopId,
+        });
+        throw new Error('Failed to save notification token');
+      }
+
+      return { success: true };
+    } catch (error) {
+      logger.error('Error in saveToken', { error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Delete an FCM token from notification_tokens.
+   */
+  async deleteTokenByFcmToken(fcmToken) {
+    try {
+      const { error } = await supabase
+        .from('notification_tokens')
+        .delete()
+        .eq('fcm_token', fcmToken);
+
+      if (error) {
+        logger.error('Failed to delete notification token', { error, fcmToken });
+        throw new Error('Failed to delete notification token');
+      }
+
+      return { success: true };
+    } catch (error) {
+      logger.error('Error in deleteTokenByFcmToken', { error: error.message });
+      throw error;
+    }
+  }
+
+  /**
    * Get customer notifications
    */
   async getNotifications(customerId, filters = {}, page = 1, pageSize = DEFAULT_PAGE_SIZE) {

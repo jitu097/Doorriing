@@ -27,8 +27,8 @@ data class User(
 )
 
 data class FcmTokenRequest(
-    @SerializedName("userId") val userId: String,
-    @SerializedName("fcmToken") val fcmToken: String
+    @SerializedName("fcm_token") val fcmToken: String,
+    @SerializedName("device_type") val deviceType: String = "android"
 )
 
 data class ApiResponse<T>(
