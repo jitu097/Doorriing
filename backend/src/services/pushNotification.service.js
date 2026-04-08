@@ -1,4 +1,5 @@
 import admin from '../config/firebaseAdmin.js';
+import { isFirebaseAdminConfigured } from '../config/firebaseAdmin.js';
 import { supabase } from '../config/supabaseClient.js';
 import { logger } from '../utils/logger.js';
 
@@ -35,6 +36,14 @@ class PushNotificationService {
     });
 
     const tokens = await this.getTokens({ customer_id, shop_id });
+
+    if (!isFirebaseAdminConfigured) {
+      logger.warn('Skipping FCM send because Firebase Admin is not configured', {
+        customer_id,
+        shop_id,
+      });
+      return { sent: 0, failed: 0, stored: true };
+    }
 
     if (!tokens.length) {
       logger.info('No notification tokens found for push dispatch', {
