@@ -8,7 +8,7 @@ import './Checkout.css';
 const Checkout = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { cartItems, getCartTotal } = useCart();
+    const { cartItems, getCartTotal, deliveryFee, convenienceFee, platformSettings, platformSettingsLoading } = useCart();
     const { addresses, addAddress, updateAddress, isLoading: addressLoading } = useAddress();
     
     const [errorMsg, setErrorMsg] = useState(null);
@@ -31,9 +31,17 @@ const Checkout = () => {
     });
 
     const subtotal = getCartTotal();
-    const deliveryFee = 0;
-    const handlingCharge = 0;
-    const grandTotal = subtotal + deliveryFee + handlingCharge;
+    const resolvedDeliveryFee = deliveryFee ?? 0;
+    const resolvedConvenienceFee = convenienceFee ?? 0;
+    const grandTotal = subtotal + resolvedDeliveryFee + resolvedConvenienceFee;
+    const freeDeliveryThreshold = Array.isArray(platformSettings?.delivery_rules)
+        ? platformSettings.delivery_rules
+            .filter(rule => Number(rule.fee) === 0)
+            .sort((a, b) => Number(a.min) - Number(b.min))[0]?.min
+        : null;
+    const amountForFreeDelivery = freeDeliveryThreshold && subtotal < freeDeliveryThreshold
+        ? freeDeliveryThreshold - subtotal
+        : 0;
 
     // Auto-select logic
     useEffect(() => {
@@ -229,12 +237,18 @@ const Checkout = () => {
                                 </div>
                                 <div className="summary-row">
                                     <span>Delivery Fee</span>
-                                    <span>₹{deliveryFee.toFixed(2)}</span>
+                                    <span>{platformSettingsLoading && deliveryFee === null ? 'Loading...' : `₹${resolvedDeliveryFee.toFixed(2)}`}</span>
                                 </div>
                                 <div className="summary-row">
-                                    <span>Handling Charge</span>
-                                    <span>₹{handlingCharge.toFixed(2)}</span>
+                                    <span>Convenience Fee</span>
+                                    <span>{platformSettingsLoading && convenienceFee === null ? 'Loading...' : `₹${resolvedConvenienceFee.toFixed(2)}`}</span>
                                 </div>
+
+                                {amountForFreeDelivery > 0 && (
+                                    <div className="summary-row" style={{ color: '#16a34a', fontSize: '0.9rem' }}>
+                                        <span>Add ₹{amountForFreeDelivery.toFixed(2)} more to get free delivery</span>
+                                    </div>
+                                )}
 
                                 <div className="summary-divider"></div>
 

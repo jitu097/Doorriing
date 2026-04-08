@@ -1,7 +1,21 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cartService } from '../services/cart.service';
+import { getPlatformSettings } from '../services/platform.service';
 import { useAuth } from '../hooks/useAuth';
+
+const PLATFORM_SETTINGS_CACHE_KEY = 'platform_settings';
+
+const readCachedPlatformSettings = () => {
+    try {
+        const cached = localStorage.getItem(PLATFORM_SETTINGS_CACHE_KEY);
+        if (!cached) return null;
+        const parsed = JSON.parse(cached);
+        return Array.isArray(parsed?.delivery_rules) ? parsed : null;
+    } catch (error) {
+        return null;
+    }
+};
 
 const CartContext = createContext();
 
@@ -52,6 +66,22 @@ const findCartItemByClientId = (items, targetId) => {
     return items.find((entry) => deriveClientItemId(entry) === normalizedTarget) || null;
 };
 
+const calculateDeliveryFee = (total, rules) => {
+    if (!rules || rules.length === 0) return 0;
+
+    const matched = rules.find(
+        (rule) => total >= rule.min && total <= rule.max
+    );
+
+    return matched ? matched.fee : 0;
+};
+
+const calculateConvenienceFee = (settings) => {
+    if (!settings) return 0;
+    const fee = Number(settings.convenience_fee);
+    return Number.isFinite(fee) ? fee : 0;
+};
+
 export const useCart = () => {
     const context = useContext(CartContext);
     if (!context) {
@@ -65,6 +95,8 @@ export const CartProvider = ({ children }) => {
     const [cartMeta, setCartMeta] = useState({ shopId: null, shopType: null });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [platformSettings, setPlatformSettings] = useState(() => readCachedPlatformSettings());
+    const [platformSettingsLoading, setPlatformSettingsLoading] = useState(() => !readCachedPlatformSettings());
     const navigate = useNavigate();
 
     const { user, loading: authLoading } = useAuth();
@@ -140,6 +172,45 @@ export const CartProvider = ({ children }) => {
             }
         }
     }, [fetchCart, isAuthenticated, authLoading]);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const fetchSettings = async () => {
+            try {
+                if (!platformSettings) {
+                    setPlatformSettingsLoading(true);
+                }
+                const data = await getPlatformSettings();
+                if (!isMounted) return;
+                const normalizedSettings = data?.delivery_rules
+                    ? data
+                    : (data?.data?.delivery_rules ? data.data : null);
+                setPlatformSettings(normalizedSettings);
+                if (normalizedSettings?.delivery_rules) {
+                    localStorage.setItem(PLATFORM_SETTINGS_CACHE_KEY, JSON.stringify(normalizedSettings));
+                }
+            } catch (err) {
+                console.error('Platform settings error:', err);
+                if (isMounted) {
+                    // Keep cached settings if available; avoid visual jumps.
+                    if (!platformSettings) {
+                        setPlatformSettings(null);
+                    }
+                }
+            } finally {
+                if (isMounted) {
+                    setPlatformSettingsLoading(false);
+                }
+            }
+        };
+
+        fetchSettings();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     // Add item to cart or increase quantity
     const addToCart = async (item) => {
@@ -333,6 +404,24 @@ export const CartProvider = ({ children }) => {
         }, 0);
     };
 
+    const getDeliveryFee = (total = getCartTotal()) => {
+        if (platformSettingsLoading && !platformSettings) {
+            return null;
+        }
+        return calculateDeliveryFee(total, platformSettings?.delivery_rules);
+    };
+
+    const getConvenienceFee = () => {
+        if (platformSettingsLoading && !platformSettings) {
+            return null;
+        }
+        return calculateConvenienceFee(platformSettings);
+    };
+
+    const subtotal = getCartTotal();
+    const deliveryFee = getDeliveryFee(subtotal);
+    const convenienceFee = getConvenienceFee();
+
     // Get total item count (sum of all quantities)
     const getCartCount = () => {
         return cartItems.reduce((count, item) => count + item.quantity, 0);
@@ -353,12 +442,19 @@ export const CartProvider = ({ children }) => {
         cartMeta,
         loading,
         error,
+        platformSettings,
+        platformSettingsLoading,
+        calculateDeliveryFee,
         addToCart,
         removeFromCart,
         increaseQty,
         decreaseQty,
         clearCart,
         getCartTotal,
+        getDeliveryFee,
+        getConvenienceFee,
+        deliveryFee,
+        convenienceFee,
         getCartCount,
         isInCart,
         getCartItem,

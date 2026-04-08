@@ -6,12 +6,12 @@ import './CartDrawer.css';
 
 const CartDrawer = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-  const { cartItems, getCartTotal } = useCart();
+  const { cartItems, getCartTotal, deliveryFee, convenienceFee, platformSettingsLoading } = useCart();
 
   const subtotal = getCartTotal();
-  const deliveryFee = 20;
-  const handlingCharge = 2;
-  const grandTotal = subtotal + deliveryFee + handlingCharge;
+  const resolvedDeliveryFee = deliveryFee ?? 0;
+  const resolvedConvenienceFee = convenienceFee ?? 0;
+  const grandTotal = subtotal + resolvedDeliveryFee + resolvedConvenienceFee;
 
   const handleCheckout = () => {
     if (cartItems.length > 0) {
@@ -70,13 +70,13 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 <div className="summary-row">
                   <span className="summary-icon">🚚</span>
                   <span>Delivery charge</span>
-                  <span className="summary-value">₹{deliveryFee}</span>
+                  <span className="summary-value">{platformSettingsLoading && deliveryFee === null ? 'Loading...' : `₹${resolvedDeliveryFee}`}</span>
                 </div>
 
                 <div className="summary-row">
-                  <span className="summary-icon">📦</span>
-                  <span>Handling charge</span>
-                  <span className="summary-value">₹{handlingCharge}</span>
+                  <span className="summary-icon">🧾</span>
+                  <span>Convenience fee</span>
+                  <span className="summary-value">{platformSettingsLoading && convenienceFee === null ? 'Loading...' : `₹${resolvedConvenienceFee}`}</span>
                 </div>
 
                 <div className="summary-divider"></div>

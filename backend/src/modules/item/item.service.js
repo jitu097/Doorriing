@@ -24,7 +24,7 @@ class ItemService {
 
       let query = supabase
         .from('items')
-        .select('id, shop_id, category_id, subcategory_id, name, description, price, full_price, half_portion_price, has_variants, image_url, is_active, is_available, stock_quantity, created_at', { count: 'exact' })
+        .select('id, shop_id, category_id, subcategory_id, name, description, price, final_price, discount_type, discount_value, full_price, full_final_price, full_discount_type, full_discount_value, half_portion_price, half_portion_final_price, half_discount_type, half_discount_value, has_variants, image_url, is_active, is_available, stock_quantity, created_at', { count: 'exact' })
         .eq('shop_id', shopId)
         .eq('is_active', true)
         .eq('is_available', true);
@@ -87,7 +87,7 @@ class ItemService {
 
       const { data, error } = await supabase
         .from('items')
-        .select('id, shop_id, category_id, subcategory_id, name, description, price, full_price, half_portion_price, has_variants, image_url, is_active, is_available, stock_quantity, created_at, shops!inner(business_type)')
+        .select('id, shop_id, category_id, subcategory_id, name, description, price, final_price, discount_type, discount_value, full_price, full_final_price, full_discount_type, full_discount_value, half_portion_price, half_portion_final_price, half_discount_type, half_discount_value, has_variants, image_url, is_active, is_available, stock_quantity, created_at, shops!inner(business_type)')
         .eq('id', itemId)
         .eq('is_active', true)
         .single();
@@ -146,7 +146,7 @@ class ItemService {
 
       const { data, error, count } = await supabase
         .from('items')
-        .select('id, shop_id, category_id, subcategory_id, name, description, price, full_price, half_portion_price, has_variants, image_url, is_active, is_available, stock_quantity', { count: 'exact' })
+        .select('id, shop_id, category_id, subcategory_id, name, description, price, final_price, discount_type, discount_value, full_price, full_final_price, full_discount_type, full_discount_value, half_portion_price, half_portion_final_price, half_discount_type, half_discount_value, has_variants, image_url, is_active, is_available, stock_quantity', { count: 'exact' })
         .eq('category_id', categoryId)
         .eq('is_active', true)
         .eq('is_available', true)
@@ -187,7 +187,7 @@ class ItemService {
 
       const { data, error, count } = await supabase
         .from('items')
-        .select('id, shop_id, category_id, subcategory_id, name, description, price, full_price, half_portion_price, has_variants, image_url, is_active, is_available, stock_quantity', { count: 'exact' })
+        .select('id, shop_id, category_id, subcategory_id, name, description, price, final_price, discount_type, discount_value, full_price, full_final_price, full_discount_type, full_discount_value, half_portion_price, half_portion_final_price, half_discount_type, half_discount_value, has_variants, image_url, is_active, is_available, stock_quantity', { count: 'exact' })
         .eq('shop_id', shopId)
         .eq('subcategory_id', subcategoryId)
         .eq('is_active', true)

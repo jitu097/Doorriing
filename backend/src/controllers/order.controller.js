@@ -21,7 +21,7 @@ export const orderController = {
         try {
             const customerId = req.user.customerId;
             // Address ID or Full Address can be handled in body, as per requirements
-            const { addressId, addressDetails } = req.body;
+            const { addressId, addressDetails, pricing } = req.body;
 
             // Ensure addressId or addressDetails is provided
             if (!addressId && !addressDetails) {
@@ -31,7 +31,7 @@ export const orderController = {
                 });
             }
 
-            const result = await orderService.checkout(customerId, addressId || addressDetails);
+            const result = await orderService.checkout(customerId, addressId || addressDetails, pricing || {});
 
             res.status(201).json({
                 success: true,

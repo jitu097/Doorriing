@@ -10,7 +10,7 @@ const CheckoutPayment = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { cartItems, getCartTotal, clearCart } = useCart();
+  const { cartItems, getCartTotal, clearCart, deliveryFee, convenienceFee, platformSettingsLoading } = useCart();
   const { addresses } = useAddress();
 
   const [paymentMethod, setPaymentMethod] = useState("COD");
@@ -25,9 +25,9 @@ const CheckoutPayment = () => {
   });
 
   const subtotal = getCartTotal();
-  const deliveryFee = 0;
-  const handlingCharge = 0;
-  const grandTotal = subtotal + deliveryFee + handlingCharge;
+  const resolvedDeliveryFee = deliveryFee ?? 0;
+  const resolvedConvenienceFee = convenienceFee ?? 0;
+  const grandTotal = subtotal + resolvedDeliveryFee + resolvedConvenienceFee;
 
   useEffect(() => {
     if (!cartItems || cartItems.length === 0) {
@@ -71,6 +71,11 @@ const CheckoutPayment = () => {
       setErrorMsg(
         "Missing delivery address. Please go back and select one."
       );
+      return;
+    }
+
+    if (platformSettingsLoading && deliveryFee === null) {
+      setErrorMsg("Loading delivery charges. Please wait a moment.");
       return;
     }
 
@@ -148,6 +153,16 @@ const CheckoutPayment = () => {
       const response = await orderService.checkout({
         addressId: selectedAddressId,
         paymentMethod,
+        pricing: {
+          subtotal,
+          deliveryFee: resolvedDeliveryFee,
+          convenienceFee: resolvedConvenienceFee,
+          finalAmount: grandTotal,
+        },
+        items: cartItems.map((item) => ({
+          itemId: item.id,
+          quantity: item.quantity,
+        })),
       });
 
       await clearCart();
@@ -263,9 +278,9 @@ const CheckoutPayment = () => {
           <button
             type="submit"
             className="place-order-btn"
-            disabled={loading}
+            disabled={loading || (platformSettingsLoading && deliveryFee === null)}
           >
-            {loading ? "Processing..." : "Place Order"}
+            {loading ? "Processing..." : (platformSettingsLoading && deliveryFee === null ? "Loading charges..." : "Place Order")}
           </button>
         </form>
       </div>
