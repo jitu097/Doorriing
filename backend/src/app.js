@@ -43,6 +43,16 @@ app.use((req, res, next) => {
   next();
 });
 
+// 🔥 ROOT ROUTE - Test if server is running
+app.get('/', (req, res) => {
+  res.send('Server is running');
+});
+
+// 🔥 HEALTH CHECK ROUTE - Production monitoring
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // API routes
 app.use('/api', routes);
 
