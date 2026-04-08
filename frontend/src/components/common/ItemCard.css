@@ -594,13 +594,13 @@
 
 .restaurant-add-main {
   width: 100%;
-  width: 90px;
+  width: 60px;
   border: none;
   border-radius: 14px;
   padding: 12px 18px;
   font-size: 0.95rem;
   font-weight: 200;
-  margin-left: 149px;
+  margin-left: 140px;
   margin-top: -50px;
   color: #ffffff;
   background: linear-gradient(135deg, #ff5f6d 0%, #ff344c 100%);
