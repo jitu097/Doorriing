@@ -15,8 +15,8 @@ import com.doorriing.user.R
 class NotificationHelper(private val context: Context) {
 
     companion object {
-        const val CHANNEL_ID = "doorriing_notifications"
-        private const val CHANNEL_NAME = "Doorriing Notifications"
+        const val CHANNEL_ID = "default_channel"
+        private const val CHANNEL_NAME = "General Notifications"
         private const val CHANNEL_DESC = "Notifications for orders and updates"
 
         fun registerChannel(context: Context) {

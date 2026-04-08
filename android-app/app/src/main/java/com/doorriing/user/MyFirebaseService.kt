@@ -5,6 +5,8 @@ import com.doorriing.user.network.FcmTokenRequest
 import com.doorriing.user.network.RetrofitClient
 import com.doorriing.user.repository.AuthRepository
 import com.doorriing.user.utils.NotificationHelper
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.Lifecycle
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope
@@ -23,19 +25,23 @@ class MyFirebaseService : FirebaseMessagingService() {
         Log.d("FCM", "Message received from: ${remoteMessage.from}")
         Log.d("FCM", "Data payload: ${remoteMessage.data}")
 
-        // If this is notification-only payload, let the OS handle display to avoid duplicates.
-        if (remoteMessage.notification != null && remoteMessage.data.isEmpty()) {
-            return
-        }
+        val isAppForeground = ProcessLifecycleOwner.get().lifecycle.currentState
+            .isAtLeast(Lifecycle.State.STARTED)
 
-        // Foreground/manual handling for hybrid data payloads.
-        if (remoteMessage.data.isNotEmpty()) {
-            val title = remoteMessage.data["title"] ?: "Doorriing"
-            val body = remoteMessage.data["body"] ?: ""
-            val type = remoteMessage.data["type"]
-            val referenceId = remoteMessage.data["reference_id"]
-            val url = remoteMessage.data["url"]
+        val title = remoteMessage.data["title"]
+            ?: remoteMessage.notification?.title
+            ?: "Doorriing"
+        val body = remoteMessage.data["body"]
+            ?: remoteMessage.notification?.body
+            ?: ""
+        val type = remoteMessage.data["type"]
+        val referenceId = remoteMessage.data["reference_id"]
+        val url = remoteMessage.data["url"]
 
+        // For notification-only background messages, Android system already renders it.
+        val shouldShowLocalNotification = isAppForeground || remoteMessage.data.isNotEmpty()
+
+        if (shouldShowLocalNotification) {
             NotificationHelper.showNotification(
                 context = this,
                 title = title,

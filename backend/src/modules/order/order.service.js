@@ -120,7 +120,12 @@ class OrderService {
       await cartService.clearCart(customerId, shop_id);
 
       // Create notification for customer
-      await this.createOrderNotification(customerId, order.id, 'Order placed successfully', 'Your order has been placed and is being processed');
+      await pushNotificationService.sendOrderStatusNotification({
+        customer_id: customerId,
+        shop_id,
+        status: 'placed',
+        reference_id: order.id,
+      });
 
       logger.info('Order created successfully', { orderId: order.id, orderNumber });
 

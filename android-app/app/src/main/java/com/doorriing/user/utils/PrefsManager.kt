@@ -26,6 +26,10 @@ class PrefsManager(context: Context) {
         return sharedPreferences.getString("auth_token", null)
     }
 
+    fun clearToken() {
+        sharedPreferences.edit().remove("auth_token").apply()
+    }
+
     fun clear() {
         sharedPreferences.edit().clear().apply()
     }

@@ -21,6 +21,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.doorriing.user.databinding.ActivityMainBinding
+import com.doorriing.user.network.FcmTokenRequest
+import com.doorriing.user.network.RetrofitClient
+import com.doorriing.user.repository.AuthRepository
 import com.doorriing.user.utils.NetworkUtils
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -30,6 +33,9 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
@@ -39,6 +45,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var googleSignInClient: GoogleSignInClient
+    private val authRepository: AuthRepository by lazy {
+        AuthRepository(RetrofitClient.instance)
+    }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -150,6 +159,17 @@ class MainActivity : AppCompatActivity() {
                 startNativeGoogleSignIn()
             }
         }
+
+        @JavascriptInterface
+        fun saveAuthToken(token: String?) {
+            if (token.isNullOrBlank()) {
+                DoorriingApp.prefs.clearToken()
+                return
+            }
+
+            DoorriingApp.prefs.saveToken(token)
+            fetchFcmToken()
+        }
     }
 
     private fun askNotificationPermission() {
@@ -173,6 +193,32 @@ class MainActivity : AppCompatActivity() {
             }
             val token = task.result
             Log.d("MainActivity", "FCM Token: $token")
+            syncFcmTokenToBackend(token)
+        }
+    }
+
+    private fun syncFcmTokenToBackend(fcmToken: String) {
+        val authToken = DoorriingApp.prefs.getToken()
+        if (authToken.isNullOrBlank()) {
+            Log.d("MainActivity", "Skipping FCM token sync: auth token not available yet")
+            return
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = authRepository.saveFcmToken(
+                    authToken,
+                    FcmTokenRequest(fcmToken = fcmToken, deviceType = "android")
+                )
+
+                if (response.isSuccessful) {
+                    Log.d("MainActivity", "FCM token synced with backend")
+                } else {
+                    Log.e("MainActivity", "Failed to sync FCM token: ${response.errorBody()?.string()}")
+                }
+            } catch (error: Exception) {
+                Log.e("MainActivity", "Error syncing FCM token", error)
+            }
         }
     }
 
@@ -214,6 +260,7 @@ class MainActivity : AppCompatActivity() {
         val urlToLoad = when (type) {
             "order_placed",
             "order_accepted",
+            "order_confirmed",
             "order_shipped",
             "order_delivered" -> {
                 if (referenceId != null) {

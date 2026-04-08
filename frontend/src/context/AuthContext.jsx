@@ -10,6 +10,10 @@ import {
 } from 'firebase/auth';
 import { auth, googleProvider } from '../config/firebase';
 import api from '../services/api';
+import {
+    attachForegroundNotificationListener,
+    registerWebPushToken,
+} from '../services/pushNotification.service';
 
 export const AuthContext = createContext();
 
@@ -90,6 +94,17 @@ export const AuthProvider = ({ children }) => {
                 const token = await currentUser.getIdToken();
                 localStorage.setItem('token', token);
 
+                const nativeBridge =
+                    typeof window !== 'undefined' &&
+                    (window.AndroidAuth?.saveAuthToken || window.Android?.saveAuthToken);
+                if (nativeBridge) {
+                    try {
+                        nativeBridge.call(window.AndroidAuth || window.Android, token);
+                    } catch (bridgeError) {
+                        console.warn('Failed to share auth token with native bridge', bridgeError);
+                    }
+                }
+
                 // Background sync - do not await
                 api.post('/auth/sync', {}, {
                     headers: {
@@ -109,10 +124,29 @@ export const AuthProvider = ({ children }) => {
                     email: currentUser.email,
                     displayName: currentUser.displayName
                 }));
+
+                registerWebPushToken().catch((error) => {
+                    console.warn('Web push token registration failed', error);
+                });
+
+                attachForegroundNotificationListener().catch((error) => {
+                    console.warn('Failed to attach foreground push listener', error);
+                });
             } else {
                 setCustomerProfile(null);
                 localStorage.removeItem('user');
                 localStorage.removeItem('token');
+
+                const nativeBridge =
+                    typeof window !== 'undefined' &&
+                    (window.AndroidAuth?.saveAuthToken || window.Android?.saveAuthToken);
+                if (nativeBridge) {
+                    try {
+                        nativeBridge.call(window.AndroidAuth || window.Android, '');
+                    } catch (bridgeError) {
+                        console.warn('Failed to clear native auth token', bridgeError);
+                    }
+                }
             }
 
             setLoading(false);

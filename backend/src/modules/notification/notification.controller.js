@@ -12,10 +12,11 @@ class NotificationController {
     try {
       const customerId = req.user?.customerId || null;
       const shopId = req.user?.shopId || null;
-      const { fcm_token, device_type } = req.body;
+      const { fcm_token, token, device_type } = req.body;
+      const resolvedToken = fcm_token || token;
 
-      if (!fcm_token) {
-        return sendError(res, 'fcm_token is required', 400);
+      if (!resolvedToken) {
+        return sendError(res, 'fcm_token (or token) is required', 400);
       }
 
       if (!customerId && !shopId) {
@@ -25,7 +26,7 @@ class NotificationController {
       await notificationService.saveToken({
         customerId,
         shopId,
-        fcmToken: fcm_token,
+        fcmToken: resolvedToken,
         deviceType: device_type || 'android',
       });
 

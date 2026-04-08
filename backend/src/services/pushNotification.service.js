@@ -61,12 +61,13 @@ class PushNotificationService {
             title: String(title || ''),
             body: String(message || ''),
             type: String(type || ''),
+            orderId: String(reference_id || ''),
             reference_id: String(reference_id || ''),
           },
           android: {
             priority: 'high',
             notification: {
-              channelId: 'doorriing_notifications',
+              channelId: 'default_channel',
             },
           },
         });
@@ -163,6 +164,10 @@ class PushNotificationService {
         message: 'Your order has been placed successfully.',
       },
       accepted: {
+        title: 'Order accepted',
+        message: 'Your order has been accepted by the shop.',
+      },
+      confirmed: {
         title: 'Order accepted',
         message: 'Your order has been accepted by the shop.',
       },
