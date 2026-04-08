@@ -1,6 +1,75 @@
 import { supabase } from '../config/supabaseClient.js';
 import { logger } from '../utils/logger.js';
 
+const computeFinalPrice = (basePrice, discountType, discountValue) => {
+    if (basePrice === undefined || basePrice === null) return null;
+    if (!discountType || discountValue === undefined || discountValue === null) {
+        return Number(basePrice);
+    }
+
+    const base = Number(basePrice);
+    const discount = Number(discountValue);
+    if (Number.isNaN(base) || Number.isNaN(discount)) {
+        return Number(basePrice);
+    }
+
+    const normalized = String(discountType).toLowerCase();
+    if (normalized === 'percentage') {
+        return Math.max(0, base - (base * discount) / 100);
+    }
+    if (normalized === 'flat') {
+        return Math.max(0, base - discount);
+    }
+
+    return Number(basePrice);
+};
+
+const resolveEffectiveItemPrice = (item, variant = null) => {
+    if (!item) return 0;
+
+    if (variant === 'Half') {
+        return Number(
+            item.half_portion_final_price ??
+            computeFinalPrice(item.half_portion_price, item.half_discount_type, item.half_discount_value) ??
+            item.half_portion_price ??
+            item.price ??
+            0
+        );
+    }
+
+    if (variant === 'Full') {
+        const fullBase = item.full_price ?? item.price;
+        return Number(
+            item.full_final_price ??
+            computeFinalPrice(fullBase, item.full_discount_type, item.full_discount_value) ??
+            fullBase ??
+            0
+        );
+    }
+
+    return Number(
+        item.final_price ??
+        item.full_final_price ??
+        computeFinalPrice(item.price, item.discount_type, item.discount_value) ??
+        item.price ??
+        0
+    );
+};
+
+const normalizeRulesFromScalarFields = (row) => {
+    const deliveryFee = Number(row?.delivery_fee) || 0;
+    const freeDeliveryAbove = Number(row?.free_delivery_above) || 0;
+
+    if (freeDeliveryAbove > 0) {
+        return [
+            { min: 0, max: Math.max(0, freeDeliveryAbove - 0.01), fee: deliveryFee },
+            { min: freeDeliveryAbove, max: 999999, fee: 0 },
+        ];
+    }
+
+    return [{ min: 0, max: 999999, fee: deliveryFee }];
+};
+
 const parseDeadline = (deadlineStr) => {
     if (!deadlineStr) return null;
     // Ensure deadline is treated as UTC if it's missing timezone info
@@ -11,10 +80,118 @@ const parseDeadline = (deadlineStr) => {
 };
 
 export const orderService = {
+    calculateDeliveryFee(total, rules) {
+        if (!Array.isArray(rules) || rules.length === 0) return 0;
+
+        const matched = rules.find((rule) => total >= Number(rule.min) && total <= Number(rule.max));
+        return matched ? Number(matched.fee) || 0 : 0;
+    },
+
+    async getDeliveryRules() {
+        // Priority 1: dynamic settings table
+        try {
+            const { data, error } = await supabase
+                .from('platform_settings')
+                .select('delivery_rules, delivery_fee, free_delivery_above')
+                .order('updated_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (!error && data) {
+                if (Array.isArray(data?.delivery_rules) && data.delivery_rules.length > 0) {
+                    return data.delivery_rules;
+                }
+
+                return normalizeRulesFromScalarFields(data);
+            }
+        } catch (error) {
+            logger.warn('Failed to read platform_settings from database', { error: error.message });
+        }
+
+        // Priority 2: JSON env fallback for production safety
+        try {
+            if (process.env.DELIVERY_RULES_JSON) {
+                const parsed = JSON.parse(process.env.DELIVERY_RULES_JSON);
+                if (Array.isArray(parsed)) {
+                    return parsed;
+                }
+            }
+        } catch (error) {
+            logger.warn('Invalid DELIVERY_RULES_JSON format', { error: error.message });
+        }
+
+        // No trusted rules source available
+        return [{ min: 0, max: 999999, fee: Number(process.env.DELIVERY_FEE || 0) }];
+    },
+
+    async getCheckoutChargeSettings() {
+        // Priority 1: dynamic settings table
+        try {
+            const { data, error } = await supabase
+                .from('platform_settings')
+                .select('delivery_rules, delivery_fee, free_delivery_above, convenience_fee')
+                .order('updated_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (!error && data) {
+                const deliveryRules = Array.isArray(data?.delivery_rules) && data.delivery_rules.length > 0
+                    ? data.delivery_rules
+                    : normalizeRulesFromScalarFields(data);
+                return {
+                    deliveryRules,
+                    convenienceFee: Number(data?.convenience_fee) || 0,
+                    source: 'database',
+                };
+            }
+        } catch (error) {
+            logger.warn('Failed to read checkout charge settings from database', { error: error.message });
+        }
+
+        // Priority 2: JSON env fallback for production safety
+        try {
+            if (process.env.DELIVERY_RULES_JSON) {
+                const parsed = JSON.parse(process.env.DELIVERY_RULES_JSON);
+                if (Array.isArray(parsed)) {
+                    return {
+                        deliveryRules: parsed,
+                        convenienceFee: Number(process.env.CONVENIENCE_FEE || 0),
+                        source: 'env_json',
+                    };
+                }
+            }
+        } catch (error) {
+            logger.warn('Invalid DELIVERY_RULES_JSON format', { error: error.message });
+        }
+
+        const fallbackDeliveryFee = Number(process.env.DELIVERY_FEE || 0);
+        const fallbackFreeDeliveryAbove = Number(process.env.FREE_DELIVERY_ABOVE || 0);
+        const fallbackConvenienceFee = Number(process.env.CONVENIENCE_FEE || 0);
+
+        const fallbackDeliveryRules = fallbackFreeDeliveryAbove > 0
+            ? [
+                { min: 0, max: Math.max(0, fallbackFreeDeliveryAbove - 0.01), fee: fallbackDeliveryFee },
+                { min: fallbackFreeDeliveryAbove, max: 999999, fee: 0 },
+            ]
+            : [{ min: 0, max: 999999, fee: fallbackDeliveryFee }];
+
+        logger.warn('Checkout charge settings missing in DB/env JSON, using safe defaults', {
+            fallbackDeliveryFee,
+            fallbackFreeDeliveryAbove,
+            fallbackConvenienceFee,
+        });
+
+        return {
+            deliveryRules: fallbackDeliveryRules,
+            convenienceFee: fallbackConvenienceFee,
+            source: 'defaults',
+        };
+    },
+
     /**
      * Process Checkout
      */
-    async checkout(customerId, addressData) {
+    async checkout(customerId, addressData, clientPricing = {}) {
         try {
             // STEP 1: Fetch cart by customer_id
             const { data: cart, error: cartError } = await supabase
@@ -35,7 +212,7 @@ export const orderService = {
                 .select(`
           id, quantity, variant,
           items!inner (
-            id, shop_id, name, price, half_portion_price, full_price, has_variants, is_available, stock_quantity,
+                        id, shop_id, name, price, final_price, discount_type, discount_value, half_portion_price, half_portion_final_price, half_discount_type, half_discount_value, full_price, full_final_price, full_discount_type, full_discount_value, has_variants, is_available, stock_quantity,
             shops!inner ( id, is_active, business_type )
           )
         `)
@@ -97,23 +274,64 @@ export const orderService = {
                 throw new Error('Invalid delivery address');
             }
 
-            // STEP 4: Recalculate (same as checkout page)
+            // STEP 4: Recalculate from server-side trusted data
             let subtotal = 0;
             for (const ci of cartItems) {
-                // Determine correct price based on variant
-                let unitPrice = Number(ci.items.price) || 0;
-                
-                if (ci.variant === 'Half' && ci.items.half_portion_price != null) {
-                    unitPrice = Number(ci.items.half_portion_price);
-                } else if (ci.variant === 'Full' && ci.items.full_price != null) {
-                    unitPrice = Number(ci.items.full_price);
-                }
+                const unitPrice = resolveEffectiveItemPrice(ci.items, ci.variant);
                 
                 subtotal += (ci.quantity * unitPrice);
             }
-            const deliveryCharge = 20;  // Fixed delivery charge
-            const handlingCharge = 2;   // Fixed handling charge
+
+            const { deliveryRules, convenienceFee, source } = await this.getCheckoutChargeSettings();
+
+            let deliveryCharge = this.calculateDeliveryFee(subtotal, deliveryRules);
+            let handlingCharge = convenienceFee;
+
+            const clientDeliveryFee = Number(clientPricing?.deliveryFee);
+            const clientConvenienceFee = Number(clientPricing?.convenienceFee);
+
+            // If server settings are unavailable, rely on client-provided computed charges
+            // to avoid unintentionally creating zero-fee orders.
+            if (source === 'defaults') {
+                if (Number.isFinite(clientDeliveryFee) && clientDeliveryFee >= 0) {
+                    deliveryCharge = clientDeliveryFee;
+                }
+                if (Number.isFinite(clientConvenienceFee) && clientConvenienceFee >= 0) {
+                    handlingCharge = clientConvenienceFee;
+                }
+            }
+
             const totalAmount = subtotal + deliveryCharge + handlingCharge;
+
+            // Log mismatch for fraud/telemetry; backend values are authoritative.
+            const clientSubtotal = Number(clientPricing?.subtotal);
+            const clientFinalAmount = Number(clientPricing?.finalAmount);
+
+            if (
+                Number.isFinite(clientSubtotal) &&
+                Number.isFinite(clientDeliveryFee) &&
+                Number.isFinite(clientFinalAmount)
+            ) {
+                const subtotalDiff = Math.abs(clientSubtotal - subtotal);
+                const feeDiff = Math.abs(clientDeliveryFee - deliveryCharge);
+                const convenienceFeeDiff = Number.isFinite(clientConvenienceFee)
+                    ? Math.abs(clientConvenienceFee - handlingCharge)
+                    : 0;
+                const finalDiff = Math.abs(clientFinalAmount - totalAmount);
+
+                if (subtotalDiff > 0.01 || feeDiff > 0.01 || convenienceFeeDiff > 0.01 || finalDiff > 0.01) {
+                    logger.warn('Checkout pricing mismatch detected; using backend totals', {
+                        customerId,
+                        backend: { subtotal, deliveryCharge, totalAmount },
+                        client: {
+                            subtotal: clientSubtotal,
+                            deliveryFee: clientDeliveryFee,
+                            convenienceFee: clientConvenienceFee,
+                            finalAmount: clientFinalAmount,
+                        },
+                    });
+                }
+            }
 
             // STEP 5: Generate order_number
             const datePart = new Date().toISOString().split('T')[0].replace(/-/g, '');
@@ -167,14 +385,7 @@ export const orderService = {
 
             // STEP 7: Insert into order_items
             const orderItemsToInsert = cartItems.map(ci => {
-                // Determine correct price based on variant (same logic as subtotal)
-                let unitPrice = Number(ci.items.price) || 0;
-                
-                if (ci.variant === 'Half' && ci.items.half_portion_price != null) {
-                    unitPrice = Number(ci.items.half_portion_price);
-                } else if (ci.variant === 'Full' && ci.items.full_price != null) {
-                    unitPrice = Number(ci.items.full_price);
-                }
+                const unitPrice = resolveEffectiveItemPrice(ci.items, ci.variant);
                 
                 return {
                     order_id: newOrder.id,

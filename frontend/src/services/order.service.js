@@ -11,11 +11,11 @@ const getAuthHeader = async () => {
 export const orderService = {
     /**
      * Checkout current cart and create an order
-     * @param {Object} addressDetails - The delivery address info
+     * @param {Object} checkoutPayload - Address and pricing data
      */
-    checkout: async (addressDetails) => {
+    checkout: async (checkoutPayload) => {
         const authHeader = await getAuthHeader();
-        return api.post('/user/orders/checkout', { addressDetails }, authHeader);
+        return api.post('/user/orders/checkout', checkoutPayload, authHeader);
     },
 
     /**

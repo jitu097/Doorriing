@@ -2,6 +2,62 @@ import { supabase } from '../../config/supabaseClient.js';
 import { logger } from '../../utils/logger.js';
 import itemService from '../item/item.service.js';
 
+const computeFinalPrice = (basePrice, discountType, discountValue) => {
+  if (basePrice === undefined || basePrice === null) return null;
+
+  if (!discountType || discountValue === undefined || discountValue === null) {
+    return Number(basePrice);
+  }
+
+  const base = Number(basePrice);
+  const discount = Number(discountValue);
+  if (Number.isNaN(base) || Number.isNaN(discount)) {
+    return Number(basePrice);
+  }
+
+  const normalized = String(discountType).toLowerCase();
+  if (normalized === 'percentage') {
+    return Math.max(0, base - (base * discount) / 100);
+  }
+  if (normalized === 'flat') {
+    return Math.max(0, base - discount);
+  }
+
+  return Number(basePrice);
+};
+
+const resolveEffectiveItemPrice = (item, variant = null) => {
+  if (!item) return 0;
+
+  if (variant === 'Half') {
+    return Number(
+      item.half_portion_final_price ??
+      computeFinalPrice(item.half_portion_price, item.half_discount_type, item.half_discount_value) ??
+      item.half_portion_price ??
+      item.price ??
+      0
+    );
+  }
+
+  if (variant === 'Full') {
+    const fullBase = item.full_price ?? item.price;
+    return Number(
+      item.full_final_price ??
+      computeFinalPrice(fullBase, item.full_discount_type, item.full_discount_value) ??
+      fullBase ??
+      0
+    );
+  }
+
+  return Number(
+    item.final_price ??
+    item.full_final_price ??
+    computeFinalPrice(item.price, item.discount_type, item.discount_value) ??
+    item.price ??
+    0
+  );
+};
+
 class CartService {
   /**
    * Get or create active cart for customer and shop
@@ -132,8 +188,17 @@ class CartService {
               name,
               description,
               price,
+              final_price,
+              discount_type,
+              discount_value,
               half_portion_price,
+              half_portion_final_price,
+              half_discount_type,
+              half_discount_value,
               full_price,
+              full_final_price,
+              full_discount_type,
+              full_discount_value,
               has_variants,
               image_url,
               is_available,
@@ -167,17 +232,13 @@ class CartService {
           if (!ci.items) continue;
 
           let itemObj = { ...ci.items };
-          let unitPrice = Number(itemObj.price) || 0;
-
           let variantLabel = ci.variant;
+          let unitPrice = resolveEffectiveItemPrice(itemObj, variantLabel);
           let variantSuffix = '';
 
-          // Determine correct price based on variant
-          if (variantLabel === 'Half' && itemObj.half_portion_price != null) {
-            unitPrice = Number(itemObj.half_portion_price);
+          if (variantLabel === 'Half') {
             variantSuffix = '-half';
-          } else if (variantLabel === 'Full' && itemObj.full_price != null) {
-            unitPrice = Number(itemObj.full_price);
+          } else if (variantLabel === 'Full') {
             variantSuffix = '-full';
           }
 
@@ -255,16 +316,8 @@ class CartService {
         variant: variant
       });
 
-      // Determine correct price if it's a variant
-      if (variant === 'Half' && item.half_portion_price != null) {
-        targetPrice = Number(item.half_portion_price);
-        logger.info('[CART-SERVICE] Applied Half variant price', { targetPrice });
-      } else if (variant === 'Full' && item.full_price != null) {
-        targetPrice = Number(item.full_price);
-        logger.info('[CART-SERVICE] Applied Full variant price', { targetPrice });
-      } else {
-        logger.info('[CART-SERVICE] Using default price', { targetPrice, variant });
-      }
+      targetPrice = resolveEffectiveItemPrice(item, variant);
+      logger.info('[CART-SERVICE] Resolved effective item price', { targetPrice, variant });
 
       // Get or create cart
       const cart = await this.getOrCreateCart(customerId, shopId);

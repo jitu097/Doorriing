@@ -6,12 +6,12 @@ import './Cart.css';
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { cartItems, getCartTotal } = useCart();
+  const { cartItems, getCartTotal, deliveryFee, convenienceFee, platformSettingsLoading } = useCart();
 
   const subtotal = getCartTotal();
-  const deliveryFee = 0;
-  const handlingCharge = 0;
-  const grandTotal = subtotal + deliveryFee + handlingCharge;
+  const resolvedDeliveryFee = deliveryFee ?? 0;
+  const resolvedConvenienceFee = convenienceFee ?? 0;
+  const grandTotal = subtotal + resolvedDeliveryFee + resolvedConvenienceFee;
 
   const handleCheckout = () => {
     if (cartItems.length > 0) {
@@ -52,11 +52,11 @@ const Cart = () => {
               </div>
               <div className="summary-row">
                 <span>Delivery Fee</span>
-                <span>₹{deliveryFee.toFixed(2)}</span>
+                <span>{platformSettingsLoading && deliveryFee === null ? 'Loading...' : `₹${resolvedDeliveryFee.toFixed(2)}`}</span>
               </div>
               <div className="summary-row">
-                <span>Handling Charge</span>
-                <span>₹{handlingCharge.toFixed(2)}</span>
+                <span>Convenience Fee</span>
+                <span>{platformSettingsLoading && convenienceFee === null ? 'Loading...' : `₹${resolvedConvenienceFee.toFixed(2)}`}</span>
               </div>
               <div className="summary-divider"></div>
               <div className="summary-row total">
