@@ -11,6 +11,10 @@
 }
 
 @media (max-width: 600px) {
+  .orders-container {
+    padding-top: 5rem;
+  }
+
   .orders-wrapper {
     width: 100%;
     max-width: 100%;
@@ -142,7 +146,7 @@
 }
 
 .track-btn {
-  background: #ff9800;
+  background: #ff5722;
   color: #fff;
   border: none;
   padding: 8px 16px;
@@ -154,8 +158,8 @@
 
 .view-details-btn {
   background: transparent;
-  color: #ff9800;
-  border: 1px solid #ff9800;
+  color: #ff5722;
+  border: 1px solid #ff5722;
   padding: 8px 16px;
   border-radius: 6px;
   font-size: 13px;

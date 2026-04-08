@@ -11,15 +11,45 @@
 }
 
 @media (max-width: 600px) {
+  .track-container {
+    padding-top: 5rem;
+  }
+
   .track-wrapper {
     width: 100%;
     max-width: 100%;
   }
-}
+
 
 .track-header {
   margin-bottom: 40px;
   text-align: center;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 10px;
+  background: none;
+  border: none;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+@media (max-width: 600px) {
+  .back-link {
+    display: block;
+    text-align: right;
+    padding-right: 15px;
+    margin-bottom: 20px;
+  }
+
+  .track-header {
+    text-align: center;
+  }
 }
 
 .track-header h1 {
@@ -166,4 +196,5 @@
   border-radius: 8px;
   margin-top: 15px;
   cursor: pointer;
+}
 }

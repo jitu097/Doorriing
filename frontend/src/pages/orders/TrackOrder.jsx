@@ -72,7 +72,7 @@ const TrackOrder = () => {
     <div className="track-container">
       <div className="track-wrapper">
         <header className="track-header">
-          <button className="back-link" onClick={() => navigate(`/orders/${orderId}`)}>← Back to Order</button>
+          <button className="back-link" onClick={() => navigate(`/orders/${orderId}`)}>←</button>
           <h1>Track Your Order</h1>
           <p className="order-no">Order #{order.order_number.substring(order.order_number.length - 8)}</p>
         </header>

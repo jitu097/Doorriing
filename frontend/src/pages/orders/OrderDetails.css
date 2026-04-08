@@ -11,6 +11,10 @@
 }
 
 @media (max-width: 600px) {
+  .order-details-container {
+    padding-top: 5rem;
+  }
+
   .order-details-wrapper {
     width: 100%;
     max-width: 100%;

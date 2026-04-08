@@ -21,6 +21,28 @@ const OrderDetails = () => {
         const response = await orderService.getOrderById(orderId);
         if (response.success && response.data) {
           const o = response.data;
+          
+          // Format delivery address
+          let deliveryAddressText = '';
+          if (o.delivery_address) {
+            if (typeof o.delivery_address === 'string') {
+              deliveryAddressText = o.delivery_address;
+            } else if (typeof o.delivery_address === 'object') {
+              const addr = o.delivery_address;
+              const parts = [];
+              if (addr.address) parts.push(addr.address);
+              if (addr.area || addr.city) parts.push(addr.area || addr.city);
+              if (addr.phone) {
+                if (parts.length > 0) parts.push('Phone:');
+                parts.push(addr.phone);
+              }
+              deliveryAddressText = parts.filter(p => p && p !== 'Phone:').join(', ');
+              if (addr.phone && parts.includes('Phone:')) {
+                deliveryAddressText = deliveryAddressText.replace(', Phone:', '') + '\nPhone: ' + addr.phone;
+              }
+            }
+          }
+          
           setOrder({
             id: o.id,
             orderNumber: o.order_number,
@@ -40,7 +62,7 @@ const OrderDetails = () => {
             status: o.status,
             orderDate: o.created_at,
             paymentMethod: o.payment_method === 'cod' ? 'Cash on Delivery' : 'Online',
-            deliveryAddress: o.delivery_address || '',
+            deliveryAddress: deliveryAddressText || 'Not available',
           });
           setRemainingTime(o.remaining_time ?? null);
         } else {
@@ -98,7 +120,7 @@ const OrderDetails = () => {
       <div className="order-details-wrapper">
         <header className="details-header">
           <button className="back-link" onClick={() => navigate('/orders')}>
-            ← Back to Orders
+            ← 
           </button>
           <div className="order-meta">
             <h1>Order #{order.orderNumber.substring(order.orderNumber.length - 8)}</h1>
