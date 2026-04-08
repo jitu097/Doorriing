@@ -4,7 +4,8 @@ import {
     createUserWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
-    signInWithPopup
+    signInWithPopup,
+    signInWithRedirect
 } from 'firebase/auth';
 import { auth, googleProvider } from '../config/firebase';
 import api from '../services/api';
@@ -27,7 +28,17 @@ export const AuthProvider = ({ children }) => {
 
     // Login with Google
     const loginWithGoogle = () => {
-        return signInWithPopup(auth, googleProvider);
+        const isMobileApp =
+            typeof window !== 'undefined' &&
+            /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+
+        if (isMobileApp) {
+            // Mobile devices → use redirect (fixes WebView issues)
+            return signInWithRedirect(auth, googleProvider);
+        } else {
+            // Web/desktop → use popup (prevents redirect issues on localhost)
+            return signInWithPopup(auth, googleProvider);
+        }
     };
 
     // Logout

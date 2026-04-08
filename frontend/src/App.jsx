@@ -1,7 +1,9 @@
 
 import { useState, useEffect } from 'react';
+import { getRedirectResult } from 'firebase/auth';
 import UserRoutes from './routes/UserRoutes';
 import LoadingScreen from './components/common/LoadingScreen';
+import { auth } from './config/firebase';
 
 function isMobile() {
   if (typeof window === 'undefined') return false;
@@ -11,6 +13,22 @@ function isMobile() {
 
 function App() {
   const [loading, setLoading] = useState(isMobile());
+
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+
+        if (result?.user) {
+          console.log('Google login success:', result.user);
+        }
+      } catch (error) {
+        console.error('Google redirect error:', error);
+      }
+    };
+
+    handleRedirectResult();
+  }, []);
 
   useEffect(() => {
     if (!isMobile()) {
