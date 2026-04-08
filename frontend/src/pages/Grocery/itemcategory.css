@@ -38,6 +38,7 @@
   top: 75px;
   z-index: 90;
   padding: 1rem;
+  border-bottom: 3px solid white;
 }
 
 .info-row {
@@ -45,10 +46,13 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid white;
 }
 
 .info-row:last-child {
   margin-bottom: 0;
+  border-bottom: none;
 }
 
 .rating,
@@ -123,21 +127,10 @@
   line-height: 1.1;
 }
 
-.see-slots-btn {
-  background: none;
-  border: none;
-  color: #333;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 0.75rem;
-  padding: 0.2rem 0.4rem;
-  flex-shrink: 0;
-}
-
 /* Menu Section */
 .menu-section {
   background: white;
-  margin: 25rem 1rem 1rem 1rem;
+  margin: 9rem 1rem 1rem 1rem;
   padding: 1.5rem;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -163,7 +156,7 @@
   text-align: center;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  min-height: 120px;
+  min-height: 200px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -177,8 +170,8 @@
 }
 
 .category-image {
-  width: 100px;
-  height: 120px;
+  width: 140px !important;
+  height: 140px!important;
   object-fit: cover;
   border-radius: 8px;
   margin-bottom: 0.5rem;
@@ -272,11 +265,6 @@
 
   .banner-text p {
     font-size: 0.65rem;
-  }
-
-  .see-slots-btn {
-    font-size: 0.7rem;
-    padding: 0.15rem 0.3rem;
   }
 
   /* Categories and other elements */

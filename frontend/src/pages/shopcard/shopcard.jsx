@@ -4,9 +4,7 @@ import './shopcard.css';
 import {
   resolveShopImage,
   getShopCategoryCount,
-  getShopStockCount,
   getShopStatusMeta,
-  formatCount,
 } from '../../utils/shopPresentation';
 
 const ShopCard = ({ shop, routePrefix = 'grocery' }) => {
@@ -16,13 +14,11 @@ const ShopCard = ({ shop, routePrefix = 'grocery' }) => {
   const image = resolveShopImage(safeShop);
   const city = safeShop.city;
   const categoryCount = getShopCategoryCount(safeShop);
-  const stockCount = getShopStockCount(safeShop);
   const statusMeta = getShopStatusMeta(safeShop);
   const isClosed = statusMeta.isClosed;
   const initials = title ? title.charAt(0).toUpperCase() : '?';
-  const formattedStock = stockCount !== null ? `${formatCount(stockCount)} items in stock` : null;
   const description = safeShop.description || (categoryCount ? `${categoryCount} categories available` : null);
-  const showMeta = categoryCount !== null || formattedStock;
+  const showMeta = categoryCount !== null;
 
   const handleClick = () => {
     if (isClosed) {
@@ -76,7 +72,6 @@ const ShopCard = ({ shop, routePrefix = 'grocery' }) => {
                 {categoryCount === 1 ? '1 category' : `${categoryCount} categories`}
               </span>
             )}
-            {formattedStock && <span className="card-meta-pill">{formattedStock}</span>}
           </div>
         )}
       </div>
