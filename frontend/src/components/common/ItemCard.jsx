@@ -360,35 +360,55 @@ const ItemCard = ({
     }
 
     const hasVariantChips = Boolean(variantOptions && variantOptions.length);
-    const fullVariantData = variantOptions?.find((variant) => variant.key === 'full');
-    const halfVariantData = variantOptions?.find((variant) => variant.key === 'half');
 
     return (
       <div className="restaurant-footer-collapsed">
-        {hasVariantChips ? (
+        {hasVariantChips && variantOptions ? (
           <div className="restaurant-price-chip-row">
-            <span className="restaurant-price-chip full">
-              <span className="restaurant-chip-label">Full</span>
-              <div className="restaurant-chip-price-stack">
-                {fullVariantData?.hasDiscount && fullVariantData?.formattedOriginalPrice && (
-                  <span className="restaurant-chip-original">₹{fullVariantData.formattedOriginalPrice}</span>
-                )}
-                <span className="restaurant-chip-final">
-                  ₹{fullVariantData?.formattedPrice || formattedFullVariantPrice}
+            {variantOptions.map((variant) => {
+              const variantId = `${clientItemId}-${variant.key}`;
+              const variantQty = getCartItem(variantId)?.quantity || 0;
+
+              return (
+                <span key={variant.key} className={`restaurant-price-chip ${variant.key}`}>
+                  <span className="restaurant-chip-label">{variant.label}</span>
+                  <div className="restaurant-chip-price-stack">
+                    {variant.hasDiscount && variant.formattedOriginalPrice && (
+                      <span className="restaurant-chip-original">₹{variant.formattedOriginalPrice}</span>
+                    )}
+                    <span className="restaurant-chip-final">
+                      ₹{variant.formattedPrice}
+                    </span>
+                  </div>
+                  {variantQty > 0 ? (
+                    <div className="restaurant-qty-controls variant-qty-compact">
+                      <button
+                        onClick={() => decreaseQty(variantId)}
+                        aria-label="Decrease quantity"
+                      >
+                        −
+                      </button>
+                      <span>{variantQty}</span>
+                      <button
+                        onClick={() => increaseQty(variantId)}
+                        aria-label="Increase quantity"
+                      >
+                        +
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      className="variant-add-btn"
+                      type="button"
+                      disabled={!isAvailable}
+                      onClick={() => handleVariantAdd(variant)}
+                    >
+                      Add
+                    </button>
+                  )}
                 </span>
-              </div>
-            </span>
-            <span className="restaurant-price-chip half">
-              <span className="restaurant-chip-label">Half</span>
-              <div className="restaurant-chip-price-stack">
-                {halfVariantData?.hasDiscount && halfVariantData?.formattedOriginalPrice && (
-                  <span className="restaurant-chip-original">₹{halfVariantData.formattedOriginalPrice}</span>
-                )}
-                <span className="restaurant-chip-final">
-                  ₹{halfVariantData?.formattedPrice || formattedHalfVariantPrice}
-                </span>
-              </div>
-            </span>
+              );
+            })}
           </div>
         ) : (
           <div className="restaurant-price-stack">
@@ -402,16 +422,7 @@ const ItemCard = ({
           </div>
         )}
 
-        {hasVariantChips ? (
-          <button
-            className="restaurant-add-main"
-            type="button"
-            disabled={!isAvailable}
-            onClick={handleAddToCart}
-          >
-            {!isAvailable ? 'UNAVAILABLE' : 'Add'}
-          </button>
-        ) : !isInCart ? (
+        {hasVariantChips ? null : !isInCart ? (
           <button
             className="restaurant-add-main"
             type="button"

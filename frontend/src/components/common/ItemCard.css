@@ -1,7 +1,7 @@
 @media (max-width: 600px) {
   .item-card,
   .item-card.item-card {
-    width: 100% !important;
+    width: 100 !important;
     min-width: 0 !important;
     max-width: 100% !important;
     margin: 0 0 14px 0 !important;
@@ -45,7 +45,7 @@
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
-    gap: 4px !important;
+    gap: 0px !important;
     min-width: 0 !important;
   }
   .item-card-title-row,
@@ -55,7 +55,7 @@
   .item-card-name,
   .item-card .item-card-name {
     font-size: 1rem !important;
-    font-weight: 600 !important;
+    font-weight: 60 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
@@ -505,21 +505,21 @@
 .restaurant-price-chip-row {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   width: 100%;
 }
 
 .restaurant-price-chip {
-  padding: 10px 14px;
-  border-radius: 18px;
+  padding: 8px 10px;
+  border-radius: 14px;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 0px;
   width: 100%;
 }
 
@@ -528,14 +528,16 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   white-space: nowrap;
+  margin-right: 2px;
 }
 
 .restaurant-chip-price-stack {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
   width: auto;
+  margin-right: 0px;
 }
 
 .restaurant-chip-original {
@@ -549,7 +551,75 @@
   font-weight: 700;
   color: #1f1f24;
 }
+.variant-add-btn {
+  width: auto;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid #ff6b35;
+  background-color: #ffffff;
+  color: #ff6b35;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
 
+.variant-add-btn:hover:not(:disabled) {
+  background-color: #ff6b35;
+  color: #ffffff;
+}
+
+.variant-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.variant-qty-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  border-radius: 4px;
+  padding: 1px 2px;
+  background: #fff5f6;
+  border: 1px solid #ffb3c1;
+  flex-shrink: 0;
+}
+
+.variant-qty-compact button {
+  border: none;
+  background: #ffffff;
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #e53945;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.variant-qty-compact button:hover {
+  background: #ffeef1;
+}
+
+.variant-qty-compact span {
+  min-width: 16px;
+  text-align: center;
+  font-weight: 600;
+  color: #2b2b2b;
+  font-size: 0.75rem;
+  padding: 0 2px;
+}
 .restaurant-price-chip.half {
   background: #ffecef;
   color: #d43f5e;
@@ -563,8 +633,9 @@
 .restaurant-footer-collapsed {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 19px;
   margin-top: auto;
+  width:100px;
 }
 
 .restaurant-price-stack {
@@ -697,6 +768,7 @@
   align-items: center;
   gap: 4px;
   border-radius: 999px;
+  
   padding: 2px 6px;
   background: #fff5f6;
   border: 1px solid #ffc4ce;
@@ -710,6 +782,7 @@
   border-radius: 50%;
   font-size: 1rem;
   font-weight: 700;
+  
   color: #e53945;
   cursor: pointer;
   transition: background 0.2s ease;
@@ -797,28 +870,31 @@
   .restaurant-price-chip-row {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 3px;
     width: 100%;
-    width: 90px;
   }
 
   .restaurant-price-chip {
-    flex: 1;
-    background: transparent;
+    padding: 6px 8px;
+    background: inherit;
     border: none;
     box-shadow: none;
-    padding: 0;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0px;
   }
 
   .restaurant-chip-label {
     font-size: 0.8rem;
     color: #222;
     letter-spacing: 0.05em;
+    margin-right: 2px;
   }
 
   .restaurant-chip-price-stack {
     align-items: flex-start;
+    gap: 1px;
+    margin-right: 0px;
   }
 
   .restaurant-chip-original {
@@ -831,4 +907,30 @@
     font-weight: 700;
     color: #000;
   }
+
+  .variant-add-btn {
+    height: 26px;
+    padding: 0 8px;
+    margin-left:30px;
+    font-size: 0.7rem;
+  }
+
+  .variant-qty-compact {
+    padding: 1px 3px;
+    gap: 1px;
+    margin-left: 30px;
+    margin-top: 1px;
+  }
+
+  .variant-qty-compact button {
+    width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+  }
+
+  .variant-qty-compact span {
+    min-width: 14px;
+    font-size: 0.7rem;
+  }
+
 }
