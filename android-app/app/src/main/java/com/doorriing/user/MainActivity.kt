@@ -9,23 +9,36 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.webkit.*
+import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.doorriing.user.databinding.ActivityMainBinding
 import com.doorriing.user.utils.NetworkUtils
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.messaging.FirebaseMessaging
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val BASE_URL = "https://doorriing.com"
-    
+
     private lateinit var auth: FirebaseAuth
+    private lateinit var googleSignInClient: GoogleSignInClient
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -37,24 +50,112 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val googleSignInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode != RESULT_OK) {
+            sendNativeGoogleErrorToWeb("Google sign-in cancelled")
+            return@registerForActivityResult
+        }
+
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            val idToken = account.idToken
+            if (idToken.isNullOrBlank()) {
+                sendNativeGoogleErrorToWeb("Google ID token missing")
+                return@registerForActivityResult
+            }
+
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            auth.signInWithCredential(credential)
+                .addOnSuccessListener { authResult ->
+                    val firebaseUser = authResult.user
+                    if (firebaseUser == null) {
+                        sendNativeGoogleErrorToWeb("Firebase user not available")
+                        return@addOnSuccessListener
+                    }
+
+                    firebaseUser.getIdToken(true)
+                        .addOnSuccessListener { tokenResult ->
+                            val firebaseIdToken = tokenResult.token
+                            if (firebaseIdToken.isNullOrBlank()) {
+                                sendNativeGoogleErrorToWeb("Firebase ID token missing")
+                                return@addOnSuccessListener
+                            }
+                            sendNativeGoogleSuccessToWeb(firebaseIdToken)
+                        }
+                        .addOnFailureListener { error ->
+                            sendNativeGoogleErrorToWeb(error.message ?: "Failed to fetch Firebase ID token")
+                        }
+                }
+                .addOnFailureListener { error ->
+                    sendNativeGoogleErrorToWeb(error.message ?: "Firebase credential sign-in failed")
+                }
+        } catch (error: ApiException) {
+            sendNativeGoogleErrorToWeb("Google sign-in failed: ${error.statusCode}")
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         auth = FirebaseAuth.getInstance()
+        googleSignInClient = buildGoogleSignInClient()
 
         askNotificationPermission()
         setupWebView()
         setupOnBackPressed()
         fetchFcmToken()
-        
+
         handleIntent(intent)
+    }
+
+    private fun buildGoogleSignInClient(): GoogleSignInClient {
+        val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        return GoogleSignIn.getClient(this, options)
+    }
+
+    private fun startNativeGoogleSignIn() {
+        googleSignInClient.signOut().addOnCompleteListener {
+            googleSignInLauncher.launch(googleSignInClient.signInIntent)
+        }
+    }
+
+    private fun sendNativeGoogleSuccessToWeb(idToken: String) {
+        val escapedToken = JSONObject.quote(idToken)
+        val script = "window.onNativeGoogleLoginSuccess && window.onNativeGoogleLoginSuccess($escapedToken);"
+        binding.webView.post {
+            binding.webView.evaluateJavascript(script, null)
+        }
+    }
+
+    private fun sendNativeGoogleErrorToWeb(message: String) {
+        val escapedMessage = JSONObject.quote(message)
+        val script = "window.onNativeGoogleLoginError && window.onNativeGoogleLoginError($escapedMessage);"
+        binding.webView.post {
+            binding.webView.evaluateJavascript(script, null)
+        }
+    }
+
+    private inner class AndroidAuthBridge {
+        @JavascriptInterface
+        fun startGoogleSignIn() {
+            runOnUiThread {
+                startNativeGoogleSignIn()
+            }
+        }
     }
 
     private fun askNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+            if (
+                ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
                 PackageManager.PERMISSION_GRANTED
             ) {
                 // Done
@@ -124,7 +225,7 @@ class MainActivity : AppCompatActivity() {
             "offer" -> "$BASE_URL/offers"
             else -> BASE_URL
         }
-        
+
         Log.d("MainActivity", "Navigating to: $urlToLoad")
         binding.webView.loadUrl(urlToLoad)
     }
@@ -142,6 +243,8 @@ class MainActivity : AppCompatActivity() {
                 useWideViewPort = true
                 cacheMode = WebSettings.LOAD_DEFAULT
             }
+
+            addJavascriptInterface(AndroidAuthBridge(), "AndroidAuth")
 
             webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
@@ -194,9 +297,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showNoInternetError() {
-        val message = try { getString(R.string.error_no_internet) } catch (e: Exception) { "No Internet Connection" }
-        val retry = try { getString(R.string.retry) } catch (e: Exception) { "Retry" }
-        
+        val message = try {
+            getString(R.string.error_no_internet)
+        } catch (e: Exception) {
+            "No Internet Connection"
+        }
+        val retry = try {
+            getString(R.string.retry)
+        } catch (e: Exception) {
+            "Retry"
+        }
+
         Snackbar.make(binding.root, message, Snackbar.LENGTH_INDEFINITE)
             .setAction(retry) {
                 if (NetworkUtils.isNetworkAvailable(this)) {

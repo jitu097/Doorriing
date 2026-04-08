@@ -1,11 +1,12 @@
-import { createContext, useEffect, useState } from 'react';
+import { createContext, useEffect, useRef, useState } from 'react';
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
-    signInWithPopup,
-    signInWithRedirect
+    GoogleAuthProvider,
+    signInWithCredential,
+    signInWithPopup
 } from 'firebase/auth';
 import { auth, googleProvider } from '../config/firebase';
 import api from '../services/api';
@@ -15,6 +16,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const nativeGoogleLoginRef = useRef({ resolve: null, reject: null });
 
     // Sign up
     const registerWithEmail = (email, password) => {
@@ -28,17 +30,26 @@ export const AuthProvider = ({ children }) => {
 
     // Login with Google
     const loginWithGoogle = () => {
-        const isMobileApp =
+        const nativeBridge =
             typeof window !== 'undefined' &&
-            /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+            (window.AndroidAuth?.startGoogleSignIn || window.Android?.startGoogleSignIn);
 
-        if (isMobileApp) {
-            // Mobile devices → use redirect (fixes WebView issues)
-            return signInWithRedirect(auth, googleProvider);
-        } else {
-            // Web/desktop → use popup (prevents redirect issues on localhost)
-            return signInWithPopup(auth, googleProvider);
+        if (nativeBridge) {
+            return new Promise((resolve, reject) => {
+                nativeGoogleLoginRef.current.resolve = resolve;
+                nativeGoogleLoginRef.current.reject = reject;
+                try {
+                    nativeBridge.call(window.AndroidAuth || window.Android);
+                } catch (error) {
+                    nativeGoogleLoginRef.current.resolve = null;
+                    nativeGoogleLoginRef.current.reject = null;
+                    reject(error);
+                }
+            });
         }
+
+        // Web/desktop browser → use popup
+        return signInWithPopup(auth, googleProvider);
     };
 
     // Logout
@@ -50,6 +61,27 @@ export const AuthProvider = ({ children }) => {
 
     // Subscribe to auth state changes
     useEffect(() => {
+        if (typeof window !== 'undefined') {
+            window.onNativeGoogleLoginSuccess = async (idToken) => {
+                try {
+                    const credential = GoogleAuthProvider.credential(idToken, null);
+                    await signInWithCredential(auth, credential);
+                    nativeGoogleLoginRef.current.resolve?.();
+                } catch (error) {
+                    nativeGoogleLoginRef.current.reject?.(error);
+                } finally {
+                    nativeGoogleLoginRef.current.resolve = null;
+                    nativeGoogleLoginRef.current.reject = null;
+                }
+            };
+
+            window.onNativeGoogleLoginError = (message) => {
+                nativeGoogleLoginRef.current.reject?.(new Error(message || 'Native Google login failed'));
+                nativeGoogleLoginRef.current.resolve = null;
+                nativeGoogleLoginRef.current.reject = null;
+            };
+        }
+
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
 
@@ -86,7 +118,13 @@ export const AuthProvider = ({ children }) => {
             setLoading(false);
         });
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribe();
+            if (typeof window !== 'undefined') {
+                delete window.onNativeGoogleLoginSuccess;
+                delete window.onNativeGoogleLoginError;
+            }
+        };
     }, []);
 
     const value = {
