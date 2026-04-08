@@ -64,7 +64,7 @@
   position: absolute;
   top: 40px;
   right: 40px;
-  background: #4CAF50;
+  background: #E95322;
   color: white;
   border: none;
   padding: 12px 30px;
@@ -76,9 +76,9 @@
 }
 
 .edit-profile-btn:hover {
-  background: #45a049;
+  background: #d64a1f;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  box-shadow: 0 4px 12px rgba(233, 83, 34, 0.3);
 }
 
 .profile-content {

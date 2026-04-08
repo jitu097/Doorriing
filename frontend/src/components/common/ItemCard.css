@@ -555,9 +555,9 @@
   width: auto;
   height: 26px;
   padding: 0 8px;
-  border: 1px solid #ff6b35;
+  border: 1px solid #E95322;
   background-color: #ffffff;
-  color: #ff6b35;
+  color: #E95322;
   border-radius: 3px;
   cursor: pointer;
   font-size: 0.7rem;
@@ -571,7 +571,7 @@
 }
 
 .variant-add-btn:hover:not(:disabled) {
-  background-color: #ff6b35;
+  background-color: #E95322;
   color: #ffffff;
 }
 
@@ -671,11 +671,11 @@
   padding: 12px 18px;
   font-size: 0.95rem;
   font-weight: 200;
-  margin-left: 140px;
+  margin-left: 120px;
   margin-top: -50px;
   color: #ffffff;
-  background: linear-gradient(135deg, #ff5f6d 0%, #ff344c 100%);
-  box-shadow: 0 12px 25px rgba(255, 94, 107, 0.28);
+  background: linear-gradient(135deg, #E95322 0%, #d64a1f 100%);
+  box-shadow: 0 12px 25px rgba(233, 83, 34, 0.28);
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -689,7 +689,7 @@
 
 .restaurant-add-main:not(:disabled):hover {
   transform: translateY(-1px);
-  box-shadow: 0 16px 30px rgba(255, 94, 107, 0.35);
+  box-shadow: 0 16px 30px rgba(233, 83, 34, 0.35);
 }
 
 .restaurant-variant-panel {

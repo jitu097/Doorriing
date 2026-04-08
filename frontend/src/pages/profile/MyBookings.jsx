@@ -3,45 +3,7 @@ import './MyBookings.css';
 
 const MyBookings = () => {
   // Mock data for table bookings (replace with actual data from backend)
-  const tableBookings = [
-    {
-      id: 'TB001',
-      restaurantName: 'Spice Garden Restaurant',
-      restaurantImage: '/restaurant-1.jpg',
-      date: '2026-03-05',
-      time: '7:00 PM',
-      guests: 4,
-      tableType: 'Window Side',
-      status: 'confirmed',
-      totalPrice: 200,
-      bookingDate: '2026-02-20',
-      specialRequests: 'Birthday celebration, please arrange cake'
-    },
-    {
-      id: 'TB002',
-      restaurantName: 'Ocean View Cafe',
-      restaurantImage: '/restaurant-2.jpg',
-      date: '2026-02-28',
-      time: '12:30 PM',
-      guests: 2,
-      tableType: 'Regular Table',
-      status: 'completed',
-      totalPrice: 0,
-      bookingDate: '2026-02-15'
-    },
-    {
-      id: 'TB003',
-      restaurantName: 'Mountain Top Bistro',
-      restaurantImage: '/restaurant-3.jpg',
-      date: '2026-02-26',
-      time: '8:00 PM',
-      guests: 6,
-      tableType: 'VIP Table',
-      status: 'cancelled',
-      totalPrice: 500,
-      bookingDate: '2026-02-18'
-    }
-  ];
+  const tableBookings = [];
 
   const getStatusBadge = (status) => {
     const badges = {
