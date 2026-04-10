@@ -9,43 +9,6 @@ const INVALID_TOKEN_ERRORS = new Set([
   'messaging/invalid-argument',
 ]);
 
-export const sendPushNotification = async (token, title, body, data = {}) => {
-  if (!token || !String(token).trim()) {
-    throw new Error('FCM token is required');
-  }
-
-  console.log('🔔 Preparing to send notification...');
-  console.log('📱 Token:', token);
-
-  const payload = {
-    token,
-    notification: {
-      title,
-      body,
-    },
-    data: Object.fromEntries(
-      Object.entries(data || {}).map(([key, value]) => [key, String(value ?? '')])
-    ),
-    android: {
-      priority: 'high',
-      notification: {
-        channelId: 'default_channel',
-      },
-    },
-  };
-
-  console.log('📦 Payload:', payload);
-
-  try {
-    const response = await admin.messaging().send(payload);
-    console.log('✅ FCM SUCCESS:', response);
-    return response;
-  } catch (error) {
-    console.error('❌ FCM ERROR:', error);
-    throw error;
-  }
-};
-
 class PushNotificationService {
   async sendPushNotification({
     customer_id = null,
@@ -97,13 +60,26 @@ class PushNotificationService {
       const fcmToken = tokenRow.fcm_token;
 
       try {
-        console.log('User FCM Token from DB:', fcmToken);
-        await sendPushNotification(fcmToken, title, message, {
-          title: String(title || ''),
-          body: String(message || ''),
-          type: String(type || ''),
-          orderId: String(reference_id || ''),
-          reference_id: String(reference_id || ''),
+        console.log('Sending FCM to token:', fcmToken);
+        await admin.messaging().send({
+          token: fcmToken,
+          notification: {
+            title,
+            body: message,
+          },
+          data: {
+            title: String(title || ''),
+            body: String(message || ''),
+            type: String(type || ''),
+            orderId: String(reference_id || ''),
+            reference_id: String(reference_id || ''),
+          },
+          android: {
+            priority: 'high',
+            notification: {
+              channelId: 'default_channel',
+            },
+          },
         });
 
         sent += 1;
@@ -147,12 +123,6 @@ class PushNotificationService {
       });
       throw new Error('Failed to fetch notification tokens');
     }
-
-    logger.info('Fetched notification tokens from DB', {
-      customer_id,
-      shop_id,
-      tokenCount: (data || []).length,
-    });
 
     return data || [];
   }

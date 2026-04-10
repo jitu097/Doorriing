@@ -1,8 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import routes from './routes/index.js';
-import { isFirebaseAdminConfigured } from './config/firebaseAdmin.js';
-import { sendPushNotification } from './services/pushNotification.service.js';
+import admin, { isFirebaseAdminConfigured } from './config/firebaseAdmin.js';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import { logger } from './utils/logger.js';
 import { createCompressionMiddleware } from './middlewares/compression.middleware.js';
@@ -71,13 +70,24 @@ app.post('/test-push', async (req, res) => {
   }
 
   try {
-    const response = await sendPushNotification(
+    const response = await admin.messaging().send({
       token,
-      'Test Notification',
-      'If you see this, FCM is working',
-      { type: 'test' }
-    );
+      notification: {
+        title: 'Test Notification',
+        body: 'If you see this, FCM is working',
+      },
+      data: {
+        type: 'test',
+      },
+      android: {
+        priority: 'high',
+        notification: {
+          channelId: 'default_channel',
+        },
+      },
+    });
 
+    console.log('FCM SUCCESS:', response);
     return res.json({ success: true, response });
   } catch (error) {
     console.error('FCM ERROR:', error);
