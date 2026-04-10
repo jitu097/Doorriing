@@ -28,6 +28,9 @@ import com.doorriing.user.utils.NetworkUtils
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.common.api.ApiException
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
@@ -39,6 +42,10 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        private const val TAG = "MainActivity"
+    }
 
     private lateinit var binding: ActivityMainBinding
     private val BASE_URL = "https://doorriing.com"
@@ -76,6 +83,8 @@ class MainActivity : AppCompatActivity() {
                 return@registerForActivityResult
             }
 
+            Log.d(TAG, "Google ID token received: $idToken")
+
             val credential = GoogleAuthProvider.getCredential(idToken, null)
             auth.signInWithCredential(credential)
                 .addOnSuccessListener { authResult ->
@@ -92,7 +101,9 @@ class MainActivity : AppCompatActivity() {
                                 sendNativeGoogleErrorToWeb("Firebase ID token missing")
                                 return@addOnSuccessListener
                             }
-                            sendNativeGoogleSuccessToWeb(firebaseIdToken)
+
+                            Log.d(TAG, "Firebase ID token received: $firebaseIdToken")
+                            sendNativeGoogleSuccessToWeb(idToken)
                         }
                         .addOnFailureListener { error ->
                             sendNativeGoogleErrorToWeb(error.message ?: "Failed to fetch Firebase ID token")
@@ -102,7 +113,7 @@ class MainActivity : AppCompatActivity() {
                     sendNativeGoogleErrorToWeb(error.message ?: "Firebase credential sign-in failed")
                 }
         } catch (error: ApiException) {
-            sendNativeGoogleErrorToWeb("Google sign-in failed: ${error.statusCode}")
+            sendNativeGoogleErrorToWeb(mapGoogleSignInError(error.statusCode))
         }
     }
 
@@ -131,6 +142,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startNativeGoogleSignIn() {
+        if (!ensurePlayServicesAvailable()) {
+            return
+        }
+
         googleSignInClient.signOut().addOnCompleteListener {
             googleSignInLauncher.launch(googleSignInClient.signInIntent)
         }
@@ -145,10 +160,38 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun sendNativeGoogleErrorToWeb(message: String) {
+        Log.w(TAG, "Google sign-in error: $message")
         val escapedMessage = JSONObject.quote(message)
         val script = "window.onNativeGoogleLoginError && window.onNativeGoogleLoginError($escapedMessage);"
         binding.webView.post {
             binding.webView.evaluateJavascript(script, null)
+        }
+    }
+
+    private fun ensurePlayServicesAvailable(): Boolean {
+        val availability = GoogleApiAvailability.getInstance()
+        val status = availability.isGooglePlayServicesAvailable(this)
+
+        if (status == ConnectionResult.SUCCESS) {
+            return true
+        }
+
+        val errorMessage = availability.getErrorString(status) ?: "Google Play Services are unavailable"
+        sendNativeGoogleErrorToWeb(errorMessage)
+
+        if (availability.isUserResolvableError(status)) {
+            availability.getErrorDialog(this, status, 1001)?.show()
+        }
+
+        return false
+    }
+
+    private fun mapGoogleSignInError(statusCode: Int): String {
+        return when (statusCode) {
+            GoogleSignInStatusCodes.SIGN_IN_CANCELLED -> "Google sign-in cancelled"
+            GoogleSignInStatusCodes.SIGN_IN_CURRENTLY_IN_PROGRESS -> "Google sign-in is already in progress"
+            GoogleSignInStatusCodes.SIGN_IN_FAILED -> "Google sign-in failed"
+            else -> "Google sign-in failed with status code: $statusCode"
         }
     }
 

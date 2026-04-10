@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth';
 import { auth, googleProvider } from '../config/firebase';
 import api from '../services/api';
+import { getGoogleSignInErrorMessage } from '../utils/authErrors';
 import {
     attachForegroundNotificationListener,
     registerWebPushToken,
@@ -68,6 +69,12 @@ export const AuthProvider = ({ children }) => {
         if (typeof window !== 'undefined') {
             window.onNativeGoogleLoginSuccess = async (idToken) => {
                 try {
+                    if (!idToken || typeof idToken !== 'string') {
+                        throw new Error('Google authentication token was not returned.');
+                    }
+
+                    console.log('Google ID token:', idToken);
+
                     const credential = GoogleAuthProvider.credential(idToken, null);
                     await signInWithCredential(auth, credential);
                     nativeGoogleLoginRef.current.resolve?.();
@@ -80,7 +87,7 @@ export const AuthProvider = ({ children }) => {
             };
 
             window.onNativeGoogleLoginError = (message) => {
-                nativeGoogleLoginRef.current.reject?.(new Error(message || 'Native Google login failed'));
+                nativeGoogleLoginRef.current.reject?.(new Error(getGoogleSignInErrorMessage(message || 'Native Google login failed')));
                 nativeGoogleLoginRef.current.resolve = null;
                 nativeGoogleLoginRef.current.reject = null;
             };
