@@ -73,6 +73,12 @@ router.post('/razorpay-webhook', express.raw({ type: 'application/json' }), asyn
 
 			if (updatedOrder?.customer_id) {
 				try {
+					console.log('Triggering order confirmation push notification', {
+						orderId: updatedOrder.id,
+						customerId: updatedOrder.customer_id,
+						shopId: updatedOrder.shop_id,
+						paymentId,
+					});
 					await pushNotificationService.sendOrderStatusNotification({
 						customer_id: updatedOrder.customer_id,
 						shop_id: updatedOrder.shop_id,
