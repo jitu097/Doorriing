@@ -22,33 +22,24 @@ class MyFirebaseService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
-        Log.d("FCM_DEBUG", "Received: ${remoteMessage.data}")
-        Log.d("FCM", "Message received from: ${remoteMessage.from}")
-        Log.d("FCM", "Data payload: ${remoteMessage.data}")
+        Log.d("FCM", "Received data: ${remoteMessage.data}")
+        Log.d("FCM", "Received notification: ${remoteMessage.notification?.title}")
 
-        val isAppForeground = ProcessLifecycleOwner.get().lifecycle.currentState
-            .isAtLeast(Lifecycle.State.STARTED)
+        // Handle both Payload Types (Fallback logic)
+        val title = remoteMessage.notification?.title ?: remoteMessage.data["title"]
+        val body = remoteMessage.notification?.body ?: remoteMessage.data["body"]
 
-        val title = remoteMessage.data["title"]
-            ?: remoteMessage.notification?.title
-            ?: "Doorriing"
-        val body = remoteMessage.data["body"]
-            ?: remoteMessage.notification?.body
-            ?: ""
         val type = remoteMessage.data["type"]
         val referenceId = remoteMessage.data["reference_id"]
-        val url = remoteMessage.data["url"]
+        val targetUrl = remoteMessage.data["target_url"] ?: remoteMessage.data["url"]
 
-        // For notification-only background messages, Android system already renders it.
-        val shouldShowLocalNotification = isAppForeground || remoteMessage.data.isNotEmpty()
-
-        if (shouldShowLocalNotification) {
+        if (title != null || body != null) {
             NotificationHelper(this).showNotification(
-                title = title,
-                body = body,
+                title = title ?: "Doorriing",
+                body = body ?: "",
                 type = type,
                 referenceId = referenceId,
-                url = url
+                url = targetUrl
             )
         }
     }

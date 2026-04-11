@@ -11,10 +11,6 @@ import {
 import { auth, googleProvider } from '../config/firebase';
 import api from '../services/api';
 import { getGoogleSignInErrorMessage } from '../utils/authErrors';
-import {
-    attachForegroundNotificationListener,
-    registerWebPushToken,
-} from '../services/pushNotification.service';
 
 export const AuthContext = createContext();
 
@@ -132,13 +128,6 @@ export const AuthProvider = ({ children }) => {
                     displayName: currentUser.displayName
                 }));
 
-                registerWebPushToken().catch((error) => {
-                    console.warn('Web push token registration failed', error);
-                });
-
-                attachForegroundNotificationListener().catch((error) => {
-                    console.warn('Failed to attach foreground push listener', error);
-                });
             } else {
                 setCustomerProfile(null);
                 localStorage.removeItem('user');

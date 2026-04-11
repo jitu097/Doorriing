@@ -46,19 +46,18 @@ class NotificationHelper(private val context: Context) {
             registerChannel(context)
 
             val intent = Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 putExtra("type", type)
                 putExtra("reference_id", referenceId)
                 putExtra("target_url", url)
             }
 
-            val pendingIntent = TaskStackBuilder.create(context).run {
-                addNextIntentWithParentStack(intent)
-                getPendingIntent(
-                    System.currentTimeMillis().toInt(),
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-            }
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                System.currentTimeMillis().toInt(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
 
             val builder = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
