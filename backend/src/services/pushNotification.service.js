@@ -35,7 +35,14 @@ class PushNotificationService {
       reference_id,
     });
 
-    const tokens = await this.getTokens({ customer_id, shop_id });
+    const tokenRows = await this.getTokens({ customer_id, shop_id });
+    
+    // 1. Clean and validate tokens
+    const fcmTokens = (tokenRows || [])
+      .map(row => row.fcm_token)
+      .filter(token => token && typeof token === 'string' && token.trim() !== '');
+
+    console.log("Tokens fetched from DB:", fcmTokens);
 
     if (!isFirebaseAdminConfigured) {
       logger.warn('Skipping FCM send because Firebase Admin is not configured', {
@@ -45,61 +52,62 @@ class PushNotificationService {
       return { sent: 0, failed: 0, stored: true };
     }
 
-    if (!tokens.length) {
-      logger.info('No notification tokens found for push dispatch', {
-        customer_id,
-        shop_id,
-      });
+    // 2. Ensure tokens array is NOT empty
+    if (fcmTokens.length === 0) {
+      console.log("No valid FCM tokens found for user/shop, skipping send.");
       return { sent: 0, failed: 0, stored: true };
     }
 
-    let sent = 0;
-    let failed = 0;
+    const payload = {
+      tokens: fcmTokens,
+      notification: {
+        title: title,
+        body: message,
+      },
+      data: {
+        target_url: String(reference_id ? `/orders/${reference_id}` : ''),
+        type: String(type || ''),
+      },
+    };
 
-    for (const tokenRow of tokens) {
-      const fcmToken = tokenRow.fcm_token;
+    console.log("Sending FCM payload:", JSON.stringify(payload, null, 2));
 
-      try {
-        console.log('Sending FCM to token:', fcmToken);
-        await admin.messaging().send({
-          token: fcmToken,
-          notification: {
-            title,
-            body: message,
-          },
-          data: {
-            title: String(title || ''),
-            body: String(message || ''),
-            type: String(type || ''),
-            orderId: String(reference_id || ''),
-            reference_id: String(reference_id || ''),
-          },
-          android: {
-            priority: 'high',
-            notification: {
-              channelId: 'default_channel',
-            },
-          },
-        });
+    try {
+      const response = await admin.messaging().sendEachForMulticast(payload);
+      
+      let sent = 0;
+      let failed = 0;
 
-        sent += 1;
-      } catch (error) {
-        failed += 1;
+      // 3. Handle PARTIAL SUCCESS
+      response.responses.forEach(async (res, index) => {
+        const token = fcmTokens[index];
+        if (res.success) {
+          sent++;
+          console.log(`✅ FCM Sent successfully to token: ${token}`);
+          console.log("Firebase response:", res.messageId);
+        } else {
+          failed++;
+          console.error(`❌ FCM Failed for token: ${token}`);
+          console.error("Full error object:", JSON.stringify(res.error, null, 2));
 
-        logger.error('FCM send failed', {
-          error: error.message,
-          code: error.code,
-          customer_id,
-          shop_id,
-        });
-
-        if (INVALID_TOKEN_ERRORS.has(error.code)) {
-          await this.removeToken(fcmToken);
+          // 4. UPSERT/Clean Token in DB
+          if (res.error.code === 'messaging/registration-token-not-registered') {
+            console.log(`Removing unregistered token from DB: ${token}`);
+            await this.removeToken(token);
+          }
         }
-      }
-    }
+      });
 
-    return { sent, failed, stored: true };
+      return { sent, failed, stored: true };
+    } catch (error) {
+      logger.error('Multicast FCM send failed entirely', {
+        error: error.message,
+        customer_id,
+        shop_id,
+      });
+      console.error("Critical FCM error:", error);
+      return { sent: 0, failed: 0, error: error.message };
+    }
   }
 
   async getTokens({ customer_id = null, shop_id = null }) {
