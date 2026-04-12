@@ -167,7 +167,7 @@
 .items-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
+  gap: 1rem;
   margin-top: 2rem;
 }
 
@@ -229,7 +229,7 @@
   .items-grid {
     display: flex !important;
     flex-direction: column !important;
-    gap: 1.2rem !important;
+    gap: 0px !important;
     grid-template-columns: none !important;
     width: 100% !important;
   }
@@ -238,7 +238,7 @@
 @media (max-width: 600px) {
   .items-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
+    gap: -0.3rem;
     margin-top: 0.5rem;
   }
 }
