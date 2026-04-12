@@ -1,0 +1,127 @@
+.notifications-page {
+  max-width: 900px;
+  margin: 1.5rem auto;
+  padding: 0 1rem 5rem;
+}
+
+.notifications-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.notifications-header h1 {
+  margin: 0;
+  color: #222;
+}
+
+.notifications-header p {
+  margin: 0.35rem 0 0;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.notifications-refresh-btn {
+  border: 1px solid #f0d7d8;
+  background: #fff;
+  color: #d6454a;
+  border-radius: 10px;
+  padding: 0.55rem 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.notifications-refresh-btn:hover {
+  background: #fff6f6;
+}
+
+.notifications-list-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 68vh;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.notifications-card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 0.95rem 1rem;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.18s ease, transform 0.18s ease;
+}
+
+.notifications-card:hover {
+  border-color: #f0b5b8;
+  transform: translateY(-1px);
+}
+
+.notifications-card.unread {
+  border-left: 4px solid #f5565c;
+}
+
+.notifications-card.read {
+  opacity: 0.7;
+}
+
+.notifications-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.notifications-card-top h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #1f1f1f;
+}
+
+.notifications-card-top span {
+  font-size: 0.78rem;
+  color: #888;
+  white-space: nowrap;
+}
+
+.notifications-card p {
+  margin: 0.4rem 0 0;
+  color: #525252;
+  line-height: 1.45;
+}
+
+.notifications-pill {
+  display: inline-block;
+  margin-top: 0.6rem;
+  color: #d6454a;
+  font-size: 0.76rem;
+}
+
+.notifications-empty,
+.notifications-loading,
+.notifications-error {
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  padding: 1rem;
+  background: #fff;
+}
+
+.notifications-error {
+  color: #b93a3f;
+  border-color: #f3cbcc;
+  margin-bottom: 0.8rem;
+}
+
+@media (max-width: 600px) {
+  .notifications-page {
+    margin-top: 5rem;
+  }
+
+  .notifications-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

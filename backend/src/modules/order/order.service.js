@@ -2,6 +2,7 @@ import { supabase } from '../../config/supabaseClient.js';
 import { logger } from '../../utils/logger.js';
 import { ORDER_STATUS, PAYMENT_STATUS, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, NOTIFICATION_TYPE } from '../../utils/constants.js';
 import cartService from '../cart/cart.service.js';
+import pushNotificationService from '../../services/pushNotification.service.js';
 
 class OrderService {
   /**
@@ -119,7 +120,12 @@ class OrderService {
       await cartService.clearCart(customerId, shop_id);
 
       // Create notification for customer
-      await this.createOrderNotification(customerId, order.id, 'Order placed successfully', 'Your order has been placed and is being processed');
+      await pushNotificationService.sendOrderStatusNotification({
+        customer_id: customerId,
+        shop_id,
+        status: 'placed',
+        reference_id: order.id,
+      });
 
       logger.info('Order created successfully', { orderId: order.id, orderNumber });
 
@@ -300,15 +306,13 @@ class OrderService {
    */
   async createOrderNotification(customerId, orderId, title, message) {
     try {
-      await supabase
-        .from('notifications')
-        .insert({
-          customer_id: customerId,
-          title,
-          message,
-          type: NOTIFICATION_TYPE.ORDER,
-          is_read: false,
-        });
+      await pushNotificationService.sendPushNotification({
+        customer_id: customerId,
+        title,
+        message,
+        type: NOTIFICATION_TYPE.ORDER,
+        reference_id: orderId,
+      });
     } catch (error) {
       logger.error('Failed to create notification', { error: error.message });
       // Don't throw, notification failure shouldn't break the flow

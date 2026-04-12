@@ -5,6 +5,7 @@ import { authenticate } from '../middlewares/auth.middleware.js';
 import razorpay from '../utils/razorpay.js';
 import crypto from 'crypto';
 import { supabase } from '../config/supabaseClient.js';
+import pushNotificationService from '../services/pushNotification.service.js';
 
 const router = Router();
 
@@ -64,9 +65,24 @@ router.post('/razorpay-webhook', express.raw({ type: 'application/json' }), asyn
 			const paymentId = event.payload.payment.entity.id;
 			const orderId = event.payload.payment.entity.order_id;
 			// Update order status in DB
-			await supabase.from('orders')
+			const { data: updatedOrder } = await supabase.from('orders')
 				.update({ payment_status: 'paid', status: 'confirmed' })
-				.eq('order_number', orderId);
+				.eq('order_number', orderId)
+				.select('id, customer_id, shop_id')
+				.maybeSingle();
+
+			if (updatedOrder?.customer_id) {
+				try {
+					await pushNotificationService.sendOrderStatusNotification({
+						customer_id: updatedOrder.customer_id,
+						shop_id: updatedOrder.shop_id,
+						status: 'confirmed',
+						reference_id: updatedOrder.id,
+					});
+				} catch (pushError) {
+					console.error('Failed to send order confirmation push notification', pushError);
+				}
+			}
 		}
 
 		// Add more event handling as needed

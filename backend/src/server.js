@@ -7,7 +7,7 @@ import { logger } from './utils/logger.js';
 import { supabase } from './config/supabaseClient.js';
 import { WebSocketServer } from 'ws';
 
-const REQUESTED_PORT = Number(config.port) || 5001;
+const REQUESTED_PORT = Number(config.port) || 5000;
 const MAX_PORT_SEARCH = 20;
 const LOG_STREAM_ENABLED = process.env.LOG_STREAM_ENABLED === 'true';
 const LOG_STREAM_TOKEN = process.env.LOG_STREAM_TOKEN || '';
@@ -149,14 +149,14 @@ const startServer = async () => {
         if (error) {
           logger.error('🔥 SUPABASE CONNECTION FAILED ON STARTUP:', { error: error.message, code: error.code });
           console.log('🔥 DATABASE ERROR:', error);
-          process.exit(1);
+          logger.warn('Continuing startup despite Supabase probe failure so the API remains reachable.');
         } else {
           logger.info('✅ Supabase connected successfully.');
         }
       } catch (err) {
         logger.error('🔥 CRITICAL SUPABASE NETWORK FAILURE:', { message: err.message, cause: err.cause, stack: err.stack });
         console.log('🔥 NETWORK TIMEOUT CONNECTING TO DB URL:', process.env.SUPABASE_URL);
-        process.exit(1);
+        logger.warn('Continuing startup despite Supabase network probe failure so the API remains reachable.');
       }
     });
 

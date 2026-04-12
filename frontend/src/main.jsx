@@ -6,6 +6,7 @@ import './index.css'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { AddressProvider } from './context/AddressContext'
+import { NotificationProvider } from './context/NotificationContext'
 import { startLogStream } from './utils/logStream'
 
 // Safety check for root element
@@ -28,7 +29,9 @@ try {
         <AuthProvider>
           <CartProvider>
             <AddressProvider>
-              <App />
+              <NotificationProvider>
+                <App />
+              </NotificationProvider>
             </AddressProvider>
           </CartProvider>
         </AuthProvider>

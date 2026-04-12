@@ -8,6 +8,12 @@ const CRITICAL_ASSETS = [
   '/manifest.json'
 ];
 
+try {
+  importScripts('/firebase-messaging-sw.js');
+} catch (error) {
+  console.warn('[SW] Firebase messaging worker not loaded:', error);
+}
+
 // Install event: Precache critical assets
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing service worker v5');

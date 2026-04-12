@@ -41,6 +41,7 @@ router.use('/orders', orderRoutes);
 // Mount user order endpoints
 router.use('/user/orders', userOrderRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/notification', notificationRoutes);
 router.use('/user/addresses', addressRoutes);
 router.use('/bookings', bookingRoutes);
 router.use('/home', homeRoutes);

@@ -1,5 +1,6 @@
 import { supabase } from '../config/supabaseClient.js';
 import { logger } from '../utils/logger.js';
+import pushNotificationService from './pushNotification.service.js';
 
 const computeFinalPrice = (basePrice, discountType, discountValue) => {
     if (basePrice === undefined || basePrice === null) return null;
@@ -415,6 +416,21 @@ export const orderService = {
 
             if (clearCartError) {
                 logger.warn('Failed to clear cart after order placement', { cartId: cart.id, orderId: newOrder.id });
+            }
+
+            try {
+                await pushNotificationService.sendOrderStatusNotification({
+                    customer_id: customerId,
+                    shop_id: shopId,
+                    status: 'placed',
+                    reference_id: newOrder.id,
+                });
+            } catch (notificationError) {
+                logger.error('Failed to send order placed notification', {
+                    error: notificationError.message,
+                    orderId: newOrder.id,
+                    customerId,
+                });
             }
 
             // STEP 9: Return full response

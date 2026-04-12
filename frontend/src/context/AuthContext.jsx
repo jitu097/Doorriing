@@ -1,19 +1,23 @@
-import { createContext, useEffect, useState } from 'react';
+import { createContext, useEffect, useRef, useState } from 'react';
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
+    GoogleAuthProvider,
+    signInWithCredential,
     signInWithPopup
 } from 'firebase/auth';
 import { auth, googleProvider } from '../config/firebase';
 import api from '../services/api';
+import { getGoogleSignInErrorMessage } from '../utils/authErrors';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const nativeGoogleLoginRef = useRef({ resolve: null, reject: null });
 
     // Sign up
     const registerWithEmail = (email, password) => {
@@ -27,6 +31,25 @@ export const AuthProvider = ({ children }) => {
 
     // Login with Google
     const loginWithGoogle = () => {
+        const nativeBridge =
+            typeof window !== 'undefined' &&
+            (window.AndroidAuth?.startGoogleSignIn || window.Android?.startGoogleSignIn);
+
+        if (nativeBridge) {
+            return new Promise((resolve, reject) => {
+                nativeGoogleLoginRef.current.resolve = resolve;
+                nativeGoogleLoginRef.current.reject = reject;
+                try {
+                    nativeBridge.call(window.AndroidAuth || window.Android);
+                } catch (error) {
+                    nativeGoogleLoginRef.current.resolve = null;
+                    nativeGoogleLoginRef.current.reject = null;
+                    reject(error);
+                }
+            });
+        }
+
+        // Web/desktop browser → use popup
         return signInWithPopup(auth, googleProvider);
     };
 
@@ -39,6 +62,33 @@ export const AuthProvider = ({ children }) => {
 
     // Subscribe to auth state changes
     useEffect(() => {
+        if (typeof window !== 'undefined') {
+            window.onNativeGoogleLoginSuccess = async (idToken) => {
+                try {
+                    if (!idToken || typeof idToken !== 'string') {
+                        throw new Error('Google authentication token was not returned.');
+                    }
+
+                    console.log('Google ID token:', idToken);
+
+                    const credential = GoogleAuthProvider.credential(idToken, null);
+                    await signInWithCredential(auth, credential);
+                    nativeGoogleLoginRef.current.resolve?.();
+                } catch (error) {
+                    nativeGoogleLoginRef.current.reject?.(error);
+                } finally {
+                    nativeGoogleLoginRef.current.resolve = null;
+                    nativeGoogleLoginRef.current.reject = null;
+                }
+            };
+
+            window.onNativeGoogleLoginError = (message) => {
+                nativeGoogleLoginRef.current.reject?.(new Error(getGoogleSignInErrorMessage(message || 'Native Google login failed')));
+                nativeGoogleLoginRef.current.resolve = null;
+                nativeGoogleLoginRef.current.reject = null;
+            };
+        }
+
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
 
@@ -46,6 +96,17 @@ export const AuthProvider = ({ children }) => {
                 // Save token on auth state change
                 const token = await currentUser.getIdToken();
                 localStorage.setItem('token', token);
+
+                const nativeBridge =
+                    typeof window !== 'undefined' &&
+                    (window.AndroidAuth?.saveAuthToken || window.Android?.saveAuthToken);
+                if (nativeBridge) {
+                    try {
+                        nativeBridge.call(window.AndroidAuth || window.Android, token);
+                    } catch (bridgeError) {
+                        console.warn('Failed to share auth token with native bridge', bridgeError);
+                    }
+                }
 
                 // Background sync - do not await
                 api.post('/auth/sync', {}, {
@@ -66,16 +127,34 @@ export const AuthProvider = ({ children }) => {
                     email: currentUser.email,
                     displayName: currentUser.displayName
                 }));
+
             } else {
                 setCustomerProfile(null);
                 localStorage.removeItem('user');
                 localStorage.removeItem('token');
+
+                const nativeBridge =
+                    typeof window !== 'undefined' &&
+                    (window.AndroidAuth?.saveAuthToken || window.Android?.saveAuthToken);
+                if (nativeBridge) {
+                    try {
+                        nativeBridge.call(window.AndroidAuth || window.Android, '');
+                    } catch (bridgeError) {
+                        console.warn('Failed to clear native auth token', bridgeError);
+                    }
+                }
             }
 
             setLoading(false);
         });
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribe();
+            if (typeof window !== 'undefined') {
+                delete window.onNativeGoogleLoginSuccess;
+                delete window.onNativeGoogleLoginError;
+            }
+        };
     }, []);
 
     const value = {

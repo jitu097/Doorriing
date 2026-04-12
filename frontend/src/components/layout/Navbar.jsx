@@ -5,6 +5,7 @@ import AddressForm from '../common/AddressForm';
 import { useAddress } from '../../context/AddressContext';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../hooks/useAuth';
+import NotificationBell from '../NotificationBell';
 import './Navbar.css';
 
 const Navbar = ({ onCartClick }) => {
@@ -134,6 +135,9 @@ const Navbar = ({ onCartClick }) => {
         )}
 
         {/* Account Dropdown - Only show when logged in */}
+        {user && <NotificationBell />}
+
+        {/* Account Dropdown - Only show when logged in */}
         {user && (
           <div className="navbar-account-wrapper">
             <div className="navbar-account" onClick={handleAccountClick} tabIndex={0}>
@@ -191,3 +195,4 @@ const Navbar = ({ onCartClick }) => {
 };
 
 export default Navbar;
+//jitu

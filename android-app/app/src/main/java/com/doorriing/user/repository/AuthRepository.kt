@@ -15,7 +15,10 @@ class AuthRepository(private val apiService: ApiService) {
         return apiService.signup(request)
     }
 
-    suspend fun saveFcmToken(request: com.doorriing.user.network.FcmTokenRequest): Response<com.doorriing.user.network.ApiResponse<Unit>> {
-        return apiService.saveFcmToken(request)
+    suspend fun saveFcmToken(
+        authToken: String,
+        request: com.doorriing.user.network.FcmTokenRequest
+    ): Response<com.doorriing.user.network.ApiResponse<Unit>> {
+        return apiService.saveFcmToken("Bearer $authToken", request)
     }
 }

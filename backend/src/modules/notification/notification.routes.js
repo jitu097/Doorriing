@@ -5,7 +5,12 @@ import { requireCustomer } from '../../middlewares/role.middleware.js';
 
 const router = Router();
 
-// All notification routes require authentication and customer account
+// Token sync route requires authentication only.
+// It supports both customer/shop identities and must remain outside requireCustomer.
+router.post('/save-token', authenticate, notificationController.saveToken);
+router.post('/save-fcm-token', authenticate, notificationController.saveToken);
+
+// All remaining notification routes require authentication and customer account
 router.use(authenticate, requireCustomer);
 
 // Get unread count (must be before /:id to avoid route conflict)

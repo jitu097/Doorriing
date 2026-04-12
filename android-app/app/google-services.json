@@ -7,6 +7,51 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:1049973675081:android:6ee431a3aa5b6df1ab5b98",
+        "android_client_info": {
+          "package_name": "com.doorriing.seller"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1049973675081-168cujh7l2jmsrvriacf3irb6qu76dpq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.doorriing.seller",
+            "certificate_hash": "0d145ca0fdaf9862cccedc21a1b89dcea3c77b31"
+          }
+        },
+        {
+          "client_id": "1049973675081-gbaerhteuiivuu1umu4f43u674q1lihj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.doorriing.seller",
+            "certificate_hash": "6477b1d3abad23dc9b3eaec522180c9282a49922"
+          }
+        },
+        {
+          "client_id": "1049973675081-tqglq1ml83fkei8nnheo2foq68nbl603.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZkLZFN8UYJUwR72nvVYaezLOZjhARioM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1049973675081-tqglq1ml83fkei8nnheo2foq68nbl603.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:1049973675081:android:1347373355d3509aab5b98",
         "android_client_info": {
           "package_name": "com.doorriing.user"
