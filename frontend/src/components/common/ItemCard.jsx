@@ -411,14 +411,18 @@ const ItemCard = ({
             })}
           </div>
         ) : (
-          <div className="restaurant-price-stack">
-            <span className="restaurant-price-label">Full</span>
-            {shouldShowOriginal && (
-              <span className="restaurant-price-original">₹{formattedOriginalPrice}</span>
-            )}
-            <span className="restaurant-price-current">
-              {formattedPrice ? `₹${formattedPrice}` : 'Price unavailable'}
-            </span>
+          <div className="restaurant-price-variants-display">
+            {variantOptions && variantOptions.map((variant) => (
+              <div key={variant.key} className="restaurant-variant-preview">
+                <span className="restaurant-variant-label">{variant.label}</span>
+                <div className="restaurant-variant-price-stack">
+                  {variant.hasDiscount && variant.formattedOriginalPrice && (
+                    <span className="restaurant-variant-original">₹{variant.formattedOriginalPrice}</span>
+                  )}
+                  <span className="restaurant-variant-final">₹{variant.formattedPrice}</span>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

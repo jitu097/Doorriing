@@ -692,7 +692,7 @@
   border-radius: 14px;
   padding: 6px 8px;
   font-size: 0.95rem;
-  font-weight: 200;
+  font-weight: 700!important;
   margin-left: 90px;
   margin-top: -50px;
   color: #ffffff;
@@ -802,6 +802,20 @@
   background: #f0f0f0;
   color: #b1b1b1;
   cursor: not-allowed;
+}
+
+.restaurant-price-variants-display {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.restaurant-variant-preview {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 
 .restaurant-qty-controls {
