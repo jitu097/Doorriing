@@ -286,23 +286,25 @@
 }
 
 .portion-controls-container {
-  margin-top: 8px;
-  padding: 12px 14px;
+  margin-top: 4px;
+  padding: 8px 10px;
   background: #fff9f6;
   border: 1px solid #ffe1d3;
   border-radius: 12px;
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-direction: row;
+  gap: 6px;
+  width: fit-content;
+  align-items: center;
 }
 
 .portion-row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #f3f3f3;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 .portion-row:last-child {
@@ -311,24 +313,25 @@
 }
 
 .portion-info {
-  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 4px;
   margin: 0;
+  white-space: nowrap;
 }
 
 .portion-label-small {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
   color: #333;
+  white-space: nowrap;
 }
 
 .portion-price-small {
-  font-size: 0.95rem;
-  font-weight: 900;
+  font-size: 0.8rem;
+  font-weight: 700;
   color: #d74e28;
+  white-space: nowrap;
 }
 
 .quantity-controls {
@@ -368,9 +371,9 @@
   background: #E95322;
   color: #ffffff;
   border: 2px solid #E95322;
-  padding: 4px 14px;
-  border-radius: 8px;
-  font-size: 0.8rem;
+  padding: 3px 12px;
+  border-radius: 6px;
+  font-size: 0.7rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -687,10 +690,10 @@
   width: 60px;
   border: none;
   border-radius: 14px;
-  padding: 12px 18px;
+  padding: 6px 8px;
   font-size: 0.95rem;
   font-weight: 200;
-  margin-left: 120px;
+  margin-left: 90px;
   margin-top: -50px;
   color: #ffffff;
   background: linear-gradient(135deg, #E95322 0%, #d64a1f 100%);
@@ -714,62 +717,80 @@
 .restaurant-variant-panel {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 8px;
+  gap: 4px;
+  margin-top: 0;
+  align-items: flex-start;
 }
 
 .restaurant-variant-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 14px 16px;
-  border: 1px solid #f4f4f4;
-  box-shadow: 0 10px 25px rgba(27, 27, 27, 0.07);
+  justify-content: flex-start;
+  gap: 2px;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+  width: fit-content;
+  min-width: 0;
 }
 
 .restaurant-variant-info {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  gap: 1px;
+  align-items: center;
+  min-width: 0;
 }
 
 .restaurant-variant-label {
-  font-size: 0.85rem;
+  font-size: 0.6rem;
   font-weight: 600;
   color: #4a4a4a;
+  white-space: nowrap;
+  min-width: 0;
+  flex-shrink: 0;
 }
 
 .restaurant-variant-price-stack {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-direction: row;
+  gap: 1px;
+  align-items: center;
+  min-width: 0;
 }
 
 .restaurant-variant-original {
-  font-size: 0.85rem;
+  font-size: 0.55rem;
   color: #b5b5b5;
   text-decoration: line-through;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .restaurant-variant-final {
-  font-size: 1.15rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: #e53945;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .restaurant-variant-add {
   border: none;
-  border-radius: 999px;
-  padding: 6px 20px;
+  border-radius: 3px;
+  padding: 1px 6px;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.6rem;
   background: #ffe4e8;
-  
   color: #e53945;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .restaurant-variant-add:not(:disabled):hover {
@@ -888,9 +909,11 @@
   }
 
   .restaurant-variant-row {
-    flex-direction: column;
-    gap: 12px;
-    align-items: flex-start;
+    flex-direction: row;
+    gap: 2px;
+    align-items: center;
+    flex-wrap: nowrap;
+    width: fit-content;
   }
 
   .restaurant-qty-controls {

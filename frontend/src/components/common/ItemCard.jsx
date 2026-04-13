@@ -250,7 +250,7 @@ const ItemCard = ({
   const renderDefaultFooter = () => (
     <div className="item-card-footer">
       <div className="item-card-price-block">
-        {showVariantPricing && variantOptions ? (
+        {showVariantPricing && showVariants && variantOptions ? (
           <div className="item-card-price-variants">
             <span className="price-variant-text">Half: ₹{formattedHalfVariantPrice}</span>
             <span className="price-variant-text">Full: ₹{formattedFullVariantPrice}</span>
@@ -363,7 +363,7 @@ const ItemCard = ({
 
     return (
       <div className="restaurant-footer-collapsed">
-        {hasVariantChips && variantOptions ? (
+        {hasVariantChips && variantOptions && showVariants ? (
           <div className="restaurant-price-chip-row">
             {variantOptions.map((variant) => {
               const variantId = `${clientItemId}-${variant.key}`;
@@ -422,7 +422,7 @@ const ItemCard = ({
           </div>
         )}
 
-        {hasVariantChips ? null : !isInCart ? (
+        {hasVariantChips && showVariants ? null : !isInCart ? (
           <button
             className="restaurant-add-main"
             type="button"
