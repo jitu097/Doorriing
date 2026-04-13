@@ -151,9 +151,25 @@
 }
 
 .food-type-indicator {
-  font-size: 1.1rem;
-  line-height: 1;
-  margin-right: 4px;
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: white;
+  border-radius: 50%;
+  padding: 0px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  width: 20px;
+  height: 20px;
+}
+
+.food-type-indicator img {
+  display: block;
+  width: 12px !important;
+  height: 12px !important;
 }
 
 .item-card-name {
@@ -507,6 +523,7 @@
   flex-direction: column;
   gap: 4px;
   width: 100%;
+  margin-left: -9px;
 }
 
 .restaurant-price-chip {
@@ -767,22 +784,23 @@
 .restaurant-qty-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0px!important;
   border-radius: 999px;
   justify-content: space-between;
-  padding: 8px 16px;
+  padding: 0px 1px!important;
   background: #fff5f6;
   border: 1px solid #ffc4ce;
   width: 100%;
+  margin-left: 5px!important;
 }
 
 .restaurant-qty-controls button {
   border: none;
   background: #ffffff;
-  width: 40px;
-  height: 40px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  font-size: 1.2rem;
+  font-size: 0.85rem;
   font-weight: 700;
   
   color: #e53945;
@@ -795,11 +813,11 @@
 }
 
 .restaurant-qty-controls span {
-  min-width: 30px;
+  min-width: 18px;
   text-align: center;
   font-weight: 600;
   color: #2b2b2b;
-  font-size: 1.3rem;
+  font-size: 0.95rem;
 }
 
 .restaurant-main-qty {

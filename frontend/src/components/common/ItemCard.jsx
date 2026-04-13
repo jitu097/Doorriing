@@ -463,12 +463,7 @@ const ItemCard = ({
       {image && (
         <div className="item-card-image">
           <img src={image} alt={name} loading="lazy" />
-        </div>
-      )}
-
-      <div className="item-card-body">
-        <div className="item-card-title-row">
-          {showFoodIndicator ? (
+          {showFoodIndicator && (
             <span
               className="food-type-indicator"
               aria-label={derivedIsVeg ? 'Vegetarian item' : 'Non-vegetarian item'}
@@ -477,10 +472,16 @@ const ItemCard = ({
               <img
                 src={derivedIsVeg ? '/vegy.webp' : '/nonveg.webp'}
                 alt={derivedIsVeg ? 'Vegetarian' : 'Non-Vegetarian'}
-                style={{ width: 18, height: 18, verticalAlign: 'middle' }}
+                style={{ width: 20, height: 20, verticalAlign: 'middle' }}
               />
             </span>
-          ) : legacyVegIndicator ? (
+          )}
+        </div>
+      )}
+
+      <div className="item-card-body">
+        <div className="item-card-title-row">
+          {legacyVegIndicator ? (
             <span className={`item-card-veg-badge ${isVeg ? 'veg' : 'non-veg'}`}>
               <span className="veg-dot" />
             </span>
