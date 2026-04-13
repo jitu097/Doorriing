@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import ImageScroller from '../../components/common/ImageScroller';
 import HomeButtons from './HomeButtons';
 import ItemCard from '../../components/common/ItemCard';
+import OrderNotification from '../../components/common/OrderNotification';
 import { itemService } from '../../services/item.service';
 import './Home.css';
 import { computeFinalPrice } from '../../utils/pricing';
@@ -200,6 +201,7 @@ const Home = () => {
     <div className="home-page">
       <ImageScroller />
       <HomeButtons />
+      <OrderNotification />
       <div className="home-content">
         <h1 className="home-main-title">Welcome to Doorriing</h1>
         <div className="home-section-toggle">

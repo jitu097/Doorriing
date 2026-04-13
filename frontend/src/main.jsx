@@ -7,6 +7,7 @@ import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { AddressProvider } from './context/AddressContext'
 import { NotificationProvider } from './context/NotificationContext'
+import { RecentOrderProvider } from './context/RecentOrderContext'
 import { startLogStream } from './utils/logStream'
 
 // Safety check for root element
@@ -30,7 +31,9 @@ try {
           <CartProvider>
             <AddressProvider>
               <NotificationProvider>
-                <App />
+                <RecentOrderProvider>
+                  <App />
+                </RecentOrderProvider>
               </NotificationProvider>
             </AddressProvider>
           </CartProvider>

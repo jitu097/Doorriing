@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useAddress } from "../../context/AddressContext";
+import { useRecentOrder } from "../../context/RecentOrderContext";
 import { orderService } from "../../services/order.service.js";
 import { api } from "../../services/api";
 import "./Checkout.css";
@@ -9,6 +10,7 @@ import "./Checkout.css";
 const CheckoutPayment = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { setOrderAsRecent } = useRecentOrder();
 
   const { cartItems, getCartTotal, clearCart, deliveryFee, convenienceFee, platformSettingsLoading } = useCart();
   const { addresses } = useAddress();
@@ -112,7 +114,18 @@ const CheckoutPayment = () => {
               if (verifyData.success) {
                 await clearCart();
                 sessionStorage.removeItem("checkoutSelectedAddressId");
-                navigate(`/order-confirmation?orderId=${order.id}`);
+                
+                // Fetch order details to display in notification
+                try {
+                  const orderResponse = await orderService.getOrderById(order.id);
+                  if (orderResponse.success && orderResponse.data) {
+                    setOrderAsRecent(orderResponse.data);
+                  }
+                } catch (err) {
+                  console.error("Failed to fetch order details:", err);
+                }
+                
+                navigate("/home");
               } else {
                 setErrorMsg("Payment verification failed. Please try again.");
               }
@@ -171,9 +184,20 @@ const CheckoutPayment = () => {
       const orderId =
         response.data?.order?.id ||
         response.data?.order?.order_number ||
+        response.data?.id ||
         "success";
 
-      navigate(`/order-confirmation?orderId=${orderId}`);
+      // Fetch order details to display in notification
+      try {
+        const orderResponse = await orderService.getOrderById(orderId);
+        if (orderResponse.success && orderResponse.data) {
+          setOrderAsRecent(orderResponse.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch order details:", err);
+      }
+      
+      navigate("/home");
     } catch (error) {
       console.error("Checkout failed:", error);
       setErrorMsg(
