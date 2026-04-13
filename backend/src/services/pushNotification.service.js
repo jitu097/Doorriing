@@ -17,6 +17,7 @@ class PushNotificationService {
     message,
     type = '',
     reference_id = '',
+    target = null,
   }) {
     if (!customer_id && !shop_id) {
       throw new Error('Either customer_id or shop_id is required');
@@ -35,7 +36,7 @@ class PushNotificationService {
       reference_id,
     });
 
-    const tokenRows = await this.getTokens({ customer_id, shop_id });
+    const tokenRows = await this.getTokens({ customer_id, shop_id, target });
     
     // 1. Clean and validate tokens
     const fcmTokens = (tokenRows || [])
@@ -118,15 +119,21 @@ class PushNotificationService {
     }
   }
 
-  async getTokens({ customer_id = null, shop_id = null }) {
+  async getTokens({ customer_id = null, shop_id = null, target = null }) {
     let query = supabase.from('notification_tokens').select('fcm_token');
 
-    if (customer_id) {
+    if (target === 'customer' && customer_id) {
       query = query.eq('customer_id', customer_id);
-    }
-
-    if (shop_id) {
+    } else if (target === 'shop' && shop_id) {
       query = query.eq('shop_id', shop_id);
+    } else {
+      if (customer_id && shop_id) {
+        query = query.or(`customer_id.eq.${customer_id},shop_id.eq.${shop_id}`);
+      } else if (customer_id) {
+        query = query.eq('customer_id', customer_id);
+      } else if (shop_id) {
+        query = query.eq('shop_id', shop_id);
+      }
     }
 
     const { data, error } = await query;
@@ -219,6 +226,7 @@ class PushNotificationService {
       message: template.message,
       type: `order_${normalized}`,
       reference_id,
+      target: 'customer',
     });
   }
 }
