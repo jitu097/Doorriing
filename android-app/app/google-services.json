@@ -22,14 +22,6 @@
           }
         },
         {
-          "client_id": "1049973675081-gbaerhteuiivuu1umu4f43u674q1lihj.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.doorriing.seller",
-            "certificate_hash": "6477b1d3abad23dc9b3eaec522180c9282a49922"
-          }
-        },
-        {
           "client_id": "1049973675081-tqglq1ml83fkei8nnheo2foq68nbl603.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -58,6 +50,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "1049973675081-k2ucp9jvn1q5mcdfaucohidusdk0jqba.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.doorriing.user",
+            "certificate_hash": "039d9548462b4a9d17618a61742e4b040236277e"
+          }
+        },
         {
           "client_id": "1049973675081-r20js7h57g3j1k9jopql9jfdp0qtidt4.apps.googleusercontent.com",
           "client_type": 1,

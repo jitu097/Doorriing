@@ -65,8 +65,16 @@ class PushNotificationService {
         body: message,
       },
       data: {
+        title: String(title || ''),
+        body: String(message || ''),
         target_url: String(reference_id ? `/orders/${reference_id}` : ''),
         type: String(type || ''),
+      },
+      android: {
+        priority: 'high',
+        notification: {
+          channelId: 'default_channel',
+        },
       },
     };
 
