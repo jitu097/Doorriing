@@ -717,7 +717,7 @@
 .restaurant-variant-panel {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 12px;
   margin-top: 0;
   align-items: flex-start;
 }
@@ -726,7 +726,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 2px;
+  gap: 14px!important;
   background: transparent;
   border-radius: 0;
   padding: 0;
@@ -783,8 +783,8 @@
   border: none;
   border-radius: 3px;
   padding: 1px 6px;
-  font-weight: 600;
-  font-size: 0.6rem;
+  font-weight: 700;
+  font-size: 0.7rem;
   background: #ffe4e8;
   color: #e53945;
   cursor: pointer;
