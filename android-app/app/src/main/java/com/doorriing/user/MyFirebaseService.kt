@@ -51,27 +51,42 @@ class MyFirebaseService : FirebaseMessagingService() {
         sendTokenToServer(token)
     }
 
-    private fun sendTokenToServer(token: String) {
-        val authToken = DoorriingApp.prefs.getToken()
-        if (authToken.isNullOrBlank()) {
-            Log.w("FCM", "Skipping token sync: user auth token not found")
+    private fun sendTokenToServer(token: String, retryCount: Int = 0) {
+        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            Log.w("FCM", "Skipping token sync: user not logged in natively")
             return
         }
 
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val request = FcmTokenRequest(
-                    fcmToken = token,
-                    deviceType = "android"
-                )
-                val response = authRepository.saveFcmToken(authToken, request)
-                if (response.isSuccessful) {
-                    Log.d("FCM", "Token saved to backend successfully")
-                } else {
-                    Log.e("FCM", "Failed to save token: ${response.errorBody()?.string()}")
+        currentUser.getIdToken(true).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val freshAuthToken = task.result?.token
+                if (freshAuthToken.isNullOrBlank()) {
+                    Log.e("FCM", "Fresh Auth Token is null/blank")
+                    return@addOnCompleteListener
                 }
-            } catch (e: Exception) {
-                Log.e("FCM", "Error sending token to backend", e)
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val request = FcmTokenRequest(
+                            fcmToken = token,
+                            deviceType = "android"
+                        )
+                        val response = authRepository.saveFcmToken(freshAuthToken, request)
+                        if (response.isSuccessful) {
+                            Log.d("FCM", "Token saved to backend successfully")
+                        } else if (response.code() == 401 && retryCount < 1) {
+                            Log.w("FCM", "Token sync returned 401, retrying once...")
+                            sendTokenToServer(token, retryCount + 1)
+                        } else {
+                            Log.e("FCM", "Failed to save token: ${response.errorBody()?.string()}")
+                        }
+                    } catch (e: Exception) {
+                        Log.e("FCM", "Error sending token to backend", e)
+                    }
+                }
+            } else {
+                Log.e("FCM", "Failed to get fresh ID token", task.exception)
             }
         }
     }

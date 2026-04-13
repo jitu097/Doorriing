@@ -242,27 +242,42 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun syncFcmTokenToBackend(fcmToken: String) {
-        val authToken = DoorriingApp.prefs.getToken()
-        if (authToken.isNullOrBlank()) {
-            Log.d("MainActivity", "Skipping FCM token sync: auth token not available yet")
+    private fun syncFcmTokenToBackend(fcmToken: String, retryCount: Int = 0) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            Log.w("MainActivity", "Skipping FCM token sync: user not logged in natively")
             return
         }
 
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val response = authRepository.saveFcmToken(
-                    authToken,
-                    FcmTokenRequest(fcmToken = fcmToken, deviceType = "android")
-                )
-
-                if (response.isSuccessful) {
-                    Log.d("MainActivity", "FCM token synced with backend")
-                } else {
-                    Log.e("MainActivity", "Failed to sync FCM token: ${response.errorBody()?.string()}")
+        currentUser.getIdToken(true).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val freshAuthToken = task.result?.token
+                if (freshAuthToken.isNullOrBlank()) {
+                    Log.e("MainActivity", "Fresh Auth Token is null/blank")
+                    return@addOnCompleteListener
                 }
-            } catch (error: Exception) {
-                Log.e("MainActivity", "Error syncing FCM token", error)
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val response = authRepository.saveFcmToken(
+                            freshAuthToken,
+                            FcmTokenRequest(fcmToken = fcmToken, deviceType = "android")
+                        )
+
+                        if (response.isSuccessful) {
+                            Log.d("MainActivity", "FCM token synced with backend")
+                        } else if (response.code() == 401 && retryCount < 1) {
+                            Log.w("MainActivity", "FCM sync got 401, retrying once...")
+                            syncFcmTokenToBackend(fcmToken, retryCount + 1)
+                        } else {
+                            Log.e("MainActivity", "Failed to sync FCM token: ${response.errorBody()?.string()}")
+                        }
+                    } catch (error: Exception) {
+                        Log.e("MainActivity", "Error syncing FCM token", error)
+                    }
+                }
+            } else {
+                Log.e("MainActivity", "Failed to get fresh ID token", task.exception)
             }
         }
     }
