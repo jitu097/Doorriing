@@ -55,13 +55,7 @@
             android:value="false" />
 
         <!-- Set custom default icon. This is used when no icon is set for incoming notification messages. -->
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@mipmap/ic_launcher" />
-        <!-- Set color used with incoming notification messages. This is used when no color is set for the incoming notification message. -->
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_color"
-            android:resource="@color/black" />
+        <!-- removed to prevent SystemUI silent crash with mipmap adaptive icons -->
         <!-- Set default FCM channel to prevent background drop. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
