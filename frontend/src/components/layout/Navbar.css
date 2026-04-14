@@ -111,7 +111,7 @@
 	margin: 0 2rem;
 	flex-shrink: 0;
 	margin-left: 150px;
-	margin-top: 20px;
+	margin-top: 21px;
 }
 
 .searchbar-icon-btn:hover {
@@ -521,7 +521,7 @@
 	.navbar {
 		padding: 0.4rem 0;
 		width: 100%;
-		background-color: #fc5c00;
+		background-color:  #e8c552;
 	}
 	.navbar-container {
 		padding: 0 1.5rem 0 0;
@@ -539,7 +539,7 @@
 
 	.location-address {
 		max-width: 160px;
-		color: #d0d1d3;
+		color: #000000;
 	}
 }
 
