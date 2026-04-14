@@ -1,7 +1,7 @@
 .navbar-cart-ui {
 	display: flex;
 	align-items: center;
-	background: #fff;
+	background: #ffffff;
 	border: 2px solid #f3dede;
 	border-radius: 2rem;
 	padding: 0.15rem 1rem 0.15rem 0.6rem;
@@ -110,6 +110,8 @@
 	transition: background 0.15s;
 	margin: 0 2rem;
 	flex-shrink: 0;
+	margin-left: 150px;
+	margin-top: 20px;
 }
 
 .searchbar-icon-btn:hover {
@@ -217,8 +219,6 @@
 		width: 100%;
 		max-width: 100%;
 		margin-bottom: 0;
-		/* Add safe-area padding to prevent touching status bar/notch */
-		padding-top: max(0.3rem, env(safe-area-inset-top, 0.3rem));
 	}
 }
 .navbar-container {
@@ -259,6 +259,7 @@
 	display: flex;
 	align-items: center;
 	flex-shrink: 0;
+	margin-top: 15px;
 }
 .location-title {
 	font-weight: 600;
@@ -323,6 +324,7 @@
 
 	.notification-bell-wrapper {
 		margin-right: 0.45rem;
+		margin-top: 10px;
 	}
 }
 .navbar-account {
@@ -333,6 +335,7 @@
 	display: flex;
 	align-items: center;
 	gap: 0.3rem;
+	margin-top: 30px;
 }
 
 .navbar-login-btn {
@@ -397,6 +400,16 @@
 }
 .account-dropdown li:hover {
 	background: #f9f9f9;
+}
+.notification-bell-item {
+	padding: 0.65rem 1rem !important;
+	border-bottom: 1px solid #f0f0f0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.notification-bell-item:hover {
+	background: #fff8f0 !important;
 }
 .logout-btn {
 	width: 100%;
@@ -508,6 +521,7 @@
 	.navbar {
 		padding: 0.4rem 0;
 		width: 100%;
+		background-color: #fc5c00;
 	}
 	.navbar-container {
 		padding: 0 1.5rem 0 0;
@@ -525,6 +539,7 @@
 
 	.location-address {
 		max-width: 160px;
+		color: #d0d1d3;
 	}
 }
 

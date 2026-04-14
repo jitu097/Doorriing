@@ -135,9 +135,6 @@ const Navbar = ({ onCartClick }) => {
         )}
 
         {/* Account Dropdown - Only show when logged in */}
-        {user && <NotificationBell />}
-
-        {/* Account Dropdown - Only show when logged in */}
         {user && (
           <div className="navbar-account-wrapper">
             <div className="navbar-account" onClick={handleAccountClick} tabIndex={0}>
@@ -146,6 +143,7 @@ const Navbar = ({ onCartClick }) => {
             {showAccount && (
               <div className="account-dropdown">
                 <ul>
+                  <li className="notification-bell-item"><NotificationBell /></li>
                   <li><Link to="/home">Home</Link></li>
                   <li><Link to="/orders">My Orders</Link></li>
                   <li><Link to="/address">Address</Link></li>
