@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import NotificationBell from '../NotificationBell';
 import './Footer.css';
 
-const Footer = ({ visible = true }) => {
+const noop = () => {};
+
+const Footer = ({ visible = true, onCartClick = noop }) => {
   const navigate = useNavigate();
   return (
     <footer className={`mobile-footer${visible ? ' visible' : ' hidden'}`}>
@@ -14,10 +16,13 @@ const Footer = ({ visible = true }) => {
         <button className="footer-btn" onClick={() => navigate('/orders')}>
           <img src="/order.webp" alt="Orders" className="footer-icon" />
         </button>
+        <button className="footer-btn" onClick={onCartClick}>
+          <img src="/carty.webp" alt="Cart" className="footer-icon" />
+        </button>
         <div className="footer-notification-item">
           <NotificationBell />
         </div>
-       
+        
       </nav>
     </footer>
   );

@@ -47,7 +47,7 @@ const PageLayout = () => {
         <Outlet />
       </main>
       {isHomePage && <MainFooter />}
-      {!hideFloatingCart && <MobileFooter visible={footerVisible} />}
+      {!hideFloatingCart && <MobileFooter visible={footerVisible} onCartClick={handleCartOpen} />}
       {!hideFloatingCart && <FloatingCart onCartClick={handleCartOpen} footerVisible={footerVisible} />}
       <CartDrawer isOpen={showCart} onClose={handleCartClose} />
     </div>
