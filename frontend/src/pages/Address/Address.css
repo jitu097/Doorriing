@@ -40,7 +40,7 @@
 }
 
 .add-address-btn {
-  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  background: linear-gradient(135deg, #ef6a05 0%, #f47403 100%);
   color: white;
   border: none;
   padding: 14px 30px;
@@ -49,12 +49,12 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
 }
 
 .add-address-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+  box-shadow: 0 6px 20px rgba(255, 149, 0, 0.4);
 }
 
 /* Empty State */
@@ -84,7 +84,7 @@
 }
 
 .add-first-btn {
-  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  background: linear-gradient(135deg, #FF9500 0%, #FF7600 100%);
   color: white;
   border: none;
   padding: 14px 40px;
@@ -97,7 +97,7 @@
 
 .add-first-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+  box-shadow: 0 6px 20px rgba(255, 149, 0, 0.3);
 }
 
 /* Address Grid */
@@ -120,19 +120,19 @@
 .address-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-  border-color: #4CAF50;
+  border-color: #FF9500;
 }
 
 .address-card.default {
-  border-color: #4CAF50;
-  background: linear-gradient(135deg, #ffffff 0%, #f0fff4 100%);
+  border-color: #FF9500;
+  background: linear-gradient(135deg, #ffffff 0%, #FFF4E6 100%);
 }
 
 .default-badge {
   position: absolute;
   top: 16px;
   right: 16px;
-  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  background: linear-gradient(135deg, #FF9500 0%, #FF7600 100%);
   color: white;
   padding: 6px 14px;
   border-radius: 20px;
@@ -176,7 +176,7 @@
 }
 
 .address-phone {
-  color: #4CAF50;
+  color: #FF9500;
   font-size: 15px;
   font-weight: 600;
   margin: 0 0 12px 0;
@@ -211,6 +211,12 @@
   gap: 6px;
 }
 
+.action-btn-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
 .action-btn.edit {
   background: #e3f2fd;
   color: #1976d2;
@@ -232,13 +238,13 @@
 }
 
 .action-btn.default {
-  background: #e8f5e9;
-  color: #4CAF50;
+  background: #FFF4E6;
+  color: #FF9500;
   flex-basis: 100%;
 }
 
 .action-btn.default:hover {
-  background: #4CAF50;
+  background: #FF9500;
   color: white;
 }
 
@@ -349,9 +355,10 @@
 }
 
 .address-types {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  justify-content: space-between;
   gap: 12px;
+  flex-wrap: nowrap;
 }
 
 .type-btn {
@@ -368,17 +375,19 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .type-btn:hover {
   background: #f0f0f0;
-  border-color: #4CAF50;
+  border-color: #FF9500;
 }
 
 .type-btn.active {
-  background: #e8f5e9;
-  border-color: #4CAF50;
-  color: #4CAF50;
+  background: #FFF4E6;
+  border-color: #FF9500;
+  color: #FF9500;
 }
 
 .type-icon-large {
@@ -409,8 +418,8 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #4CAF50;
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+  border-color: #FF9500;
+  box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.1);
 }
 
 .form-group input::placeholder {
@@ -431,7 +440,7 @@
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #4CAF50;
+  accent-color: #FF9500;
 }
 
 .form-checkbox label {
@@ -469,13 +478,13 @@
 }
 
 .save-btn {
-  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  background: linear-gradient(135deg, #FF9500 0%, #FF7600 100%);
   color: white;
 }
 
 .save-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
 }
 
 /* Responsive Design */
@@ -521,8 +530,17 @@
     flex-direction: column;
   }
 
+  .address-actions {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
   .action-btn {
-    flex-basis: 100%;
+    flex: 1;
+    min-width: 0;
+    flex-basis: auto;
+    padding: 8px 10px;
+    font-size: 12px;
   }
 
   .default-badge {

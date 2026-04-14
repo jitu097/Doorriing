@@ -168,7 +168,7 @@ const Address = () => {
                     className="action-btn delete"
                     onClick={() => handleDelete(address.id)}
                   >
-                    🗑️ Delete
+                    <img src="/delete.png" alt="Delete" className="action-btn-icon" />
                   </button>
                   {!address.isDefault && (
                     <button
