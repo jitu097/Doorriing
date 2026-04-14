@@ -17,9 +17,7 @@ const Footer = ({ visible = true }) => {
         <div className="footer-notification-item">
           <NotificationBell />
         </div>
-        <button className="footer-btn" onClick={() => navigate('/FloatingCart')}>
-          <img src="/carty.webp" alt="Profile" className="footer-icon" />
-        </button>
+       
       </nav>
     </footer>
   );
