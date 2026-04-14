@@ -218,6 +218,13 @@ const CheckoutPayment = () => {
   return (
     <div className="checkout-page">
       <div className="checkout-container">
+        <button 
+          className="checkout-back-btn" 
+          onClick={handleBackToAddress}
+          aria-label="Go back"
+        >
+          ←
+        </button>
 
         <div className="checkout-title-row">
           <h1 className="checkout-title">Checkout</h1>

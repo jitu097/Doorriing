@@ -36,7 +36,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
           <button className="cart-drawer-back" onClick={onClose} aria-label="Go back">
             <span style={{fontSize: '1.6rem', fontWeight: 600, lineHeight: 1}}>&larr;</span>
           </button>
-          <h2>My Cart</h2>
           <button className="cart-drawer-close" onClick={onClose} aria-label="Close cart">
             ✕
           </button>

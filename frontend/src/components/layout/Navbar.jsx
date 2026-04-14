@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Modal from '../common/Modal';
 import AddressForm from '../common/AddressForm';
 import { useAddress } from '../../context/AddressContext';
@@ -16,6 +16,7 @@ const Navbar = ({ onCartClick }) => {
   const [showLocation, setShowLocation] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [search, setSearch] = useState('');
+  const accountWrapperRef = useRef(null);
 
   const { activeAddress, addAddress, updateAddress } = useAddress();
 
@@ -37,6 +38,20 @@ const Navbar = ({ onCartClick }) => {
       setNavFormData(activeAddress);
     }
   }, [activeAddress, showLocation]);
+
+  // Handle click outside account dropdown to close it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (accountWrapperRef.current && !accountWrapperRef.current.contains(event.target)) {
+        setShowAccount(false);
+      }
+    };
+
+    if (showAccount) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showAccount]);
 
   const cartCount = getCartCount();
 
@@ -136,7 +151,7 @@ const Navbar = ({ onCartClick }) => {
 
         {/* Account Dropdown - Only show when logged in */}
         {user && (
-          <div className="navbar-account-wrapper">
+          <div className="navbar-account-wrapper" ref={accountWrapperRef}>
             <div className="navbar-account" onClick={handleAccountClick} tabIndex={0}>
               <img src="/account.webp" alt="Account" className="account-icon" loading="lazy" />
             </div>
