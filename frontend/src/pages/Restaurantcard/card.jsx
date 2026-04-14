@@ -85,6 +85,17 @@ const RestaurantCard = ({ shop }) => {
             <span className={`card-status ${isClosed ? 'closed' : 'open'}`}>{statusMeta.label}</span>
           )}
           {isClosed && <div className="card-closed-cover">Closed</div>}
+          {showBookingButton && (
+            <div className="card-booking-actions">
+              <button 
+                className="btn-book-table" 
+                onClick={handleTableBooking}
+                aria-label="Reserve a table"
+              >
+                🍽️ Reserve Table
+              </button>
+            </div>
+          )}
         </div>
         <div className="restaurant-card-content">
           <h3 className="restaurant-card-title">{title}</h3>
@@ -98,17 +109,6 @@ const RestaurantCard = ({ shop }) => {
                 </span>
               )}
               {formattedStock && <span className="card-meta-pill">{formattedStock}</span>}
-            </div>
-          )}
-          {showBookingButton && (
-            <div className="card-booking-actions">
-              <button 
-                className="btn-book-table" 
-                onClick={handleTableBooking}
-                aria-label="Reserve a table"
-              >
-                🍽️ Reserve Table
-              </button>
             </div>
           )}
         </div>

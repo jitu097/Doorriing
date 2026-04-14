@@ -196,6 +196,71 @@
   border-top: 1px solid #e0e0e0;
 }
 
+.summary-header {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  cursor: pointer;
+  user-select: none;
+  z-index: 10;
+}
+
+.summary-header:hover .summary-arrow {
+  color: #ff6b35;
+  filter: brightness(1.2);
+}
+
+.summary-arrow {
+  font-size: 14px;
+  color: #ff9800;
+  transition: transform 0.3s ease, color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.summary-arrow.open {
+  transform: rotate(90deg) !important;
+}
+
+.bill-details-content {
+  animation: slideDown 0.3s ease forwards;
+  position: relative;
+  padding-right: 32px;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+.summary-collapsed {
+  animation: slideDown 0.3s ease forwards;
+  position: relative;
+  padding-right: 32px;
+}
+
+.summary-collapsed .summary-row {
+  padding: 0;
+}
+
+.summary-collapsed .summary-row.grand-total {
+  padding: 0;
+  border: none;
+  padding-top: 0;
+  margin: 0;
+}
+
 .summary-title {
   font-size: 16px;
   font-weight: 700;

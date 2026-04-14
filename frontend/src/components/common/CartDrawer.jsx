@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import CartItem from '../user/CartItem';
@@ -7,6 +7,7 @@ import './CartDrawer.css';
 const CartDrawer = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const { cartItems, getCartTotal, deliveryFee, convenienceFee, platformSettingsLoading } = useCart();
+  const [billDetailsOpen, setBillDetailsOpen] = useState(false);
 
   const subtotal = getCartTotal();
   const resolvedDeliveryFee = deliveryFee ?? 0;
@@ -57,34 +58,63 @@ const CartDrawer = ({ isOpen, onClose }) => {
               </div>
 
               <div className="cart-drawer-summary">
-                <h3 className="summary-title">Bill details</h3>
-                
-                <div className="summary-row">
-                  <span className="summary-icon">🛍️</span>
-                  <span>Items total</span>
-                  <span className="summary-value">
-                    <span className="strikethrough">₹{(subtotal + 256).toFixed(0)}</span> ₹{subtotal.toFixed(0)}
-                  </span>
-                </div>
+                {!billDetailsOpen && (
+                  <div className="summary-collapsed">
+                    <div 
+                      className="summary-header" 
+                      onClick={() => setBillDetailsOpen(!billDetailsOpen)}
+                    >
+                      <div className={`summary-arrow ${billDetailsOpen ? 'open' : ''}`}>
+                        ▶
+                      </div>
+                    </div>
+                    <div className="summary-row grand-total" onClick={() => setBillDetailsOpen(!billDetailsOpen)}>
+                      <span>Total Amount</span>
+                      <span className="grand-total-value">₹{grandTotal.toFixed(0)}</span>
+                    </div>
+                  </div>
+                )}
 
-                <div className="summary-row">
-                  <span className="summary-icon">🚚</span>
-                  <span>Delivery charge</span>
-                  <span className="summary-value">{platformSettingsLoading && deliveryFee === null ? 'Loading...' : `₹${resolvedDeliveryFee}`}</span>
-                </div>
+                {billDetailsOpen && (
+                  <div className="bill-details-content">
+                    <h4>Bill Summary</h4>
+                    <div 
+                    
+                      className="summary-header" 
+                      onClick={() => setBillDetailsOpen(!billDetailsOpen)}
+                    >
+                      <div className={`summary-arrow ${billDetailsOpen ? 'open' : ''}`}>
+                        ▶
+                      </div>
+                    </div>
+                    <div className="summary-row">
+                      <span className="summary-icon">🛍️</span>
+                      <span>Items total</span>
+                      <span className="summary-value">
+                        <span className="strikethrough">₹{(subtotal + 256).toFixed(0)}</span> ₹{subtotal.toFixed(0)}
+                      </span>
+                    </div>
 
-                <div className="summary-row">
-                  <span className="summary-icon">🧾</span>
-                  <span>Convenience fee</span>
-                  <span className="summary-value">{platformSettingsLoading && convenienceFee === null ? 'Loading...' : `₹${resolvedConvenienceFee}`}</span>
-                </div>
+                    <div className="summary-row">
+                      <span className="summary-icon">🚚</span>
+                      <span>Delivery charge</span>
+                      <span className="summary-value">{platformSettingsLoading && deliveryFee === null ? 'Loading...' : `₹${resolvedDeliveryFee}`}</span>
+                    </div>
 
-                <div className="summary-divider"></div>
+                    <div className="summary-row">
+                      <span className="summary-icon">🧾</span>
+                      <span>Convenience fee</span>
+                      <span className="summary-value">{platformSettingsLoading && convenienceFee === null ? 'Loading...' : `₹${resolvedConvenienceFee}`}</span>
+                    </div>
 
-                <div className="summary-row grand-total">
-                  <span>Grand total</span>
-                  <span className="grand-total-value">₹{grandTotal.toFixed(0)}</span>
-                </div>
+                    <div className="summary-divider"></div>
+
+                    <div className="summary-row grand-total">
+                      <span>Grand total</span>
+                      <span className="grand-total-value">₹{grandTotal.toFixed(0)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="cart-drawer-footer">
