@@ -47,7 +47,7 @@ export const NotificationProvider = ({ children }) => {
 
     const interval = window.setInterval(() => {
       fetchNotifications();
-    }, 45000);
+    }, 15000);
 
     return () => window.clearInterval(interval);
   }, [fetchNotifications]);

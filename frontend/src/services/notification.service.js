@@ -1,7 +1,11 @@
 import api from './api';
 
-export const getNotifications = async () => {
-  const payload = await api.get('/notifications');
+export const getNotifications = async (pageSize = 100) => {
+  const payload = await api.get('/notifications', {
+    params: {
+      page_size: pageSize,
+    },
+  });
 
   return {
     notifications: Array.isArray(payload?.data) ? payload.data : [],
