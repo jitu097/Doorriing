@@ -34,6 +34,11 @@ html, body {
 }
 
 @media (max-width: 600px) {
+  html {
+    /* Support for notched devices (iPhone X+) */
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  
   body {
     padding-bottom: 56px;
   }

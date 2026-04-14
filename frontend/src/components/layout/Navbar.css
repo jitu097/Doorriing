@@ -217,6 +217,8 @@
 		width: 100%;
 		max-width: 100%;
 		margin-bottom: 0;
+		/* Add safe-area padding to prevent touching status bar/notch */
+		padding-top: max(0.3rem, env(safe-area-inset-top, 0.3rem));
 	}
 }
 .navbar-container {
