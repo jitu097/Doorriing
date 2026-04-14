@@ -5,7 +5,6 @@ import AddressForm from '../common/AddressForm';
 import { useAddress } from '../../context/AddressContext';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../hooks/useAuth';
-import NotificationBell from '../NotificationBell';
 import './Navbar.css';
 
 const Navbar = ({ onCartClick }) => {
@@ -158,7 +157,6 @@ const Navbar = ({ onCartClick }) => {
             {showAccount && (
               <div className="account-dropdown">
                 <ul>
-                  <li className="notification-bell-item"><NotificationBell /></li>
                   <li><Link to="/home">Home</Link></li>
                   <li><Link to="/orders">My Orders</Link></li>
                   <li><Link to="/address">Address</Link></li>

@@ -59,7 +59,7 @@
   border: 1px solid #eee;
   border-radius: 14px;
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.14);
-  z-index: 130;
+  z-index: 2000;
 }
 
 .notification-dropdown-header {
@@ -166,6 +166,10 @@
 
   .notification-dropdown {
     width: min(88vw, 340px);
-    right: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    top: auto;
+    right: auto;
+    bottom: calc(100% + 10px);
   }
 }

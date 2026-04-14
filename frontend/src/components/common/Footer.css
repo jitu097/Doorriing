@@ -57,6 +57,40 @@
     margin-bottom: 2px;
     margin: 0 0 2px 0;
   }
+
+  .footer-notification-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 0;
+    margin: 0;
+  }
+
+  .footer-notification-item .notification-bell-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .footer-notification-item .notification-bell-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+  }
+
+  .footer-notification-item .notification-bell-btn svg {
+    width: 24px;
+    height: 24px;
+    stroke: #222;
+  }
   
   /* Add padding to body to account for fixed footer */
   body {
