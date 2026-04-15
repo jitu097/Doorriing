@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { getGoogleSignInErrorMessage } from '../../utils/authErrors';
+import { setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { auth } from '../../config/firebase';
 import './Signup.css';
 
 const Signup = () => {
@@ -89,6 +91,8 @@ const Signup = () => {
     setServerError('');
 
     try {
+      // CRITICAL: Ensure persistence is set before signup
+      await setPersistence(auth, browserLocalPersistence);
       await registerWithEmail(formData.email, formData.password);
       // Note: User profile update (name, phone) can be handled here if needed
       // using updateProfile(auth.currentUser, { displayName: formData.name })
@@ -113,6 +117,8 @@ const Signup = () => {
     setLoading(true);
     setServerError('');
     try {
+      // CRITICAL: Ensure persistence is set before Google login
+      await setPersistence(auth, browserLocalPersistence);
       await loginWithGoogle();
       navigate('/home');
     } catch (error) {

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { getGoogleSignInErrorMessage } from '../../utils/authErrors';
+import { setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { auth } from '../../config/firebase';
 import './Login.css';
 
 const Login = () => {
@@ -65,6 +67,8 @@ const Login = () => {
     setServerError('');
 
     try {
+      // CRITICAL: Ensure persistence is set before login
+      await setPersistence(auth, browserLocalPersistence);
       await loginWithEmail(formData.email, formData.password);
       navigate('/home');
     } catch (error) {
@@ -85,6 +89,8 @@ const Login = () => {
     setLoading(true);
     setServerError('');
     try {
+      // CRITICAL: Ensure persistence is set before Google login
+      await setPersistence(auth, browserLocalPersistence);
       await loginWithGoogle();
       navigate('/home');
     } catch (error) {
