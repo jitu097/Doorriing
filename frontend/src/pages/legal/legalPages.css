@@ -1,7 +1,7 @@
 .legal-page {
   max-width: 1300px;
   width: 90%;
-  margin: 0 auto;
+  margin: 4rem auto 0;
   padding: 2rem 1.5rem 3rem;
 }
 
@@ -9,6 +9,7 @@
   .legal-page {
     width: 100%;
     max-width: 100%;
+    margin-top: 5rem;
   }
 }
 

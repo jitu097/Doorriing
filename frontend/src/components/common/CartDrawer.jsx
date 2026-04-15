@@ -17,7 +17,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
   const handleCheckout = () => {
     if (cartItems.length > 0) {
       onClose();
-      navigate('/checkout');
+      navigate('/checkout/payment');
     }
   };
 
