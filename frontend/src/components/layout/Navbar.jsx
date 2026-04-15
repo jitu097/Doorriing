@@ -141,23 +141,25 @@ const Navbar = ({ onCartClick }) => {
         {showSearch && (
           <div className="navbar-searchbar-dropdown">
             <div className="searchbar-dropdown-content">
-              <input
-                type="text"
-                className="searchbar-input-dropdown"
-                placeholder="Search products..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                onKeyPress={handleSearch}
-                autoFocus
-              />
-              <button
-                className="searchbar-search-btn-dropdown"
-                type="button"
-                onClick={handleSearch}
-                aria-label="Search"
-              >
-                🔍
-              </button>
+              <div className="searchbar-input-wrapper">
+                <input
+                  type="text"
+                  className="searchbar-input-dropdown"
+                  placeholder="Search products..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  onKeyPress={handleSearch}
+                  autoFocus
+                />
+                <button
+                  className="searchbar-search-btn-inside"
+                  type="button"
+                  onClick={handleSearch}
+                  aria-label="Search"
+                >
+                  <img src="/search.webp" alt="Search" className="searchbar-inside-icon" loading="lazy" />
+                </button>
+              </div>
               <button
                 className="searchbar-close-btn-dropdown"
                 type="button"
