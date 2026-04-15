@@ -99,6 +99,23 @@
     align-items: center;
 }
 
+.checkout-address-edit-link {
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #E95322;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.checkout-address-edit-link:hover {
+    border-color: #E95322;
+    background: #fff7f4;
+}
+
 /* Addresses */
 .address-grid-horizontal {
     display: flex;

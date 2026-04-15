@@ -215,6 +215,15 @@ const CheckoutPayment = () => {
     navigate("/home");
   };
 
+  const handleEditAddress = () => {
+    navigate("/address", {
+      state: {
+        from: "/checkout/payment",
+        selectedAddressId,
+      },
+    });
+  };
+
   if (!cartItems || cartItems.length === 0) return null;
 
   return (
@@ -249,6 +258,13 @@ const CheckoutPayment = () => {
           <div className="checkout-section">
             <div className="section-heading">
               <span>Delivery Address</span>
+              <button
+                type="button"
+                className="checkout-address-edit-link"
+                onClick={handleEditAddress}
+              >
+                Edit
+              </button>
             </div>
 
             {selectedAddress && (
