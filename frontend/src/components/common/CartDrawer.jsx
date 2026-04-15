@@ -21,6 +21,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
     }
   };
 
+
   const handleOverlayClick = (e) => {
     if (e.target.classList.contains('cart-drawer-overlay')) {
       onClose();

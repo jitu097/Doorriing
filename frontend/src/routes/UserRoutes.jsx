@@ -8,7 +8,6 @@ const Signup = lazy(() => import('../pages/auth/Signup'));
 const DeleteAccount = lazy(() => import('../pages/auth/DeleteAccount'));
 const Landingpage = lazy(() => import('../pages/Landingpage/Landingpage'));
 const Home = lazy(() => import('../pages/home/Home'));
-const Checkout = lazy(() => import('../pages/cart/Checkout'));
 const CheckoutPayment = lazy(() => import('../pages/cart/CheckoutPayment'));
 const OrderSuccess = lazy(() => import('../pages/cart/OrderSuccess'));
 const OrderConfirmation = lazy(() => import('../pages/orders/OrderConfirmation'));
@@ -90,7 +89,6 @@ const UserRoutes = () => {
       {/* Protected Routes - Require authentication */}
       <Route element={<ProtectedRoute />}>
         <Route element={<PageLayout />}>
-          <Route path="/checkout" element={<Checkout />} />
           <Route path="/checkout/payment" element={<CheckoutPayment />} />
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />

@@ -26,6 +26,14 @@ const CheckoutPayment = () => {
     return initial ? String(initial) : null;
   });
 
+  // Auto-select first address if none selected and addresses exist
+  useEffect(() => {
+    if (!selectedAddressId && addresses && addresses.length > 0) {
+      const firstAddressId = String(addresses[0].id);
+      sessionStorage.setItem("checkoutSelectedAddressId", firstAddressId);
+    }
+  }, [addresses, selectedAddressId]);
+
   const subtotal = getCartTotal();
   const resolvedDeliveryFee = deliveryFee ?? 0;
   const resolvedConvenienceFee = convenienceFee ?? 0;
@@ -36,12 +44,6 @@ const CheckoutPayment = () => {
       navigate("/home", { replace: true });
     }
   }, [cartItems, navigate]);
-
-  useEffect(() => {
-    if (!selectedAddressId) {
-      navigate("/checkout", { replace: true });
-    }
-  }, [selectedAddressId, navigate]);
 
   const selectedAddress = useMemo(() => {
     if (!addresses) return null;
@@ -114,7 +116,7 @@ const CheckoutPayment = () => {
               if (verifyData.success) {
                 await clearCart();
                 sessionStorage.removeItem("checkoutSelectedAddressId");
-                
+
                 // Fetch order details to display in notification
                 try {
                   const orderResponse = await orderService.getOrderById(order.id);
@@ -124,7 +126,7 @@ const CheckoutPayment = () => {
                 } catch (err) {
                   console.error("Failed to fetch order details:", err);
                 }
-                
+
                 navigate("/home");
               } else {
                 setErrorMsg("Payment verification failed. Please try again.");
@@ -196,7 +198,7 @@ const CheckoutPayment = () => {
       } catch (err) {
         console.error("Failed to fetch order details:", err);
       }
-      
+
       navigate("/home");
     } catch (error) {
       console.error("Checkout failed:", error);
@@ -209,8 +211,8 @@ const CheckoutPayment = () => {
     }
   };
 
-  const handleBackToAddress = () => {
-    navigate("/checkout", { state: { selectedAddressId } });
+  const handleBackToHome = () => {
+    navigate("/home");
   };
 
   if (!cartItems || cartItems.length === 0) return null;
@@ -218,9 +220,9 @@ const CheckoutPayment = () => {
   return (
     <div className="checkout-page">
       <div className="checkout-container">
-        <button 
-          className="checkout-back-btn" 
-          onClick={handleBackToAddress}
+        <button
+          className="checkout-back-btn"
+          onClick={handleBackToHome}
           aria-label="Go back"
         >
           ←
@@ -247,13 +249,6 @@ const CheckoutPayment = () => {
           <div className="checkout-section">
             <div className="section-heading">
               <span>Delivery Address</span>
-              <button
-                type="button"
-                className="address-edit-btn"
-                onClick={handleBackToAddress}
-              >
-                Change
-              </button>
             </div>
 
             {selectedAddress && (

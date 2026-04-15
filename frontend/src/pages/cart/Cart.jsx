@@ -1,23 +1,16 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import CartItem from '../../components/user/CartItem';
 import './Cart.css';
 
 const Cart = () => {
-  const navigate = useNavigate();
   const { cartItems, getCartTotal, deliveryFee, convenienceFee, platformSettingsLoading } = useCart();
 
   const subtotal = getCartTotal();
   const resolvedDeliveryFee = deliveryFee ?? 0;
   const resolvedConvenienceFee = convenienceFee ?? 0;
   const grandTotal = subtotal + resolvedDeliveryFee + resolvedConvenienceFee;
-
-  const handleCheckout = () => {
-    if (cartItems.length > 0) {
-      navigate('/checkout');
-    }
-  };
 
   return (
     <div className="cart-page">
@@ -63,13 +56,6 @@ const Cart = () => {
                 <span>Grand Total</span>
                 <span>₹{grandTotal.toFixed(2)}</span>
               </div>
-              <button
-                className="checkout-btn"
-                onClick={handleCheckout}
-                disabled={cartItems.length === 0}
-              >
-                Proceed to Checkout
-              </button>
               <Link to="/home" className="continue-link">
                 Continue Shopping
               </Link>
