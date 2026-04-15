@@ -68,6 +68,15 @@ const Navbar = ({ onCartClick }) => {
   const handleLocationClick = () => navigate('/address');
   const handleLocationClose = () => setShowLocation(false);
 
+  const handleSearch = (e) => {
+    if (e.key === 'Enter' || e.type === 'click') {
+      if (search.trim()) {
+        setShowSearch(false);
+        navigate(`/home?search=${encodeURIComponent(search)}`);
+      }
+    }
+  };
+
   const handleNavAddressSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -114,6 +123,7 @@ const Navbar = ({ onCartClick }) => {
             placeholder='Search "chocolate"'
             value={search}
             onChange={e => setSearch(e.target.value)}
+            onKeyPress={handleSearch}
           />
         </div>
 
@@ -127,24 +137,35 @@ const Navbar = ({ onCartClick }) => {
           <img src="/search.webp" alt="Search" className="searchbar-icon" loading="lazy" />
         </button>
 
-        {/* Search - Mobile Overlay */}
+        {/* Search - Mobile Dropdown */}
         {showSearch && (
-          <div className="navbar-searchbar-overlay">
-            <input
-              type="text"
-              className="searchbar-input-overlay"
-              placeholder="Search products..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              autoFocus
-            />
-            <button
-              className="searchbar-close-btn"
-              type="button"
-              onClick={() => setShowSearch(false)}
-            >
-              ✕
-            </button>
+          <div className="navbar-searchbar-dropdown">
+            <div className="searchbar-dropdown-content">
+              <input
+                type="text"
+                className="searchbar-input-dropdown"
+                placeholder="Search products..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                onKeyPress={handleSearch}
+                autoFocus
+              />
+              <button
+                className="searchbar-search-btn-dropdown"
+                type="button"
+                onClick={handleSearch}
+                aria-label="Search"
+              >
+                🔍
+              </button>
+              <button
+                className="searchbar-close-btn-dropdown"
+                type="button"
+                onClick={() => setShowSearch(false)}
+              >
+                ✕
+              </button>
+            </div>
           </div>
         )}
 

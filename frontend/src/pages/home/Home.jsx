@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ImageScroller from '../../components/common/ImageScroller';
 import HomeButtons from './HomeButtons';
 import ItemCard from '../../components/common/ItemCard';
@@ -92,6 +93,8 @@ const normalizeItems = (items = []) => {
 };
 
 const Home = () => {
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('search') || '';
   const [groceryItems, setGroceryItems] = useState([]);
   const [restaurantItems, setRestaurantItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -197,13 +200,24 @@ const Home = () => {
   const activeItems = activeSection === SECTION_CONFIG.grocery.key ? groceryItems : restaurantItems;
   const { title, emptyMessage } = SECTION_CONFIG[activeSection];
 
+  // Filter items based on search query
+  const filteredItems = searchQuery
+    ? activeItems.filter(item =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.shopName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : activeItems;
+
   return (
     <div className="home-page">
       <ImageScroller />
       <HomeButtons />
       <OrderNotification />
       <div className="home-content">
-        <h1 className="home-main-title">Welcome to Doorriing</h1>
+        {!searchQuery && (
+          <h1 className="home-main-title">Welcome to Doorriing</h1>
+        )}
         <div className="home-section-toggle">
           <button
             type="button"
@@ -221,7 +235,7 @@ const Home = () => {
           </button>
         </div>
 
-        {renderItemsSection(title, activeItems, emptyMessage)}
+        {renderItemsSection(title, filteredItems, searchQuery ? 'No products match your search.' : emptyMessage)}
       </div>
     </div>
   );
