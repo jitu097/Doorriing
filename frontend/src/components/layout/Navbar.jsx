@@ -129,7 +129,7 @@ const Navbar = ({ onCartClick }) => {
 
         {/* Search - Mobile Icon */}
         <button
-          className="searchbar-icon-btn searchbar-mobile-icon"
+          className={`searchbar-icon-btn searchbar-mobile-icon ${showSearch ? 'hidden' : ''}`}
           type="button"
           onClick={() => setShowSearch(true)}
           aria-label="Open search"

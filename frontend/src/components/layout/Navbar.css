@@ -123,6 +123,10 @@
 	display: none !important;
 }
 
+.searchbar-mobile-icon.hidden {
+	display: none !important;
+}
+
 .searchbar-icon {
 	width: 1.5rem;
 	height: 1.5rem;
