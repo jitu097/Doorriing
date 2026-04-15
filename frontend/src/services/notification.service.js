@@ -23,3 +23,8 @@ export const markAsRead = async (id) => {
     return true;
   }
 };
+
+export const markAllAsRead = async () => {
+  await api.put('/notifications/read-all', {});
+  return true;
+};

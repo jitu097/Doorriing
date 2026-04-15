@@ -13,26 +13,11 @@ const CheckoutPayment = () => {
   const { setOrderAsRecent } = useRecentOrder();
 
   const { cartItems, getCartTotal, clearCart, deliveryFee, convenienceFee, platformSettingsLoading } = useCart();
-  const { addresses } = useAddress();
+  const { addresses, activeAddress } = useAddress();
 
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [errorMsg, setErrorMsg] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  const [selectedAddressId] = useState(() => {
-    const initial =
-      location.state?.selectedAddressId ||
-      sessionStorage.getItem("checkoutSelectedAddressId");
-    return initial ? String(initial) : null;
-  });
-
-  // Auto-select first address if none selected and addresses exist
-  useEffect(() => {
-    if (!selectedAddressId && addresses && addresses.length > 0) {
-      const firstAddressId = String(addresses[0].id);
-      sessionStorage.setItem("checkoutSelectedAddressId", firstAddressId);
-    }
-  }, [addresses, selectedAddressId]);
 
   const subtotal = getCartTotal();
   const resolvedDeliveryFee = deliveryFee ?? 0;
@@ -46,11 +31,20 @@ const CheckoutPayment = () => {
   }, [cartItems, navigate]);
 
   const selectedAddress = useMemo(() => {
-    if (!addresses) return null;
-    return addresses.find(
-      (addr) => String(addr.id) === String(selectedAddressId)
-    );
-  }, [addresses, selectedAddressId]);
+    if (!addresses || addresses.length === 0) return null;
+
+    if (activeAddress?.id) {
+      const activeMatch = addresses.find(
+        (addr) => String(addr.id) === String(activeAddress.id)
+      );
+      if (activeMatch) return activeMatch;
+    }
+
+    const defaultAddress = addresses.find((addr) => addr.isDefault);
+    return defaultAddress || addresses[0];
+  }, [addresses, activeAddress]);
+
+  const selectedAddressId = selectedAddress ? String(selectedAddress.id) : null;
 
   const formatPrimaryLine = (addr) => {
     if (!addr) return "";
@@ -115,8 +109,6 @@ const CheckoutPayment = () => {
 
               if (verifyData.success) {
                 await clearCart();
-                sessionStorage.removeItem("checkoutSelectedAddressId");
-
                 // Fetch order details to display in notification
                 try {
                   const orderResponse = await orderService.getOrderById(order.id);
@@ -181,8 +173,6 @@ const CheckoutPayment = () => {
       });
 
       await clearCart();
-      sessionStorage.removeItem("checkoutSelectedAddressId");
-
       const orderId =
         response.data?.order?.id ||
         response.data?.order?.order_number ||

@@ -28,7 +28,7 @@ const NotificationBell = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef(null);
-  const { recentNotifications, unreadCount, markAsRead } = useNotification();
+  const { recentNotifications, unreadCount, markAsRead, markAllAsRead } = useNotification();
 
   const hasNotifications = useMemo(
     () => Array.isArray(recentNotifications) && recentNotifications.length > 0,
@@ -51,7 +51,7 @@ const NotificationBell = () => {
       try {
         await markAsRead(notification.id);
       } catch {
-        // Keep navigation responsive even if mark-read request fails.
+        // Keep the dropdown usable even if mark-read request fails.
       }
     }
 
@@ -81,7 +81,24 @@ const NotificationBell = () => {
       {isOpen && (
         <div className="notification-dropdown">
           <div className="notification-dropdown-header">
-            <h4>Notifications</h4>
+            <div className="notification-dropdown-header-row">
+              <h4>Notifications</h4>
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  className="notification-mark-all-btn"
+                  onClick={async () => {
+                    try {
+                      await markAllAsRead();
+                    } catch {
+                      // Keep the dropdown usable if the bulk update fails.
+                    }
+                  }}
+                >
+                  Mark all as read
+                </button>
+              )}
+            </div>
           </div>
 
           {!hasNotifications && <div className="notification-empty">No notifications</div>}
@@ -102,16 +119,6 @@ const NotificationBell = () => {
             </ul>
           )}
 
-          <button
-            type="button"
-            className="notification-view-all"
-            onClick={() => {
-              setIsOpen(false);
-              navigate('/notifications');
-            }}
-          >
-            View All
-          </button>
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { getNotifications, markAsRead } from '../services/notification.service';
+import { getNotifications, markAllAsRead, markAsRead } from '../services/notification.service';
 
 const NotificationContext = createContext(null);
 
@@ -42,6 +42,18 @@ export const NotificationProvider = ({ children }) => {
     }
   }, []);
 
+  const markAllNotificationsAsRead = useCallback(async () => {
+    setNotifications((prev) => prev.map((item) => ({ ...item, is_read: true })));
+    const previousNotifications = notifications;
+
+    try {
+      await markAllAsRead();
+    } catch (err) {
+      setNotifications(previousNotifications);
+      throw err;
+    }
+  }, [notifications]);
+
   useEffect(() => {
     fetchNotifications();
 
@@ -59,6 +71,7 @@ export const NotificationProvider = ({ children }) => {
     error,
     fetchNotifications,
     markAsRead: markNotificationAsRead,
+    markAllAsRead: markAllNotificationsAsRead,
     recentNotifications: notifications.slice(0, 5),
   };
 
