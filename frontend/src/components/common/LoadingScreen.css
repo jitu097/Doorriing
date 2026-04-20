@@ -89,32 +89,32 @@ html, body {
 	}
 
 	.grocery {
-		top: 9%;
-		left: 40%;
+		top: 30%;
+		left: -10%;
 	}
 
 	.hotel {
-		top: 5%;
-		right: 40%;
+		top: 12%;
+		right: 50%;
 	}
 
 	.restaurant {
 		top: 20%;
-		left: 40%;
+		left: 60%;
 	}
 
 	.cosmetic {
 		top: 30%;
-		right: 10%;
+		right: 15%;
 	}
 
 	.dairy {
-		bottom: 30%;
-		right: 60%;
+		top:5%;
+		left: 30%;
 	}
 
 	.electric {
-		top: 50%;
-		left: 25%;
+		top: 48%;
+		left: 30%;
 	}
 }
