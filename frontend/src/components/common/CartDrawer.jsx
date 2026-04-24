@@ -123,9 +123,14 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 </button>
                 <div className="cancellation-policy-box">
                   <div className="cancellation-policy-title">Cancellation Policy</div>
-                  <div className="cancellation-policy-text">
-                    Orders cannot be cancelled once packed for delivery. In case of unexpected delays, a refund will be provided, if applicable.
-                  </div>
+                 <div className="cancellation-policy-text">
+  <ul>
+    <li>Once an order is placed, it cannot be cancelled.</li>
+    <li>Customers are advised to check their order at the time of delivery.</li>
+    <li>For any issues or queries related to the order items, please contact the seller directly.</li>
+    <li>The app does not handle or take responsibility for item-related queries.</li>
+  </ul>
+</div>
                 </div>
               </div>
             </>

@@ -2,6 +2,8 @@ import shopService from './shop.service.js';
 import { sendSuccess, sendError, sendPaginated } from '../../utils/response.js';
 import { logger } from '../../utils/logger.js';
 import { DEFAULT_PAGE_SIZE } from '../../utils/constants.js';
+import { checkServiceability, validateCoordinates } from '../../utils/distance.util.js';
+import { deliveryZoneService } from '../delivery-zone/delivery-zone.service.js';
 
 class ShopController {
   /**
@@ -134,6 +136,69 @@ class ShopController {
       return sendSuccess(res, shops, 'Home page shops fetched successfully');
     } catch (error) {
       logger.error('GetShopsForHome controller error', { error: error.message });
+      next(error);
+    }
+  }
+
+  /**
+   * Get all shops within service area
+   * GET /api/shops/serviceable
+   * Required: latitude, longitude (user location)
+   * Returns all shops if user is inside the delivery zone, else empty array with serviceability message
+   */
+  async getServiceableShops(req, res, next) {
+    try {
+      const { latitude, longitude, business_type, page = 1, page_size = DEFAULT_PAGE_SIZE } = req.query;
+
+      // Validate coordinates
+      if (!latitude || !longitude) {
+        return sendError(res, 'Latitude and longitude are required', 400);
+      }
+
+      const validation = validateCoordinates(latitude, longitude);
+      if (!validation.valid) {
+        return sendError(res, validation.error, 400);
+      }
+
+      // Check serviceability
+      const zoneConfig = deliveryZoneService.getZoneConfig();
+      const serviceabilityResult = checkServiceability(
+        validation.latitude,
+        validation.longitude,
+        zoneConfig
+      );
+
+      // If not serviceable, return empty shops with message
+      if (!serviceabilityResult.isServiceable) {
+        return sendSuccess(
+          res,
+          {
+            shops: [],
+            pagination: { page: 1, page_size, total: 0, total_pages: 0 },
+            serviceable: false,
+            message: serviceabilityResult.message,
+          },
+          'Location is outside service area'
+        );
+      }
+
+      // If serviceable, get shops based on business_type
+      let result;
+      if (business_type) {
+        result = await shopService.getShopsByBusinessType(business_type, parseInt(page), parseInt(page_size));
+      } else {
+        result = await shopService.getShops({ business_type: null, city: null, search: null }, parseInt(page), parseInt(page_size));
+      }
+
+      return sendPaginated(
+        res,
+        result.shops,
+        result.pagination,
+        'Serviceable shops fetched successfully',
+        { serviceable: true, ...serviceabilityResult }
+      );
+    } catch (error) {
+      logger.error('GetServiceableShops controller error', { error: error.message });
       next(error);
     }
   }

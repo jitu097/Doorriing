@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import { prefersReducedMotion, enableGPUAcceleration } from "../../utils/animationOptimization";
@@ -17,7 +16,7 @@ const drop = {
       opacity: 1,
       scale: 1,
       transition: {
-        delay: reducedMotion ? 0 : i * 0.12, // Reduced from 0.20s to 0.12s
+        delay: 0, // All shops drop at same time
         type: "spring",
         stiffness: reducedMotion ? 1 : 100, // Reduced from 120 to 100 for smoother
         damping: reducedMotion ? 1 : 12, // Reduced from 10 to 12 for more damping
@@ -73,4 +72,3 @@ export default function LoadingScreen() {
     </div>
   );
 }
-
