@@ -6,6 +6,7 @@ import HomeButtons from './HomeButtons';
 import ItemCard from '../../components/common/ItemCard';
 import OrderNotification from '../../components/common/OrderNotification';
 import { itemService } from '../../services/item.service';
+import useServiceability from '../../hooks/useServiceability';
 import './Home.css';
 import { computeFinalPrice } from '../../utils/pricing';
 
@@ -101,7 +102,28 @@ const Home = () => {
   const [error, setError] = useState('');
   const [activeSection, setActiveSection] = useState(SECTION_CONFIG.grocery.key);
 
+  // Serviceability check
+  const {
+    isServiceable,
+    loading: locationLoading,
+    error: locationError,
+    message: locationMessage,
+    distance,
+    radiusKm,
+    getCurrentLocation,
+  } = useServiceability();
+
+  // Check location on component mount
   useEffect(() => {
+    getCurrentLocation();
+  }, []);
+
+  // Fetch items only if serviceable
+  useEffect(() => {
+    if (!isServiceable || locationLoading) {
+      return;
+    }
+
     const fetchHomeItems = async () => {
       try {
         setLoading(true);
@@ -138,7 +160,7 @@ const Home = () => {
     };
 
     fetchHomeItems();
-  }, []);
+  }, [isServiceable, locationLoading]);
 
   const renderItemsSection = (title, items, emptyMessage) => {
     // Safety: ensure items is always an array
@@ -215,27 +237,60 @@ const Home = () => {
       <HomeButtons />
       <OrderNotification />
       <div className="home-content">
-        {!searchQuery && (
-          <h1 className="home-main-title">Welcome to Doorriing</h1>
+        {/* Location Loading State */}
+        {locationLoading && (
+          <div className="location-checking-alert">
+            <div className="spinner"></div>
+            <p>Checking your location...</p>
+          </div>
         )}
-        <div className="home-section-toggle">
-          <button
-            type="button"
-            className={`home-toggle-btn ${activeSection === SECTION_CONFIG.grocery.key ? 'is-active' : ''}`}
-            onClick={() => setActiveSection(SECTION_CONFIG.grocery.key)}
-          >
-            Fresh Grocery Items
-          </button>
-          <button
-            type="button"
-            className={`home-toggle-btn ${activeSection === SECTION_CONFIG.restaurant.key ? 'is-active' : ''}`}
-            onClick={() => setActiveSection(SECTION_CONFIG.restaurant.key)}
-          >
-            Restaurant Specials
-          </button>
-        </div>
 
-        {renderItemsSection(title, filteredItems, searchQuery ? 'No products match your search.' : emptyMessage)}
+        {/* Outside Service Area */}
+        {!locationLoading && !isServiceable && (
+          <div className="serviceability-alert">
+            <div className="alert-icon">📍</div>
+            <h2>Outside Delivery Area</h2>
+            <p className="alert-message">{locationMessage}</p>
+            {distance && radiusKm && (
+              <p className="distance-info">
+                You are <strong>{distance} km</strong> away. We deliver within <strong>{radiusKm} km</strong> radius.
+              </p>
+            )}
+            {locationError && (
+              <p className="alert-error">{locationError}</p>
+            )}
+            <button className="btn-retry" onClick={() => getCurrentLocation()}>
+              🔄 Try Again
+            </button>
+          </div>
+        )}
+
+        {/* Inside Service Area - Show Content */}
+        {!locationLoading && isServiceable && (
+          <>
+            {!searchQuery && (
+              <h1 className="home-main-title">Welcome to Doorriing</h1>
+            )}
+            <div className="home-section-toggle">
+              <button
+                type="button"
+                className={`home-toggle-btn ${activeSection === SECTION_CONFIG.grocery.key ? 'is-active' : ''}`}
+                onClick={() => setActiveSection(SECTION_CONFIG.grocery.key)}
+              >
+                Fresh Grocery Items
+              </button>
+              <button
+                type="button"
+                className={`home-toggle-btn ${activeSection === SECTION_CONFIG.restaurant.key ? 'is-active' : ''}`}
+                onClick={() => setActiveSection(SECTION_CONFIG.restaurant.key)}
+              >
+                Restaurant Specials
+              </button>
+            </div>
+
+            {renderItemsSection(title, filteredItems, searchQuery ? 'No products match your search.' : emptyMessage)}
+          </>
+        )}
       </div>
     </div>
   );

@@ -7,6 +7,9 @@ const router = Router();
 // Get shops for home page (must be first to avoid route conflicts)
 router.get('/home', optionalAuth, shopController.getShopsForHome);
 
+// Get serviceable shops (checks delivery zone) (must be before /nearby)
+router.get('/serviceable', optionalAuth, shopController.getServiceableShops);
+
 // Get nearby shops (must be before /:id to avoid route conflict)
 router.get('/nearby', optionalAuth, shopController.getNearbyShops);
 
