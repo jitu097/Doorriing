@@ -9,11 +9,12 @@ class DeliveryZoneService {
     // Default zone configuration for Latehar, Jharkhand
     // Can be updated via API or database later
     this.zoneConfig = {
-      id: 'latehar-zone-1',
-      name: 'Latehar Service Area',
-      centerLat: 24.2667, // Latehar center coordinates
-      centerLon: 84.6167,
-      radiusKm: 10, // 10 km delivery radius
+      id: 'latehar-zone',
+      name: 'Latehar',
+      centerLat: 24.2669, // Latehar center coordinates
+      centerLon: 84.3566,
+      radiusKm: 8.5, // 8.5 km delivery radius
+      isActive: true,
       city: 'Latehar',
       state: 'Jharkhand',
       createdAt: new Date(),
