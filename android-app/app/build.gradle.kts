@@ -12,8 +12,8 @@ android {
         applicationId = "com.doorriing.user"
         minSdk = 24
         targetSdk = 35
-        versionCode = 11
-        versionName = "11.0"
+        versionCode = 15
+        versionName = "15.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -66,6 +66,11 @@ android {
 }
 
 configurations.all {
+    // Exclude ALL Advertising ID and AdServices related libraries
+    exclude(group = "com.google.android.gms", module = "play-services-ads")
+    exclude(group = "com.google.android.gms", module = "play-services-ads-lite")
+    exclude(group = "com.google.android.gms", module = "play-services-ads-identifier")
+    exclude(group = "com.google.android.gms", module = "play-services-measurement-api")
     exclude(group = "androidx.privacysandbox.ads", module = "ads-adservices")
     exclude(group = "androidx.privacysandbox.ads", module = "ads-adservices-java")
 }

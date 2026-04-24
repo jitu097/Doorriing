@@ -27,3 +27,8 @@
 # Firebase
 -keep class com.google.firebase.** { *; }
 -dontwarn com.google.firebase.**
+
+# Missing classes from excluded ads-adservices and play-services-ads-identifier
+-dontwarn android.adservices.**
+-dontwarn androidx.privacysandbox.ads.adservices.**
+-dontwarn com.google.android.gms.ads.identifier.**

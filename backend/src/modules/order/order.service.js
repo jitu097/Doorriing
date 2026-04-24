@@ -127,6 +127,16 @@ class OrderService {
         reference_id: order.id,
       });
 
+      // ✅ NOTIFY SELLER: Ensure the shop owner gets a push notification immediately
+      await pushNotificationService.sendPushNotification({
+        shop_id,
+        title: 'New Order Received ✅',
+        message: `You have received a new order #${orderNumber}. Please take action!`,
+        type: 'new_order',
+        reference_id: order.id,
+        target: 'shop'
+      });
+
       logger.info('Order created successfully', { orderId: order.id, orderNumber });
 
       return order;

@@ -10,6 +10,9 @@ const INVALID_TOKEN_ERRORS = new Set([
 ]);
 
 class PushNotificationService {
+  /**
+   * ✅ Core notification dispatcher (Restored & Fixed)
+   */
   async sendPushNotification({
     customer_id = null,
     shop_id = null,
@@ -19,135 +22,134 @@ class PushNotificationService {
     reference_id = '',
     target = null,
   }) {
-    if (!customer_id && !shop_id) {
-      throw new Error('Either customer_id or shop_id is required');
-    }
+    try {
+      if (!customer_id && !shop_id) {
+        throw new Error('Either customer_id or shop_id is required');
+      }
 
-    if (!title || !message) {
-      throw new Error('Both title and message are required');
-    }
+      if (!title || !message) {
+        throw new Error('Both title and message are required');
+      }
 
-    await this.storeNotification({
-      customer_id,
-      shop_id,
-      title,
-      message,
-      type,
-      reference_id,
-    });
+      // 1. Determine priority and channel
+      const isSeller = target === 'shop';
+      const channelId = isSeller ? 'doorriing_seller_channel' : 'default_channel';
 
-    const tokenRows = await this.getTokens({ customer_id, shop_id, target });
-    
-    // 1. Clean and validate tokens
-    const fcmTokens = (tokenRows || [])
-      .map(row => row.fcm_token)
-      .filter(token => token && typeof token === 'string' && token.trim() !== '');
+      if (isSeller) {
+        console.log(`[FCM_TRACE] 🚀 Preparing notification for shop: ${shop_id}`);
+      }
 
-    console.log("Tokens fetched from DB:", fcmTokens);
-
-    if (!isFirebaseAdminConfigured) {
-      logger.warn('Skipping FCM send because Firebase Admin is not configured', {
+      // 2. Persistent storage (Ensures history even if push fails)
+      await this.storeNotification({
         customer_id,
         shop_id,
-      });
-      return { sent: 0, failed: 0, stored: true };
-    }
+        title,
+        message,
+        type,
+        reference_id,
+      }).catch(err => console.error("⚠️ Failed to store notification in DB:", err.message));
 
-    // 2. Ensure tokens array is NOT empty
-    if (fcmTokens.length === 0) {
-      console.log("No valid FCM tokens found for user/shop, skipping send.");
-      return { sent: 0, failed: 0, stored: true };
-    }
+      // 3. Fetch Tokens
+      const tokenRows = await this.getTokens({ customer_id, shop_id, target });
+      const fcmTokens = (tokenRows || [])
+        .map(row => row.fcm_token)
+        .filter(token => token && typeof token === 'string' && token.trim() !== '');
 
-    const payload = {
-      tokens: fcmTokens,
-      notification: {
-        title: title,
-        body: message,
-      },
-      data: {
-        title: String(title || ''),
-        body: String(message || ''),
-        target_url: String(reference_id ? `/orders/${reference_id}` : ''),
-        type: String(type || ''),
-      },
-      android: {
-        priority: 'high',
+      if (fcmTokens.length === 0) {
+        console.log(`[FCM_TRACE] No tokens found for ${isSeller ? 'shop' : 'user'}: ${isSeller ? shop_id : customer_id}`);
+        return { sent: 0, failed: 0, stored: true };
+      }
+
+      if (!isFirebaseAdminConfigured) {
+        logger.warn('Skipping FCM send because Firebase Admin is not configured');
+        return { sent: 0, failed: 0, stored: true };
+      }
+
+      // 4. Construct Payload
+      const payload = {
+        tokens: fcmTokens,
         notification: {
-          channelId: 'default_channel',
+          title: String(title),
+          body: String(message),
         },
-      },
-    };
+        data: {
+          title: String(title),
+          body: String(message),
+          target_url: String(reference_id ? `/orders/${reference_id}` : ''),
+          type: String(type || ''),
+          order_id: String(reference_id || ''),
+          click_action: isSeller ? 'OPEN_ORDER' : ''
+        },
+        android: {
+          priority: 'high',
+          notification: {
+            channelId: channelId,
+          },
+        },
+      };
 
-    console.log("Sending FCM payload:", JSON.stringify(payload, null, 2));
+      if (isSeller) {
+        console.log(`[FCM_TRACE] 📡 Dispatching to ${fcmTokens.length} tokens via channel: ${channelId}`);
+      }
 
-    try {
+      // 5. Atomic Send
       const response = await admin.messaging().sendEachForMulticast(payload);
       
       let sent = 0;
       let failed = 0;
 
-      // 3. Handle PARTIAL SUCCESS
       response.responses.forEach(async (res, index) => {
         const token = fcmTokens[index];
         if (res.success) {
           sent++;
-          console.log(`✅ FCM Sent successfully to token: ${token}`);
-          console.log("Firebase response:", res.messageId);
+          if (isSeller) console.log(`✅ [FCM_SUCCESS] Sent to token ending in ...${token.slice(-6)}`);
         } else {
           failed++;
-          console.error(`❌ FCM Failed for token: ${token}`);
-          console.error("Full error object:", JSON.stringify(res.error, null, 2));
-
-          // 4. UPSERT/Clean Token in DB
+          console.error(`❌ [FCM_FAILURE] Error: ${res.error.code} for token ...${token.slice(-6)}`);
           if (res.error.code === 'messaging/registration-token-not-registered') {
-            console.log(`Removing unregistered token from DB: ${token}`);
-            await this.removeToken(token);
+             await this.removeToken(token).catch(() => {});
           }
         }
       });
 
       return { sent, failed, stored: true };
     } catch (error) {
-      logger.error('Multicast FCM send failed entirely', {
-        error: error.message,
-        customer_id,
-        shop_id,
-      });
-      console.error("Critical FCM error:", error);
+      logger.error('Critical failure in sendPushNotification', { error: error.message });
+      // We don't throw - we want the order creation to succeed even if notifications fail
       return { sent: 0, failed: 0, error: error.message };
     }
   }
 
   async getTokens({ customer_id = null, shop_id = null, target = null }) {
-    let query = supabase.from('notification_tokens').select('fcm_token');
+    try {
+      if (target === 'shop' && shop_id) {
+        const { data, error } = await supabase
+          .from('seller_notification_tokens')
+          .select('fcm_token')
+          .eq('shop_id', shop_id);
+        
+        if (error) throw error;
+        return data || [];
+      }
 
-    if (target === 'customer' && customer_id) {
-      query = query.eq('customer_id', customer_id);
-    } else if (target === 'shop' && shop_id) {
-      query = query.eq('shop_id', shop_id);
-    } else {
-      if (customer_id && shop_id) {
+      let query = supabase.from('notification_tokens').select('fcm_token');
+      if (target === 'customer' && customer_id) {
+        query = query.eq('customer_id', customer_id);
+      } else if (customer_id && shop_id) {
         query = query.or(`customer_id.eq.${customer_id},shop_id.eq.${shop_id}`);
       } else if (customer_id) {
         query = query.eq('customer_id', customer_id);
       } else if (shop_id) {
         query = query.eq('shop_id', shop_id);
       }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      logger.error('Failed to fetch notification tokens', { error: error.message });
+      return [];
     }
-
-    const { data, error } = await query;
-
-    if (error) {
-      logger.error('Failed to fetch notification tokens', {
-        error,
-        customer_id,
-        shop_id,
-      });
-      throw new Error('Failed to fetch notification tokens');
-    }
-
-    return data || [];
   }
 
   async storeNotification({ customer_id = null, shop_id = null, title, message, type = '', reference_id = '' }) {
@@ -163,61 +165,26 @@ class PushNotificationService {
         is_read: false,
       });
 
-    if (error) {
-      logger.error('Failed to store notification', {
-        error,
-        customer_id,
-        shop_id,
-        type,
-      });
-      throw new Error('Failed to store notification');
-    }
+    if (error) throw error;
   }
 
   async removeToken(fcmToken) {
-    const { error } = await supabase
-      .from('notification_tokens')
-      .delete()
-      .eq('fcm_token', fcmToken);
-
-    if (error) {
-      logger.error('Failed to delete invalid FCM token', { error, fcmToken });
-      return;
-    }
-
-    logger.info('Deleted invalid FCM token', { fcmToken });
+    await supabase.from('notification_tokens').delete().eq('fcm_token', fcmToken);
+    await supabase.from('seller_notification_tokens').delete().eq('fcm_token', fcmToken);
   }
 
   async sendOrderStatusNotification({ customer_id, shop_id = null, status, reference_id }) {
     const normalized = String(status || '').toLowerCase();
-
     const templates = {
-      placed: {
-        title: 'Order placed',
-        message: 'Your order has been placed successfully.',
-      },
-      accepted: {
-        title: 'Order accepted',
-        message: 'Your order has been accepted by the shop.',
-      },
-      confirmed: {
-        title: 'Order accepted',
-        message: 'Your order has been accepted by the shop.',
-      },
-      shipped: {
-        title: 'Order shipped',
-        message: 'Your order is on the way.',
-      },
-      delivered: {
-        title: 'Order delivered',
-        message: 'Your order has been delivered.',
-      },
+      placed: { title: 'Order placed', message: 'Your order has been placed successfully.' },
+      accepted: { title: 'Order accepted', message: 'Your order has been accepted by the shop.' },
+      confirmed: { title: 'Order accepted', message: 'Your order has been accepted by the shop.' },
+      shipped: { title: 'Order shipped', message: 'Your order is on the way.' },
+      delivered: { title: 'Order delivered', message: 'Your order has been delivered.' },
     };
 
     const template = templates[normalized];
-    if (!template) {
-      return { sent: 0, failed: 0, stored: false };
-    }
+    if (!template) return { sent: 0, failed: 0, stored: false };
 
     return this.sendPushNotification({
       customer_id,
