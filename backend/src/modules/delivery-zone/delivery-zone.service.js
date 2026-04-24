@@ -11,9 +11,9 @@ class DeliveryZoneService {
     this.zoneConfig = {
       id: 'latehar-zone',
       name: 'Latehar',
-      centerLat: 24.2669, // Latehar center coordinates
-      centerLon: 84.3566,
-      radiusKm: 45.5, // 8.5 km delivery radius
+      centerLat: 23.75, // Latehar town center coordinates
+      centerLon: 84.5,
+      radiusKm: 8.5, // 8.5 km delivery radius
       isActive: true,
       city: 'Latehar',
       state: 'Jharkhand',
