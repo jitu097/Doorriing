@@ -13,7 +13,6 @@ import addressRoutes from '../modules/address/address.routes.js';
 import bookingRoutes from '../modules/booking/booking.routes.js';
 import homeRoutes from '../modules/home/home.routes.js';
 import platformRoutes from '../modules/platform/platform.routes.js';
-import deliveryZoneRoutes from '../modules/delivery-zone/delivery-zone.routes.js';
 import monitoringRoutes from './monitoring.routes.js';
 
 const router = Router();
@@ -46,7 +45,6 @@ router.use('/notification', notificationRoutes);
 router.use('/user/addresses', addressRoutes);
 router.use('/bookings', bookingRoutes);
 router.use('/home', homeRoutes);
-router.use('/delivery-zone', deliveryZoneRoutes);
 router.use('/platform-settings', platformRoutes);
 
 export default router;
