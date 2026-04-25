@@ -32,3 +32,10 @@
 -dontwarn android.adservices.**
 -dontwarn androidx.privacysandbox.ads.adservices.**
 -dontwarn com.google.android.gms.ads.identifier.**
+
+# WebView Javascript Bridge
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+-keep class com.doorriing.user.MainActivity$AndroidAuthBridge { *; }
+

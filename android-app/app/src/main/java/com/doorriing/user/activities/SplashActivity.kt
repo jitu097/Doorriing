@@ -17,7 +17,11 @@ class SplashActivity : AppCompatActivity() {
 
         // Delay for splash screen
         Handler(Looper.getMainLooper()).postDelayed({
-            startActivity(Intent(this, MainActivity::class.java))
+            val intent = Intent(this, MainActivity::class.java).apply {
+                putExtras(this@SplashActivity.intent)
+                data = this@SplashActivity.intent.data
+            }
+            startActivity(intent)
             finish()
         }, 2000)
     }

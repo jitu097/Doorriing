@@ -54,7 +54,7 @@ class NotificationHelper(private val context: Context) {
 
             val pendingIntent = PendingIntent.getActivity(
                 context,
-                System.currentTimeMillis().toInt(),
+                (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
@@ -69,7 +69,7 @@ class NotificationHelper(private val context: Context) {
 
             try {
                 with(NotificationManagerCompat.from(context)) {
-                    notify(System.currentTimeMillis().toInt(), builder.build())
+                    notify((System.currentTimeMillis() % Int.MAX_VALUE).toInt(), builder.build())
                 }
             } catch (_: SecurityException) {
                 // No-op when notification runtime permission is denied.

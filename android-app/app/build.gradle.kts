@@ -12,8 +12,8 @@ android {
         applicationId = "com.doorriing.user"
         minSdk = 24
         targetSdk = 35
-        versionCode = 15
-        versionName = "15.0"
+        versionCode = 17
+        versionName = "17.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -54,6 +54,7 @@ android {
     buildFeatures {
         viewBinding = true
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"

@@ -137,16 +137,24 @@ const CheckoutPayment = () => {
           theme: {
             color: "#3399cc",
           },
+          modal: {
+            on_dismiss: function () {
+              setLoading(false);
+            },
+          },
         };
 
         const rzp = new window.Razorpay(options);
+        rzp.on("payment.failed", function (response) {
+          setLoading(false);
+          setErrorMsg(response.error.description || "Payment failed.");
+        });
         rzp.open();
       } catch (error) {
         setErrorMsg(
           error.message ||
           "Failed to create payment order. Please try again."
         );
-      } finally {
         setLoading(false);
       }
 

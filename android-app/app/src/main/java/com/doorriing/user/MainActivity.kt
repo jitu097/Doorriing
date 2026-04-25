@@ -20,6 +20,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.doorriing.user.databinding.ActivityMainBinding
 import com.doorriing.user.network.FcmTokenRequest
 import com.doorriing.user.network.RetrofitClient
@@ -36,7 +37,6 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.messaging.FirebaseMessaging
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -52,6 +52,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var googleSignInClient: GoogleSignInClient
+    private var isGoogleSigningIn = false
+    private var lastProcessedIntentId: String? = null
+
     private val authRepository: AuthRepository by lazy {
         AuthRepository(RetrofitClient.instance)
     }
@@ -69,6 +72,7 @@ class MainActivity : AppCompatActivity() {
     private val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        isGoogleSigningIn = false
         if (result.resultCode != RESULT_OK) {
             sendNativeGoogleErrorToWeb("Google sign-in cancelled")
             return@registerForActivityResult
@@ -142,10 +146,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startNativeGoogleSignIn() {
+        if (isGoogleSigningIn) return
+        
         if (!ensurePlayServicesAvailable()) {
             return
         }
 
+        isGoogleSigningIn = true
         googleSignInClient.signOut().addOnCompleteListener {
             googleSignInLauncher.launch(googleSignInClient.signInIntent)
         }
@@ -195,7 +202,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private inner class AndroidAuthBridge {
+    internal inner class AndroidAuthBridge {
         @JavascriptInterface
         fun startGoogleSignIn() {
             runOnUiThread {
@@ -244,40 +251,48 @@ class MainActivity : AppCompatActivity() {
 
     private fun syncFcmTokenToBackend(fcmToken: String, retryCount: Int = 0) {
         val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser == null) {
-            Log.w("MainActivity", "Skipping FCM token sync: user not logged in natively")
+        val bridgeToken = DoorriingApp.prefs.getToken()
+
+        if (currentUser == null && bridgeToken.isNullOrBlank()) {
+            Log.w("MainActivity", "Skipping FCM token sync: no native user or bridge token found")
             return
         }
 
-        currentUser.getIdToken(true).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val freshAuthToken = task.result?.token
-                if (freshAuthToken.isNullOrBlank()) {
-                    Log.e("MainActivity", "Fresh Auth Token is null/blank")
-                    return@addOnCompleteListener
-                }
-
-                CoroutineScope(Dispatchers.IO).launch {
-                    try {
-                        val response = authRepository.saveFcmToken(
-                            freshAuthToken,
-                            FcmTokenRequest(fcmToken = fcmToken, deviceType = "android")
-                        )
-
-                        if (response.isSuccessful) {
-                            Log.d("MainActivity", "FCM token synced with backend")
-                        } else if (response.code() == 401 && retryCount < 1) {
-                            Log.w("MainActivity", "FCM sync got 401, retrying once...")
-                            syncFcmTokenToBackend(fcmToken, retryCount + 1)
-                        } else {
-                            Log.e("MainActivity", "Failed to sync FCM token: ${response.errorBody()?.string()}")
-                        }
-                    } catch (error: Exception) {
-                        Log.e("MainActivity", "Error syncing FCM token", error)
+        if (currentUser != null) {
+            currentUser.getIdToken(true).addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val freshAuthToken = task.result?.token
+                    if (!freshAuthToken.isNullOrBlank()) {
+                        performFcmSync(freshAuthToken, fcmToken, retryCount)
                     }
+                } else {
+                    Log.e("MainActivity", "Failed to get fresh ID token", task.exception)
                 }
-            } else {
-                Log.e("MainActivity", "Failed to get fresh ID token", task.exception)
+            }
+        } else if (!bridgeToken.isNullOrBlank()) {
+            Log.d("MainActivity", "Syncing FCM token using bridge token")
+            performFcmSync(bridgeToken, fcmToken, retryCount)
+        }
+    }
+
+    private fun performFcmSync(authToken: String, fcmToken: String, retryCount: Int) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val response = authRepository.saveFcmToken(
+                    authToken,
+                    FcmTokenRequest(fcmToken = fcmToken, deviceType = "android")
+                )
+
+                if (response.isSuccessful) {
+                    Log.d("MainActivity", "FCM token synced with backend")
+                } else if (response.code() == 401 && retryCount < 1) {
+                    Log.w("MainActivity", "FCM sync got 401, retrying once...")
+                    syncFcmTokenToBackend(fcmToken, retryCount + 1)
+                } else {
+                    Log.e("MainActivity", "Failed to sync FCM token: ${response.errorBody()?.string()}")
+                }
+            } catch (error: Exception) {
+                Log.e("MainActivity", "Error syncing FCM token", error)
             }
         }
     }
@@ -294,18 +309,21 @@ class MainActivity : AppCompatActivity() {
             val referenceId = it.getStringExtra("reference_id")
             val targetUrl = it.getStringExtra("target_url")
 
+            // Create a unique ID for this intent to prevent re-processing on rotation
+            val currentIntentId = "${type}_${referenceId}_${targetUrl}"
+            if (currentIntentId != "__" && currentIntentId == lastProcessedIntentId) {
+                Log.d("MainActivity", "Intent already processed: $currentIntentId")
+                return
+            }
+            lastProcessedIntentId = currentIntentId
+
             Log.d("MainActivity", "Handling intent: type=$type, id=$referenceId, url=$targetUrl")
 
             // Prioritize specific notification types
             if (type != null) {
                 navigateFromNotification(type, referenceId)
-                // Clear extras to prevent re-handling on configuration changes if necessary
-                // but usually handled by checking if intent was already processed or using flags
-                it.removeExtra("type")
-                it.removeExtra("reference_id")
             } else if (!targetUrl.isNullOrEmpty()) {
                 binding.webView.loadUrl(targetUrl)
-                it.removeExtra("target_url")
             } else if (binding.webView.url == null) {
                 if (NetworkUtils.isNetworkAvailable(this)) {
                     binding.webView.loadUrl(BASE_URL)
@@ -356,6 +374,18 @@ class MainActivity : AppCompatActivity() {
             webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url.toString()
+                    
+                    if (url.startsWith("upi:")) {
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, request?.url)
+                            startActivity(intent)
+                            return true
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error opening UPI app for URL: $url", e)
+                            return true 
+                        }
+                    }
+
                     if (url.contains("accounts.google.com")) {
                         val intent = Intent(Intent.ACTION_VIEW, request?.url)
                         startActivity(intent)
@@ -377,7 +407,9 @@ class MainActivity : AppCompatActivity() {
                     request: WebResourceRequest?,
                     error: WebResourceError?
                 ) {
-                    // Handle errors
+                    if (request?.isForMainFrame == true) {
+                        showNoInternetError()
+                    }
                 }
             }
 
