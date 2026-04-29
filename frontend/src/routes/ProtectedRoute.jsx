@@ -1,11 +1,13 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { SuspenseFallback } from '../components/common/SuspenseFallback';
 
 const ProtectedRoute = () => {
   const { user, loading } = useAuth();
 
+  // Auth state has not been confirmed yet — do NOT redirect. Wait.
   if (loading) {
-    return <div>Loading...</div>; // Or a proper spinner component
+    return <SuspenseFallback />;
   }
 
   if (!user) {
