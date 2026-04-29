@@ -41,36 +41,65 @@ const normalizeItems = (items = []) => {
       const shopType = item.shops?.business_type || '';
       const isRestaurant = shopType.toLowerCase() === 'restaurant';
 
-      const baseOriginalPrice = isRestaurant
-        ? item.full_price ?? item.price ?? null
-        : item.price ?? null;
+      // Determine if this restaurant item has Half/Full variants
+      // Use has_variants flag if present, else detect from half_portion_price
+      const isVariantItem = isRestaurant && (
+        item.has_variants === true ||
+        (item.has_variants !== false && item.half_portion_price != null)
+      );
 
-      const baseFinalPrice = isRestaurant
-        ? item.full_final_price ??
+      let baseOriginalPrice, baseFinalPrice, halfPortionPrice, halfPortionFinalPrice,
+          fullPortionPrice, fullPortionFinalPrice;
+
+      if (isVariantItem) {
+        // Variant product: use full_price as the base (full portion)
+        baseOriginalPrice = item.full_price ?? item.price ?? null;
+        baseFinalPrice =
+          item.full_final_price ??
           item.final_price ??
           computeFinalPrice(baseOriginalPrice, item.full_discount_type, item.full_discount_value) ??
-          baseOriginalPrice
-        : item.final_price ??
+          baseOriginalPrice;
+
+        halfPortionPrice = item.half_portion_price ?? null;
+        halfPortionFinalPrice =
+          item.half_portion_final_price ??
+          computeFinalPrice(halfPortionPrice, item.half_discount_type, item.half_discount_value) ??
+          halfPortionPrice;
+
+        fullPortionPrice = baseOriginalPrice;
+        fullPortionFinalPrice = baseFinalPrice;
+      } else if (isRestaurant) {
+        // Simple restaurant product: use price directly, no half/full variants
+        baseOriginalPrice = item.price ?? item.full_price ?? null;
+        baseFinalPrice =
+          item.final_price ??
           computeFinalPrice(baseOriginalPrice, item.discount_type, item.discount_value) ??
           baseOriginalPrice;
 
-      const halfPortionPrice = isRestaurant ? item.half_portion_price ?? null : null;
-      const halfPortionFinalPrice = isRestaurant
-        ? item.half_portion_final_price ??
-          computeFinalPrice(halfPortionPrice, item.half_discount_type, item.half_discount_value) ??
-          halfPortionPrice
-        : null;
+        halfPortionPrice = null;
+        halfPortionFinalPrice = null;
+        fullPortionPrice = null;
+        fullPortionFinalPrice = null;
+      } else {
+        // Grocery or other product
+        baseOriginalPrice = item.price ?? null;
+        baseFinalPrice =
+          item.final_price ??
+          computeFinalPrice(baseOriginalPrice, item.discount_type, item.discount_value) ??
+          baseOriginalPrice;
 
-      const fullPortionPrice = isRestaurant ? item.full_price ?? baseOriginalPrice : undefined;
-      const fullPortionFinalPrice = isRestaurant
-        ? item.full_final_price ??
-          computeFinalPrice(fullPortionPrice, item.full_discount_type, item.full_discount_value) ??
-          fullPortionPrice
-        : undefined;
+        halfPortionPrice = null;
+        halfPortionFinalPrice = null;
+        fullPortionPrice = undefined;
+        fullPortionFinalPrice = undefined;
+      }
+
+      // Safe fallback for old/inconsistent product data — never show blank price
+      const safePrice = baseFinalPrice ?? baseOriginalPrice ?? 0;
 
       return {
         ...item,
-        price: baseFinalPrice,
+        price: safePrice,
         originalPrice: baseOriginalPrice,
         shopId: item.shop_id,
         shopName: item.shops?.name || '',
