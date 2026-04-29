@@ -820,6 +820,15 @@
   white-space: nowrap;
 }
 
+/* Simple (non-variant) restaurant product price display */
+.restaurant-simple-price {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
 .restaurant-qty-controls {
   display: flex;
   align-items: center;
