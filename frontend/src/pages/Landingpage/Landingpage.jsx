@@ -1,9 +1,22 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Landingpage.css';
 import Footer from '../../components/layout/Footer';
+import { useAuth } from '../../hooks/useAuth';
 
 const Landingpage = () => {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  // If a persisted session is already restored, skip the landing page entirely.
+  // This is the key fix: when the app reopens and Firebase restores the session,
+  // the user goes straight to /home instead of seeing the Signin/Signup buttons
+  // and thinking they are logged out.
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/home', { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   const handleExplore = () => {
     // Allow users to browse without authentication

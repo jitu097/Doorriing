@@ -49,6 +49,10 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val BASE_URL = "https://doorriing.com"
+    // Default in-app entry point: go directly to /home instead of the landing page.
+    // The landing page is a marketing page for new web visitors — inside the app
+    // we always want to start at the home screen and let Firebase restore the session.
+    private val HOME_URL = "$BASE_URL/home"
 
     private lateinit var auth: FirebaseAuth
     private lateinit var googleSignInClient: GoogleSignInClient
@@ -326,7 +330,10 @@ class MainActivity : AppCompatActivity() {
                 binding.webView.loadUrl(targetUrl)
             } else if (binding.webView.url == null) {
                 if (NetworkUtils.isNetworkAvailable(this)) {
-                    binding.webView.loadUrl(BASE_URL)
+                    // Load /home instead of the landing page so that Firebase's
+                    // persisted session is restored and the user lands on the
+                    // main screen — not the marketing landing page with Signin buttons.
+                    binding.webView.loadUrl(HOME_URL)
                 } else {
                     showNoInternetError()
                 }
@@ -348,7 +355,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             "offer" -> "$BASE_URL/offers"
-            else -> BASE_URL
+            else -> HOME_URL
         }
 
         Log.d("MainActivity", "Navigating to: $urlToLoad")
@@ -450,7 +457,7 @@ class MainActivity : AppCompatActivity() {
         Snackbar.make(binding.root, message, Snackbar.LENGTH_INDEFINITE)
             .setAction(retry) {
                 if (NetworkUtils.isNetworkAvailable(this)) {
-                    binding.webView.loadUrl(BASE_URL)
+                    binding.webView.loadUrl(HOME_URL)
                 } else {
                     showNoInternetError()
                 }

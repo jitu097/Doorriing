@@ -16,21 +16,20 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    // loading stays true until Firebase has confirmed auth state on this app launch.
-    // This is the gate that prevents ProtectedRoute from redirecting to /login before
-    // the persisted session has been restored.
     const [loading, setLoading] = useState(true);
-    const [customerProfile, setCustomerProfile] = useState(null);
     const nativeGoogleLoginRef = useRef({ resolve: null, reject: null });
 
-    // ─── Auth Actions ────────────────────────────────────────────────────────────
+    // Sign up
+    const registerWithEmail = (email, password) => {
+        return createUserWithEmailAndPassword(auth, email, password);
+    };
 
-    const registerWithEmail = (email, password) =>
-        createUserWithEmailAndPassword(auth, email, password);
+    // Login
+    const loginWithEmail = (email, password) => {
+        return signInWithEmailAndPassword(auth, email, password);
+    };
 
-    const loginWithEmail = (email, password) =>
-        signInWithEmailAndPassword(auth, email, password);
-
+    // Login with Google
     const loginWithGoogle = () => {
         const nativeBridge =
             typeof window !== 'undefined' &&
@@ -50,47 +49,28 @@ export const AuthProvider = ({ children }) => {
             });
         }
 
-        // Web / desktop browser — use popup
+        // Web/desktop browser → use popup
         return signInWithPopup(auth, googleProvider);
     };
 
-    // ─── THE ONLY place that clears the session ──────────────────────────────────
-    // No other part of the code should call localStorage.removeItem('token') or
-    // signOut(auth). Doing so would cause spurious logouts.
-    const logout = async () => {
-        try {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            _pushTokenToNativeBridge('');
-            await signOut(auth);
-        } catch (error) {
-            console.error('[Auth] Logout error:', error);
-        }
+    // Logout
+    const logout = () => {
+        return signOut(auth);
     };
 
-    // ─── Native Bridge Helper ────────────────────────────────────────────────────
-    const _pushTokenToNativeBridge = (token) => {
-        const bridge =
-            typeof window !== 'undefined' &&
-            (window.AndroidAuth?.saveAuthToken || window.Android?.saveAuthToken);
-        if (!bridge) return;
-        try {
-            bridge.call(window.AndroidAuth || window.Android, token ?? '');
-        } catch (err) {
-            console.warn('[Auth] Failed to push token to native bridge:', err);
-        }
-    };
+    const [customerProfile, setCustomerProfile] = useState(null);
 
-    // ─── Auth State Listener ─────────────────────────────────────────────────────
+    // Subscribe to auth state changes
     useEffect(() => {
-        // Register native Google sign-in callbacks
         if (typeof window !== 'undefined') {
             window.onNativeGoogleLoginSuccess = async (idToken) => {
                 try {
                     if (!idToken || typeof idToken !== 'string') {
                         throw new Error('Google authentication token was not returned.');
                     }
-                    console.log('[Auth] Native Google ID token received');
+
+                    console.log('Google ID token:', idToken);
+
                     const credential = GoogleAuthProvider.credential(idToken, null);
                     await signInWithCredential(auth, credential);
                     nativeGoogleLoginRef.current.resolve?.();
@@ -103,65 +83,68 @@ export const AuthProvider = ({ children }) => {
             };
 
             window.onNativeGoogleLoginError = (message) => {
-                nativeGoogleLoginRef.current.reject?.(
-                    new Error(getGoogleSignInErrorMessage(message || 'Native Google login failed'))
-                );
+                nativeGoogleLoginRef.current.reject?.(new Error(getGoogleSignInErrorMessage(message || 'Native Google login failed')));
                 nativeGoogleLoginRef.current.resolve = null;
                 nativeGoogleLoginRef.current.reject = null;
             };
         }
 
-        // Firebase calls this listener immediately on mount:
-        //   • With the persisted FirebaseUser if LOCAL persistence has a stored session
-        //   • With null if no session exists
-        // We MUST NOT touch loading until this first call resolves.
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
 
             if (currentUser) {
-                try {
-                    // forceRefresh=false → uses Firebase's internal 1-hour token cache.
-                    // No extra network round-trip; still guarantees a valid token is stored.
-                    const token = await currentUser.getIdToken(false);
-                    localStorage.setItem('token', token);
-                    localStorage.setItem('user', JSON.stringify({
-                        uid: currentUser.uid,
-                        email: currentUser.email,
-                        displayName: currentUser.displayName
-                    }));
-                    _pushTokenToNativeBridge(token);
+                // Save token on auth state change
+                const token = await currentUser.getIdToken();
+                localStorage.setItem('token', token);
 
-                    // Background sync with backend — does NOT block the auth gate
-                    api.post('/auth/sync', {}, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }).then(response => {
-                        if (response.success && response.data) {
-                            setCustomerProfile(response.data);
-                        }
-                    }).catch(error => {
-                        console.error('[Auth] Failed to sync customer profile with backend:', error);
-                        setCustomerProfile(null);
-                    });
-
-                } catch (tokenError) {
-                    // Token is unrecoverable (revoked / network issue). Graceful signed-out state.
-                    console.error('[Auth] Cannot obtain ID token — forcing sign-out:', tokenError);
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    _pushTokenToNativeBridge('');
-                    await signOut(auth);
-                    // setLoading(false) will be called by the next onAuthStateChanged emission (null)
-                    return;
+                const nativeBridge =
+                    typeof window !== 'undefined' &&
+                    (window.AndroidAuth?.saveAuthToken || window.Android?.saveAuthToken);
+                if (nativeBridge) {
+                    try {
+                        nativeBridge.call(window.AndroidAuth || window.Android, token);
+                    } catch (bridgeError) {
+                        console.warn('Failed to share auth token with native bridge', bridgeError);
+                    }
                 }
+
+                // Background sync - do not await
+                api.post('/auth/sync', {}, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }).then(response => {
+                    if (response.success && response.data) {
+                        setCustomerProfile(response.data);
+                    }
+                }).catch(error => {
+                    console.error('Failed to sync customer profile with backend:', error);
+                    setCustomerProfile(null);
+                });
+
+                localStorage.setItem('user', JSON.stringify({
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    displayName: currentUser.displayName
+                }));
+
             } else {
-                // Signed-out state — clear any stale storage. This also runs after logout().
                 setCustomerProfile(null);
                 localStorage.removeItem('user');
                 localStorage.removeItem('token');
-                _pushTokenToNativeBridge('');
+
+                const nativeBridge =
+                    typeof window !== 'undefined' &&
+                    (window.AndroidAuth?.saveAuthToken || window.Android?.saveAuthToken);
+                if (nativeBridge) {
+                    try {
+                        nativeBridge.call(window.AndroidAuth || window.Android, '');
+                    } catch (bridgeError) {
+                        console.warn('Failed to clear native auth token', bridgeError);
+                    }
+                }
             }
 
-            // Auth check complete — unblock the route rendering
             setLoading(false);
         });
 
