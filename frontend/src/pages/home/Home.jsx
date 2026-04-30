@@ -41,24 +41,23 @@ const normalizeItems = (items = []) => {
       const shopType = item.shops?.business_type || '';
       const isRestaurant = shopType.toLowerCase() === 'restaurant';
 
-      // Determine if this restaurant item has Half/Full variants
-      // Use has_variants flag if present, else detect from half_portion_price
-      const isVariantItem = isRestaurant && (
-        item.has_variants === true ||
-        (item.has_variants !== false && item.half_portion_price != null)
-      );
+      // Variant detection: an item has Half/Full variants when half_portion_price
+      // is set (non-null). Matches ItemCard's own hasHalfVariant check exactly.
+      const hasHalfPrice = isRestaurant && item.half_portion_price != null;
 
       let baseOriginalPrice, baseFinalPrice, halfPortionPrice, halfPortionFinalPrice,
           fullPortionPrice, fullPortionFinalPrice;
 
-      if (isVariantItem) {
-        // Variant product: use full_price as the base (full portion)
+      if (hasHalfPrice) {
+        // Variant restaurant product: full_price is the "full" portion price
+        // Only use full_* discount chain — never fall back to final_price
         baseOriginalPrice = item.full_price ?? item.price ?? null;
         baseFinalPrice =
           item.full_final_price ??
-          item.final_price ??
-          computeFinalPrice(baseOriginalPrice, item.full_discount_type, item.full_discount_value) ??
-          baseOriginalPrice;
+          computeFinalPrice(item.full_price, item.full_discount_type, item.full_discount_value) ??
+          item.full_price ??
+          item.price ??
+          null;
 
         halfPortionPrice = item.half_portion_price ?? null;
         halfPortionFinalPrice =
@@ -69,12 +68,23 @@ const normalizeItems = (items = []) => {
         fullPortionPrice = baseOriginalPrice;
         fullPortionFinalPrice = baseFinalPrice;
       } else if (isRestaurant) {
-        // Simple restaurant product: use price directly, no half/full variants
-        baseOriginalPrice = item.price ?? item.full_price ?? null;
-        baseFinalPrice =
-          item.final_price ??
-          computeFinalPrice(baseOriginalPrice, item.discount_type, item.discount_value) ??
-          baseOriginalPrice;
+        // Simple restaurant product — prefer full_price chain if full_price is set
+        baseOriginalPrice = item.full_price ?? item.price ?? null;
+
+        baseFinalPrice = item.full_price != null
+          ? (
+              // Seller used full_price → use full_* chain (never final_price)
+              item.full_final_price ??
+              computeFinalPrice(item.full_price, item.full_discount_type, item.full_discount_value) ??
+              item.full_price
+            )
+          : (
+              // Seller used plain price field
+              item.final_price ??
+              computeFinalPrice(item.price, item.discount_type, item.discount_value) ??
+              item.price ??
+              null
+            );
 
         halfPortionPrice = null;
         halfPortionFinalPrice = null;
@@ -94,8 +104,12 @@ const normalizeItems = (items = []) => {
         fullPortionFinalPrice = undefined;
       }
 
-      // Safe fallback for old/inconsistent product data — never show blank price
-      const safePrice = baseFinalPrice ?? baseOriginalPrice ?? 0;
+      // Safe price — skip ₹0 when original is clearly non-zero
+      // (protects against stale full_final_price=0 or wrong discount stored in DB)
+      const rawSafePrice = baseFinalPrice ?? baseOriginalPrice ?? 0;
+      const safePrice = (Number(rawSafePrice) > 0)
+        ? rawSafePrice
+        : (Number(baseOriginalPrice) > 0 ? baseOriginalPrice : rawSafePrice);
 
       return {
         ...item,

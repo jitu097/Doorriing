@@ -16,6 +16,18 @@ const formatPrice = (price) => {
   return numericPrice % 1 === 0 ? numericPrice.toString() : numericPrice.toFixed(2).replace(/\.00$/, '');
 };
 
+// Returns `computed` only when it's a real, positive price.
+// If computed is 0 or negative and original is clearly non-zero we skip it —
+// a ₹0 final price almost always means a stale/wrong discount in the DB.
+const resolvePrice = (computed, original) => {
+  const c = Number(computed);
+  const o = Number(original);
+  if (!Number.isNaN(c) && c > 0) return c;      // valid positive price
+  if (!Number.isNaN(o) && o > 0) return o;      // fall back to original
+  if (!Number.isNaN(c) && computed != null) return c; // 0 is ok when original is also 0
+  return null;
+};
+
 const getFallbackId = (id, name, price) => {
   if (id) {
     return id;
@@ -64,7 +76,7 @@ const ItemCard = ({
   const { addToCart, getCartItem, increaseQty, decreaseQty } = useCart();
   const [showVariants, setShowVariants] = useState(false);
   const isRestaurantCard = shopType === 'restaurant';
-  
+
   const normalizedFoodType = isRestaurantCard
     ? (foodType || '').toLowerCase().replace(/\s+/g, '').replace(/-/g, '')
     : null;
@@ -74,11 +86,20 @@ const ItemCard = ({
   const foodIndicatorSymbol = isRestaurantCard ? (derivedIsVeg ? '🟢' : '🔴') : null;
 
   const baseOriginalPrice = originalPrice ?? fullPortionPrice ?? price;
-  const baseFinalPrice = price ?? fullPortionFinalPrice ?? fullPortionPrice ?? baseOriginalPrice;
+
+  // Use resolvePrice so a stale full_final_price=0 or computed-to-0 discount
+  // never overrides a valid original price.
+  const rawFinalPrice = price ?? fullPortionFinalPrice ?? fullPortionPrice ?? baseOriginalPrice;
+  const baseFinalPrice = resolvePrice(rawFinalPrice, baseOriginalPrice);
+
   const halfOriginalPriceValue = halfPortionPrice ?? null;
-  const halfFinalPriceValue = halfPortionFinalPrice ?? halfPortionPrice ?? null;
+  const halfFinalPriceValue = halfPortionFinalPrice != null
+    ? resolvePrice(halfPortionFinalPrice, halfPortionPrice)
+    : (halfPortionPrice != null ? Number(halfPortionPrice) : null);
+
   const fullOriginalPriceValue = fullPortionPrice ?? baseOriginalPrice;
-  const fullFinalPriceValue = fullPortionFinalPrice ?? fullPortionPrice ?? baseFinalPrice;
+  const rawFullFinal = fullPortionFinalPrice ?? fullPortionPrice ?? baseFinalPrice;
+  const fullFinalPriceValue = resolvePrice(rawFullFinal, fullOriginalPriceValue);
 
   const hasHalfVariant = halfFinalPriceValue !== null && halfFinalPriceValue !== undefined;
   const priceValue = hasHalfVariant ? fullFinalPriceValue : baseFinalPrice;
@@ -91,25 +112,25 @@ const ItemCard = ({
   const showVariantPricing = Boolean(hasHalfVariant && formattedHalfVariantPrice);
   const variantOptions = showVariantPricing
     ? [
-        {
-          key: 'full',
-          label: 'Full',
-          formattedPrice: formattedFullVariantPrice,
-          formattedOriginalPrice: formattedFullVariantOriginalPrice,
-          priceValue: fullFinalPriceValue,
-          originalValue: fullOriginalPriceValue,
-          hasDiscount: hasDiscount(fullOriginalPriceValue, fullFinalPriceValue),
-        },
-        {
-          key: 'half',
-          label: 'Half',
-          formattedPrice: formattedHalfVariantPrice,
-          formattedOriginalPrice: formattedHalfVariantOriginalPrice,
-          priceValue: halfFinalPriceValue,
-          originalValue: halfOriginalPriceValue,
-          hasDiscount: hasDiscount(halfOriginalPriceValue, halfFinalPriceValue),
-        },
-      ]
+      {
+        key: 'full',
+        label: 'Full',
+        formattedPrice: formattedFullVariantPrice,
+        formattedOriginalPrice: formattedFullVariantOriginalPrice,
+        priceValue: fullFinalPriceValue,
+        originalValue: fullOriginalPriceValue,
+        hasDiscount: hasDiscount(fullOriginalPriceValue, fullFinalPriceValue),
+      },
+      {
+        key: 'half',
+        label: 'Half',
+        formattedPrice: formattedHalfVariantPrice,
+        formattedOriginalPrice: formattedHalfVariantOriginalPrice,
+        priceValue: halfFinalPriceValue,
+        originalValue: halfOriginalPriceValue,
+        hasDiscount: hasDiscount(halfOriginalPriceValue, halfFinalPriceValue),
+      },
+    ]
     : null;
   const fallbackId = getFallbackId(id, name, priceValue ?? price);
   const serverItemId = id ?? fallbackId;
@@ -183,13 +204,13 @@ const ItemCard = ({
       increaseQty(variantId);
     } else {
       decreaseQty(variantId);
-      
+
       // Check if both Half and Full quantities are 0, if so collapse back to initial view
       const halfVariantId = `${clientItemId}-half`;
       const fullVariantId = `${clientItemId}-full`;
       const halfQty = getCartItem(halfVariantId)?.quantity || 0;
       const fullQty = getCartItem(fullVariantId)?.quantity || 0;
-      
+
       // If both quantities are 0 after decrement, hide the portion controls
       if (halfQty === 0 && fullQty === 0) {
         setShowVariants(false);
@@ -506,7 +527,7 @@ const ItemCard = ({
         </div>
 
         {secondaryText && <p className="item-card-subtitle">{secondaryText}</p>}
-        
+
         {renderFooter()}
       </div>
     </div>

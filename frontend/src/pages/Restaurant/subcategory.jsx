@@ -156,39 +156,65 @@ const SubCategory = () => {
 
                 const foodType = (item?.food_type || '').toLowerCase();
 
-                // Determine if this item has Half/Full variants
-                // Use has_variants flag if available, else detect from half_portion_price
-                const isVariantItem = item?.has_variants === true ||
-                  (item?.has_variants !== false && item?.half_portion_price != null);
+                // Variant detection: an item has Half/Full variants when half_portion_price
+                // is set (non-null). This is the same signal ItemCard uses internally
+                // (hasHalfVariant) so the two always agree — regardless of the has_variants flag.
+                const hasHalfPrice = item?.half_portion_price != null;
 
-                // For variant items: use full_price as base; for simple items: use price directly
-                const baseOriginalPrice = isVariantItem
-                  ? (item?.full_price ?? item?.price ?? null)
-                  : (item?.price ?? item?.full_price ?? null);
+                // --- PRICE RESOLUTION ---
+                // For restaurant items the seller always sets up pricing via the
+                // full_price / full_final_price / full_discount_* columns.
+                // The plain price/final_price columns may contain stale or
+                // differently-discounted values — never mix them with full_* columns.
 
-                const baseFinalPrice = isVariantItem
-                  ? (item?.full_final_price ??
-                      item?.final_price ??
+                // Original (MRP) price
+                const baseOriginalPrice = hasHalfPrice
+                  ? (item?.full_price ?? item?.price ?? null)   // variant → full portion
+                  : (item?.full_price ?? item?.price ?? null);  // simple  → same priority
+
+                // Final (selling) price for the full portion / single price
+                const baseFinalPrice = hasHalfPrice
+                  ? (
+                      // Variant item: use ONLY full_* discount chain
+                      item?.full_final_price ??
                       computeFinalPrice(baseOriginalPrice, item?.full_discount_type, item?.full_discount_value) ??
-                      baseOriginalPrice)
-                  : (item?.final_price ??
-                      computeFinalPrice(baseOriginalPrice, item?.discount_type, item?.discount_value) ??
-                      baseOriginalPrice);
+                      baseOriginalPrice
+                    )
+                  : item?.full_price != null
+                    ? (
+                        // Simple item that still uses full_price → use full_* chain
+                        item?.full_final_price ??
+                        computeFinalPrice(item?.full_price, item?.full_discount_type, item?.full_discount_value) ??
+                        item?.full_price
+                      )
+                    : (
+                        // Simple item with only price field → use plain chain
+                        item?.final_price ??
+                        computeFinalPrice(item?.price, item?.discount_type, item?.discount_value) ??
+                        item?.price ??
+                        null
+                      );
 
-                // Safe fallback for old/inconsistent product data
-                const safePrice = baseFinalPrice ?? baseOriginalPrice ?? 0;
+                // Safe price — skip ₹0 when original is clearly non-zero
+                // (protects against stale full_final_price=0 or wrong discount in DB)
+                const rawSafePrice = baseFinalPrice ?? baseOriginalPrice ?? 0;
+                const safePrice = (Number(rawSafePrice) > 0)
+                  ? rawSafePrice
+                  : (Number(baseOriginalPrice) > 0 ? baseOriginalPrice : rawSafePrice);
 
-                // Half portion only relevant for variant items
-                const halfPortionOriginalPrice = isVariantItem ? (item?.half_portion_price ?? null) : null;
-                const halfPortionFinalPrice = isVariantItem
-                  ? (item?.half_portion_final_price ??
+                // Half portion props — only meaningful for variant items
+                const halfPortionOriginalPrice = hasHalfPrice ? (item?.half_portion_price ?? null) : null;
+                const halfPortionFinalPrice = hasHalfPrice
+                  ? (
+                      item?.half_portion_final_price ??
                       computeFinalPrice(halfPortionOriginalPrice, item?.half_discount_type, item?.half_discount_value) ??
-                      halfPortionOriginalPrice)
+                      halfPortionOriginalPrice
+                    )
                   : null;
 
-                // Full portion props — only pass for variant items to avoid confusing ItemCard
-                const fullPortionPrice = isVariantItem ? baseOriginalPrice : null;
-                const fullPortionFinalPrice = isVariantItem ? baseFinalPrice : null;
+                // Full portion props — only pass for variant items
+                const fullPortionPrice = hasHalfPrice ? baseOriginalPrice : null;
+                const fullPortionFinalPrice = hasHalfPrice ? baseFinalPrice : null;
 
                 const derivedIsVeg = foodType === 'nonveg' ? false : true;
 
