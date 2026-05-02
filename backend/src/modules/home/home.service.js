@@ -30,7 +30,7 @@ const ITEM_SELECT_COLUMNS = `
   is_available,
   stock_quantity,
   created_at,
-  shops!inner(id, name, business_type)
+  shops!inner(id, name, business_type, is_active, is_open, status)
 `;
 
 class HomeService {

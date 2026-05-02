@@ -17,9 +17,12 @@ const PageLayout = () => {
   const handleCartOpen = () => setShowCart(true);
   const handleCartClose = () => setShowCart(false);
 
-  // Hide FloatingCart on /cart and /checkout
-  const hideFloatingCart =
+  // Hide both footer and cart on /cart and /checkout
+  const hideFooterAndCart =
     location.pathname.startsWith('/cart') || location.pathname.startsWith('/checkout');
+
+  // Hide only floating cart on /address (but keep footer visible)
+  const hideFloatingCart = hideFooterAndCart || location.pathname.startsWith('/address');
 
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
 
@@ -47,7 +50,7 @@ const PageLayout = () => {
         <Outlet />
       </main>
       {isHomePage && <MainFooter />}
-      {!hideFloatingCart && <MobileFooter visible={footerVisible} onCartClick={handleCartOpen} />}
+      {!hideFooterAndCart && <MobileFooter visible={footerVisible} onCartClick={handleCartOpen} />}
       {!hideFloatingCart && <FloatingCart onCartClick={handleCartOpen} footerVisible={footerVisible} />}
       <CartDrawer isOpen={showCart} onClose={handleCartClose} />
     </div>

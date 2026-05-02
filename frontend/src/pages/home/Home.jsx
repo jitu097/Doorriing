@@ -32,7 +32,21 @@ const normalizeItems = (items = []) => {
   }
 
   try {
-    const normalized = itemsArray.map((item) => {
+    // Filter out items whose shop appears closed or inactive
+    const isShopOpen = (it) => {
+      if (!it) return false;
+      const shop = it.shops || {};
+      if (shop.is_active === false) return false;
+      if (shop.is_open === false) return false;
+      if (shop.status && String(shop.status).toLowerCase() === 'closed') return false;
+      if (it.shop_active === false) return false;
+      if (it.shop_status && String(it.shop_status).toLowerCase() === 'closed') return false;
+      return true;
+    };
+
+    const filteredItems = itemsArray.filter(isShopOpen);
+
+    const normalized = filteredItems.map((item) => {
       if (!item) {
         console.warn('[normalizeItems] Null/undefined item detected, skipping');
         return null;
