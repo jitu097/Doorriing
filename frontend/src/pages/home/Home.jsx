@@ -241,16 +241,33 @@ const Home = () => {
   };
 
   const activeItems = activeSection === SECTION_CONFIG.grocery.key ? groceryItems : restaurantItems;
-  const { title, emptyMessage } = SECTION_CONFIG[activeSection];
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
-  // Filter items based on search query
-  const filteredItems = searchQuery
-    ? activeItems.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.shopName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
+  const matchesSearch = (item) => {
+    const itemName = (item?.name || '').toLowerCase();
+    const shopName = (item?.shopName || item?.shops?.name || '').toLowerCase();
+    const description = (item?.description || '').toLowerCase();
+
+    return (
+      itemName.includes(normalizedSearchQuery) ||
+      shopName.includes(normalizedSearchQuery) ||
+      description.includes(normalizedSearchQuery)
+    );
+  };
+
+  // During search, consider all home items (both sections) so shop-name queries are always discoverable.
+  const searchableItems = normalizedSearchQuery
+    ? [...groceryItems, ...restaurantItems]
     : activeItems;
+
+  const filteredItems = normalizedSearchQuery
+    ? searchableItems.filter(matchesSearch)
+    : searchableItems;
+
+  const title = normalizedSearchQuery ? 'Search Results' : SECTION_CONFIG[activeSection].title;
+  const emptyMessage = normalizedSearchQuery
+    ? 'No products or shops match your search.'
+    : SECTION_CONFIG[activeSection].emptyMessage;
 
   return (
     <div className="home-page">
@@ -278,7 +295,7 @@ const Home = () => {
           </button>
         </div>
 
-        {renderItemsSection(title, filteredItems, searchQuery ? 'No products match your search.' : emptyMessage)}
+        {renderItemsSection(title, filteredItems, emptyMessage)}
       </div>
     </div>
   );

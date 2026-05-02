@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useCallback, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import './Grocery.css';
 import ShopCard from '../shopcard/shopcard';
 import EmptyState from '../../components/common/EmptyState';
@@ -59,6 +60,8 @@ const collectUniqueSubcategories = (shops) => {
 };
 
 const Grocery = () => {
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('search') || '';
   const [shops, setShops] = useState([]);
   const [filters, setFilters] = useState(['All']);
   const [selectedFilter, setSelectedFilter] = useState('All');
@@ -123,17 +126,24 @@ const Grocery = () => {
   }, [reloadKey]);
 
   const filteredShops = useMemo(() => {
-    if (selectedFilter === 'All') {
-      return shops;
-    }
-
     const selectedNormalized = selectedFilter.toLowerCase();
+    const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
-    return shops.filter((shop) => {
+    const categoryFiltered = selectedFilter === 'All'
+      ? shops
+      : shops.filter((shop) => {
       const rawSource = shop?.subcategories ?? shop?.shop_subcategories ?? shop?.subcategory;
       return parseShopSubcategories(rawSource).some((subcategory) => subcategory.toLowerCase() === selectedNormalized);
     });
-  }, [shops, selectedFilter]);
+
+    if (!normalizedSearchQuery) {
+      return categoryFiltered;
+    }
+
+    return categoryFiltered.filter((shop) =>
+      (shop?.name || '').toLowerCase().includes(normalizedSearchQuery)
+    );
+  }, [shops, selectedFilter, searchQuery]);
 
   // Memoize filter change handler
   const handleFilterChange = useCallback((category) => {

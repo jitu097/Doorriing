@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import './Restaurant.css';
 import RestaurantCard from '../Restaurantcard/card';
 import EmptyState from '../../components/common/EmptyState';
@@ -59,6 +60,8 @@ const collectUniqueSubcategories = (shops) => {
 };
 
 const Restaurant = () => {
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('search') || '';
   const [restaurants, setRestaurants] = useState([]);
   const [filters, setFilters] = useState(['All']);
   const [selectedFilter, setSelectedFilter] = useState('All');
@@ -125,17 +128,24 @@ const Restaurant = () => {
   }, [reloadKey]);
 
   const filteredRestaurants = useMemo(() => {
-    if (selectedFilter === 'All') {
-      return restaurants;
-    }
-
     const selectedNormalized = selectedFilter.toLowerCase();
+    const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
-    return restaurants.filter((restaurant) => {
+    const categoryFiltered = selectedFilter === 'All'
+      ? restaurants
+      : restaurants.filter((restaurant) => {
       const rawSource = restaurant?.subcategories ?? restaurant?.shop_subcategories ?? restaurant?.subcategory;
       return parseShopSubcategories(rawSource).some((subcategory) => subcategory.toLowerCase() === selectedNormalized);
     });
-  }, [restaurants, selectedFilter]);
+
+    if (!normalizedSearchQuery) {
+      return categoryFiltered;
+    }
+
+    return categoryFiltered.filter((restaurant) =>
+      (restaurant?.name || '').toLowerCase().includes(normalizedSearchQuery)
+    );
+  }, [restaurants, selectedFilter, searchQuery]);
 
   return (
     <div>

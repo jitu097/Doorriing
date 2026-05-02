@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import React, { useState, useRef, useEffect } from 'react';
 import Modal from '../common/Modal';
 import AddressForm from '../common/AddressForm';
@@ -8,13 +8,16 @@ import { useAuth } from '../../hooks/useAuth';
 import './Navbar.css';
 
 const Navbar = ({ onCartClick }) => {
+  const searchPlaceholders = ['Search products...', 'Search by shop...', 'Find your favorite food...'];
   const navigate = useNavigate();
+  const location = useLocation();
   const { getCartCount } = useCart();
   const { user, logout } = useAuth();
   const [showAccount, setShowAccount] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [search, setSearch] = useState('');
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const accountWrapperRef = useRef(null);
 
   const { activeAddress, addAddress, updateAddress } = useAddress();
@@ -52,6 +55,14 @@ const Navbar = ({ onCartClick }) => {
     }
   }, [showAccount]);
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % searchPlaceholders.length);
+    }, 1800);
+
+    return () => clearInterval(intervalId);
+  }, [searchPlaceholders.length]);
+
   const cartCount = getCartCount();
 
 
@@ -72,7 +83,19 @@ const Navbar = ({ onCartClick }) => {
     if (e.key === 'Enter' || e.type === 'click') {
       if (search.trim()) {
         setShowSearch(false);
-        navigate(`/home?search=${encodeURIComponent(search)}`);
+        const encodedSearch = encodeURIComponent(search.trim());
+
+        if (location.pathname.startsWith('/restaurant')) {
+          navigate(`/restaurant/browse?search=${encodedSearch}`);
+          return;
+        }
+
+        if (location.pathname.startsWith('/grocery')) {
+          navigate(`/grocery/browse?search=${encodedSearch}`);
+          return;
+        }
+
+        navigate(`/home?search=${encodedSearch}`);
       }
     }
   };
@@ -120,7 +143,7 @@ const Navbar = ({ onCartClick }) => {
           <input
             type="text"
             className="searchbar-input"
-            placeholder='Search "chocolate"'
+            placeholder={searchPlaceholders[placeholderIndex]}
             value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyPress={handleSearch}
@@ -145,7 +168,7 @@ const Navbar = ({ onCartClick }) => {
                 <input
                   type="text"
                   className="searchbar-input-dropdown"
-                  placeholder="Search products..."
+                  placeholder={searchPlaceholders[placeholderIndex]}
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   onKeyPress={handleSearch}
