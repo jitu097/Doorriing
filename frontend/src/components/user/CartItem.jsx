@@ -6,12 +6,13 @@ const CartItem = ({ item, showControls = true, compact = false }) => {
     const { increaseQty, decreaseQty, removeFromCart } = useCart();
 
     const itemTotal = (parseFloat(item.price) * item.quantity).toFixed(2);
+    const itemImage = item.image || item.image_url || null;
 
     return (
         <div className={`cart-item ${compact ? 'compact' : ''}`}>
-            {item.image && (
+            {itemImage && (
                 <div className="cart-item-image">
-                    <img src={item.image} alt={item.name} loading="lazy" />
+                    <img src={itemImage} alt={item.name} loading="lazy" />
                 </div>
             )}
 

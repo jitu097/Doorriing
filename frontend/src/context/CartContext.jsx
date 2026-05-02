@@ -117,8 +117,16 @@ export const CartProvider = ({ children }) => {
             const itemPayload = ci.items || {};
             const fallbackId = itemPayload?.id ?? ci.item_id ?? ci.id;
             const derivedVariant = itemPayload?.portion || ci.variant;
+            const resolvedImage = itemPayload?.image ?? itemPayload?.image_url ?? null;
+            const rawName = itemPayload?.name ?? itemPayload?.title ?? '';
+            const normalizedName = derivedVariant && rawName
+                ? (rawName.toLowerCase().includes(derivedVariant.toLowerCase()) ? rawName : `${rawName} (${derivedVariant})`)
+                : rawName;
             const enrichedPayload = {
                 ...itemPayload,
+                name: normalizedName || itemPayload?.name,
+                image: resolvedImage,
+                image_url: itemPayload?.image_url ?? resolvedImage,
                 variant: derivedVariant,
                 shopType: itemPayload?.shopType || businessType || itemPayload?.shops?.business_type || null,
                 shopId: itemPayload?.shop_id || shopIdFromPayload,
@@ -265,6 +273,8 @@ export const CartProvider = ({ children }) => {
                     ...item,
                     id: payloadItemId,
                     clientItemId,
+                    image: item.image ?? item.image_url ?? null,
+                    image_url: item.image_url ?? item.image ?? null,
                     quantity: 1,
                     shopId: item.shopId,
                     cartItemId: `temp-${Date.now()}` // Temporary ID until fetched
