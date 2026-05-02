@@ -244,17 +244,15 @@ export const CartProvider = ({ children }) => {
                 const isDifferentShop = item.shopId && firstItem.shopId && item.shopId !== firstItem.shopId;
 
                 if (isDifferentShopType || isDifferentShop) {
-                    const shopTypeMsg = isDifferentShopType
-                        ? `Cannot add ${item.shopType} items to cart with ${firstItem.shopType} items.`
-                        : `Cannot add items from different shops.`;
-
-                    const confirmMsg = `${shopTypeMsg}\n\nYour cart will be cleared to add items from the new ${item.shopType || 'shop'}. Continue?`;
-
-                    if (window.confirm(confirmMsg)) {
+                    // Automatically clear cart when adding items from a different shop
+                    try {
                         await cartService.clearCart(firstItem.shopId);
                         await fetchCart(); // Reset local state
-                    } else {
-                        return; // User cancelled
+                    } catch (clearErr) {
+                        console.error('Failed to clear cart for shop change:', clearErr);
+                        // Try to refresh local cart state and abort add if clearing fails
+                        await fetchCart();
+                        return;
                     }
                 }
             }
