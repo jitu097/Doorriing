@@ -19,6 +19,11 @@ const CartItem = ({ item, showControls = true, compact = false }) => {
             <div className="cart-item-details">
                 <h4 className="cart-item-name">{item.name}</h4>
                 {item.subtitle && <p className="cart-item-subtitle">{item.subtitle}</p>}
+                {(item.baseQuantity || item.unit) && (
+                    <p className="cart-item-measure">
+                        {item.baseQuantity ? item.baseQuantity : ''}{item.unit ? ` ${item.unit}` : ''}
+                    </p>
+                )}
                 {item.description && !compact && (
                     <p className="cart-item-description">{item.description}</p>
                 )}

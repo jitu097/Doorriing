@@ -59,8 +59,8 @@
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    margin-bottom: 10px;
-    margin-top: -12px;
+    margin-bottom: 4px;
+    margin-top: 6px;
   }
 }
 @media (max-width: 600px) {
@@ -178,7 +178,7 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: #1a1a1a;
-  margin: 0;
+  margin: 6px 0 4px 0;
   line-height: 1.4;
   flex: 1;
   display: -webkit-box;
@@ -193,7 +193,7 @@
   color: #666666;
   margin: 0;
   min-height: 1.2em;
-  margin-bottom: 15px;
+  margin-bottom: 6px;
 }
 
 .item-card-measure {
@@ -269,6 +269,13 @@
   gap: 2px;
 }
 
+.item-card-price-inline {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .item-card-price {
   font-size: 1.1rem;
   font-weight: 700;
@@ -277,7 +284,7 @@
 
 .item-card-price-original {
   font-size: 0.9rem;
- 
+  color: #888;
   text-decoration: line-through;
 }
 
@@ -499,6 +506,10 @@
     font-size: 0.95rem;
   }
 
+  .item-card-price-inline {
+    gap: 4px;
+  }
+
   .item-card-add-btn {
     padding: 6px 12px;
     font-size: 0.75rem;
@@ -529,18 +540,29 @@
 
 .restaurant-card .item-card-body {
   gap: 14px;
+  position: relative;
+}
+
+.restaurant-card .item-card-measure {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1;
+  text-align: right;
 }
 
 .restaurant-price-chip-row {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
   width: 100%;
-  margin-left: -9px;
+  margin-left: 0;
 }
 
 .restaurant-price-chip {
-  padding: 8px 10px;
+  padding: 1px 6px;
   border-radius: 14px;
   font-weight: 600;
   font-size: 0.85rem;
@@ -551,6 +573,23 @@
   justify-content: space-between;
   gap: 0px;
   width: 100%;
+}
+
+.restaurant-price-chip .restaurant-qty-controls {
+  padding: 1px 3px !important;
+  min-width: 64px;
+  margin-top: 0 !important;
+}
+
+.restaurant-price-chip .restaurant-qty-controls button {
+  width: 18px;
+  height: 18px;
+  font-size: 0.72rem;
+}
+
+.restaurant-price-chip .restaurant-qty-controls span {
+  min-width: 12px;
+  font-size: 0.76rem;
 }
 
 .restaurant-chip-label {
@@ -663,9 +702,31 @@
 .restaurant-footer-collapsed {
   display: flex;
   flex-direction: column;
-  gap: 19px;
+  gap:8px ;
   margin-top: auto;
-  width:100px;
+  width: 100%;
+}
+
+.restaurant-footer-single {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.restaurant-footer-single .restaurant-simple-price {
+  margin-top: 0;
+}
+
+.restaurant-footer-single .restaurant-add-main,
+.restaurant-footer-single .restaurant-main-qty {
+  margin-top: 10px !important;
+  margin-left: auto;
+  align-self: center;
+}
+
+.restaurant-footer-single .restaurant-add-main {
+  margin-top: -4px;
 }
 
 .restaurant-price-stack {
@@ -701,8 +762,9 @@
   padding: 6px 8px;
   font-size: 0.95rem;
   font-weight: 700!important;
-  margin-left: 95px;
-  margin-top: -50px;
+  margin-left: auto;
+  margin-top: -40px !important;
+  align-self: center;
   color: #ffffff;
   background: linear-gradient(135deg, #E95322 0%, #d64a1f 100%);
   box-shadow: 0 12px 25px rgba(233, 83, 34, 0.28);
@@ -733,8 +795,8 @@
 .restaurant-variant-row {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 14px!important;
+  justify-content: space-between;
+  gap: 8px !important;
   background: transparent;
   border-radius: 0;
   padding: 0;
@@ -742,7 +804,7 @@
   box-shadow: none;
   white-space: nowrap;
   flex-wrap: nowrap;
-  width: fit-content;
+  width: 100%;
   min-width: 0;
   margin-bottom: 0px;
 }
@@ -839,24 +901,25 @@
 .restaurant-qty-controls {
   display: flex;
   align-items: center;
-  gap: 0px!important;
+  gap: 2px !important;
   border-radius: 999px;
   justify-content: space-between;
-  padding: 0px 0px!important;
+  padding: 0px 4px !important;
   background: #fff5f6;
   border: 1px solid #ffc4ce;
-  width: 100%;
-  margin-left: -7px!important;
-  margin-top: -10px!important;
+  width: auto;
+  min-width: 72px;
+  margin-left: auto !important;
+  margin-top: 0 !important;
 }
 
 .restaurant-qty-controls button {
   border: none;
   background: #ffffff;
-  width: 26px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 700;
   
   color: #e53945;
@@ -869,24 +932,27 @@
 }
 
 .restaurant-qty-controls span {
-  min-width: 18px;
+  min-width: 14px;
   text-align: center;
   font-weight: 600;
   color: #2b2b2b;
-  font-size: 0.95rem;
+  font-size: 0.82rem;
 }
 
 .restaurant-main-qty {
   justify-content: space-between;
+  margin-top: 0 !important;
+  padding: 0px 4px !important;
 }
 
 .restaurant-main-qty button {
-  width: 40px;
-  height: 40px;
+  width: 22px;
+  height: 22px;
+  margin: 0;
   border-radius: 50%;
   border: none;
   background: #ffffff;
-  font-size: 1.2rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #e53945;
   cursor: pointer;
@@ -904,6 +970,12 @@
 
   .item-card-body {
     padding: 8px;
+  }
+
+  .restaurant-card .item-card-measure {
+    top: 8px;
+    right: 8px;
+    font-size: 0.68rem;
   }
 
   .item-card-name {
@@ -951,19 +1023,27 @@
 
   .restaurant-qty-controls {
     align-self: auto !important;
-    justify-content: space-between;
+    justify-content: center;
     width: auto !important;
-    max-width: 80px !important;
-    margin-top: -40px;
-    margin-left: 160px;
+    max-width: none !important;
+    margin-top: 0 !important;
+    margin-left: auto !important;
+    padding: 0px 4px !important;
+  }
+
+  .restaurant-footer-single {
+    gap: 6px;
+  }
+
+  .restaurant-footer-single .restaurant-add-main {
+    margin-top: -2px;
   }
 
   .restaurant-price-chip-row {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 0;
     width: 100%;
-    width:60px;
 
   }
 
@@ -978,7 +1058,7 @@
   }
 
   .restaurant-chip-label {
-    font-size: 0.4rem;
+    font-size: 0.65rem;
     color: #222;
     letter-spacing: 0.05em;
     margin-right: 1px;
@@ -1001,22 +1081,26 @@
     color: #000;
   }
 
+  .restaurant-simple-price {
+    margin-top: 0;
+  }
+
   .variant-add-btn {
     height: 26px;
     padding: 0 8px;
-    margin-left:30px;
+    margin-left: 0;
     font-size: 0.7rem;
   }
 
   .variant-qty-compact {
-    padding: 1px 3px;
+    padding: 1px 2px;
     gap: 1px;
-    margin-left: 20px;
-    margin-top: 1px;
+    margin-left: 0;
+    margin-top: 0;
   }
 
   .variant-qty-compact button {
-    width: 80px;
+    width: 20px;
     height: 20px;
     font-size: 0.75rem;
   }

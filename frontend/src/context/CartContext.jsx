@@ -130,6 +130,8 @@ export const CartProvider = ({ children }) => {
                 variant: derivedVariant,
                 shopType: itemPayload?.shopType || businessType || itemPayload?.shops?.business_type || null,
                 shopId: itemPayload?.shop_id || shopIdFromPayload,
+                baseQuantity: itemPayload?.baseQuantity ?? itemPayload?.base_quantity ?? null,
+                unit: itemPayload?.unit ?? null,
             };
             const clientItemId = deriveClientItemId(enrichedPayload, fallbackId);
 

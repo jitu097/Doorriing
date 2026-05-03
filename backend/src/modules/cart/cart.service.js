@@ -200,6 +200,8 @@ class CartService {
               full_discount_type,
               full_discount_value,
               has_variants,
+              base_quantity,
+              unit,
               image_url,
               is_available,
               stock_quantity
@@ -256,7 +258,9 @@ class CartService {
               ...itemObj,
               id: frontendId,
               price: unitPrice,
-              portion: variantLabel
+              portion: variantLabel,
+              baseQuantity: itemObj.base_quantity ?? itemObj.baseQuantity ?? null,
+              unit: itemObj.unit ?? null,
             }
           });
         }

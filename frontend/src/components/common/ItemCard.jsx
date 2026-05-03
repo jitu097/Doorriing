@@ -172,6 +172,8 @@ const ItemCard = ({
       description,
       shopId,
       shopType,
+      baseQuantity,
+      unit,
     });
   };
 
@@ -196,6 +198,8 @@ const ItemCard = ({
       shopId,
       shopType,
       portion: variant.label,
+      baseQuantity,
+      unit,
     });
   };
 
@@ -279,14 +283,14 @@ const ItemCard = ({
             <span className="price-variant-text">Full: ₹{formattedFullVariantPrice}</span>
           </div>
         ) : (
-          <>
+          <div className="item-card-price-inline">
             {shouldShowOriginal && (
               <span className="item-card-price-original">₹{formattedOriginalPrice}</span>
             )}
             <span className="item-card-price">
               {formattedPrice ? `₹${formattedPrice}` : 'Price unavailable'}
             </span>
-          </>
+          </div>
         )}
       </div>
 
@@ -385,7 +389,7 @@ const ItemCard = ({
     const hasVariantChips = Boolean(variantOptions && variantOptions.length);
 
     return (
-      <div className="restaurant-footer-collapsed">
+      <div className={`restaurant-footer-collapsed${hasVariantChips ? '' : ' restaurant-footer-single'}`}>
         {hasVariantChips && variantOptions && showVariants ? (
           <div className="restaurant-price-chip-row">
             {variantOptions.map((variant) => {
