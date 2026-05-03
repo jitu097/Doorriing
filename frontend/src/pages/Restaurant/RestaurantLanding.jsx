@@ -22,12 +22,27 @@ const RestaurantLanding = () => {
       optimizeLottieAnimation(lottieRef.current);
     }
 
-    // Auto-navigate after animation completes (reduced from 5s to 4.5s)
-    const timer = setTimeout(() => {
-      navigate('/restaurant/browse');
-    }, 4500);
+    // Preload next page chunk and keep only a short splash delay.
+    const preloadBrowsePage = import('./Restaurant');
+    let isActive = true;
+    const shortDelayMs = prefersReducedMotion() ? 250 : 1000;
 
-    return () => clearTimeout(timer);
+    const timer = setTimeout(async () => {
+      try {
+        await preloadBrowsePage;
+      } catch {
+        // Ignore preload failure and continue navigation.
+      }
+
+      if (isActive) {
+        navigate('/restaurant/browse', { replace: true });
+      }
+    }, shortDelayMs);
+
+    return () => {
+      isActive = false;
+      clearTimeout(timer);
+    };
   }, [navigate]);
 
   return (
