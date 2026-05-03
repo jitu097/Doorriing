@@ -196,6 +196,13 @@
   margin-bottom: 15px;
 }
 
+.item-card-measure {
+  font-size: 0.82rem;
+  color: #555555;
+  margin: 0;
+  font-weight: 600;
+}
+
 .item-card-quantity {
   font-size: 0.78rem;
   color: #0f8a1e;

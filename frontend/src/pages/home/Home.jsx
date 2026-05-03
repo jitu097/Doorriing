@@ -127,6 +127,8 @@ const normalizeItems = (items = []) => {
 
       return {
         ...item,
+        baseQuantity: item.base_quantity ?? item.baseQuantity ?? null,
+        unit: item.unit ?? null,
         price: safePrice,
         originalPrice: baseOriginalPrice,
         shopId: item.shop_id,
@@ -243,6 +245,8 @@ const Home = () => {
                   fullPortionFinalPrice={item.fullPortionFinalPrice}
                   foodType={item.foodType}
                   isVeg={shouldShowVegIndicator ? derivedIsVeg : undefined}
+                  baseQuantity={item.baseQuantity}
+                  unit={item.unit}
                 />
               );
             })}

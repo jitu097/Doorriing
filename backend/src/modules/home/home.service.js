@@ -25,6 +25,8 @@ const ITEM_SELECT_COLUMNS = `
   half_portion_final_price,
   food_type,
   has_variants,
+  base_quantity,
+  unit,
   image_url,
   is_active,
   is_available,

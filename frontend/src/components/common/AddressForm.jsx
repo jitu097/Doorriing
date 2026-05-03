@@ -2,6 +2,7 @@ import React from 'react';
 
 const AddressForm = ({ formData, setFormData, onSubmit, onCancel, isEditing }) => {
     const addressTypes = ['Home', 'Work', 'Other'];
+    const deliveryAreas = ['Areadhrampur', 'Jublee Chowk', 'Thana Chowk', 'Bypass', 'Bustand', 'Mako', 'Station'];
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -66,7 +67,12 @@ const AddressForm = ({ formData, setFormData, onSubmit, onCancel, isEditing }) =
 
                     <div className="form-group">
                         <label className="form-label">Area / Street / Sector *</label>
-                        <input type="text" name="area" value={formData.area || ''} onChange={handleInputChange} placeholder="e.g., Main Street, Sector 5" required />
+                        <select name="area" value={formData.area || ''} onChange={handleInputChange} required className="area-dropdown">
+                            <option value="">Select Delivery Area</option>
+                            {deliveryAreas.map(area => (
+                                <option key={area} value={area}>{area}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="form-group">

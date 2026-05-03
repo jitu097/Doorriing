@@ -172,6 +172,8 @@ const SubCategoryItem = () => {
                     image={item.image_url}
                     shopId={shopId}
                     shopType="grocery"
+                    baseQuantity={item.base_quantity ?? item.baseQuantity}
+                    unit={item.unit}
                   />
                 );
               })}

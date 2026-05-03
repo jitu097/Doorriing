@@ -238,6 +238,8 @@ const SubCategory = () => {
                     image={item.image_url}
                     shopId={restaurantId}
                     shopType="restaurant"
+                    baseQuantity={item.base_quantity ?? item.baseQuantity}
+                    unit={item.unit}
                   />
                 );
               })}

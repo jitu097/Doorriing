@@ -72,6 +72,8 @@ const ItemCard = ({
   halfPortionFinalPrice,
   fullPortionFinalPrice,
   foodType,
+  baseQuantity,
+  unit,
 }) => {
   const { addToCart, getCartItem, increaseQty, decreaseQty } = useCart();
   const [showVariants, setShowVariants] = useState(false);
@@ -527,6 +529,10 @@ const ItemCard = ({
         </div>
 
         {secondaryText && <p className="item-card-subtitle">{secondaryText}</p>}
+
+        {(baseQuantity || unit) && (
+          <p className="item-card-measure">{baseQuantity ? baseQuantity : ''}{unit ? ` ${unit}` : ''}</p>
+        )}
 
         {renderFooter()}
       </div>
