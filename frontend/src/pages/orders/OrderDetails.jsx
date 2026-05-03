@@ -54,6 +54,9 @@ const OrderDetails = () => {
               name: oi.item_name,
               quantity: oi.quantity,
               price: oi.item_price,
+              imageUrl: oi.items?.image_url || '',
+              baseQuantity: oi.items?.base_quantity ?? null,
+              unit: oi.items?.unit || '',
             })),
             subtotal: o.items_total || 0,
             deliveryFee: o.delivery_charge || 0,
@@ -151,9 +154,19 @@ const OrderDetails = () => {
               <div className="items-list">
                 {order.items.map((item, idx) => (
                   <div key={idx} className="detail-item-row">
+                    {item.imageUrl ? (
+                      <div className="detail-item-image">
+                        <img src={item.imageUrl} alt={item.name} loading="lazy" />
+                      </div>
+                    ) : null}
                     <div className="item-qty-name">
-                      <span className="qty">{item.quantity} x</span>
-                      <span className="name">{item.name}</span>
+                      <div className="item-name-line">
+                        <span className="qty">{item.quantity} x</span>
+                        <span className="name">{item.name}</span>
+                      </div>
+                      {item.baseQuantity !== null && item.baseQuantity !== undefined && item.unit ? (
+                        <span className="base-quantity">{item.baseQuantity}{item.unit}</span>
+                      ) : null}
                     </div>
                     <span className="price">₹{item.price * item.quantity}</span>
                   </div>

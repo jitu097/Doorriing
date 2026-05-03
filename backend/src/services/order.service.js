@@ -496,7 +496,12 @@ export const orderService = {
              phone
            ),
            order_items (
-             id, item_id, item_name, quantity, item_price, subtotal
+                         id, item_id, item_name, quantity, item_price, subtotal,
+                         items (
+                             image_url,
+                             base_quantity,
+                             unit
+                         )
            )
         `)
             .eq('id', orderId)

@@ -111,20 +111,63 @@
 
 .detail-item-row {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
   font-size: 15px;
   color: #333;
+  gap: 12px;
 }
 
 .item-qty-name {
   display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name-line {
+  display: flex;
   gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.detail-item-image {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f4f4f4;
+}
+
+.detail-item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .qty {
   font-weight: 700;
   color: #888;
+}
+
+.name {
+  color: #333;
+  font-weight: 500;
+}
+
+.base-quantity {
+  font-size: 12px;
+  color: #888;
+}
+
+.price {
+  white-space: nowrap;
+  font-weight: 700;
 }
 
 .bill-summary {
