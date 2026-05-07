@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
+import android.os.Message
 import android.util.Log
 import android.view.View
 import android.webkit.JavascriptInterface
@@ -374,6 +375,18 @@ class MainActivity : AppCompatActivity() {
                 loadWithOverviewMode = true
                 useWideViewPort = true
                 cacheMode = WebSettings.LOAD_DEFAULT
+
+                // ── Popup / multiple-window support ─────────────────────────
+                // Required for Razorpay Standard Checkout to work inside a
+                // WebView. Razorpay uses window.open() internally for:
+                //   1. UPI Intent flow (opening the app chooser)
+                //   2. Bank 3DS / OTP authentication pages
+                //   3. Internal payment-state callbacks
+                // Without these two settings those calls are silently dropped
+                // and UPI / 3DS never completes.
+                setSupportMultipleWindows(true)
+                javaScriptCanOpenWindowsAutomatically = true
+                // ────────────────────────────────────────────────────────────
             }
 
             addJavascriptInterface(AndroidAuthBridge(), "AndroidAuth")
@@ -421,6 +434,60 @@ class MainActivity : AppCompatActivity() {
                         binding.progressBar.progress = newProgress
                     }
                 }
+
+                // ── Handle Razorpay popup / new-window requests ───────────────
+                // Razorpay Standard Checkout calls window.open() when it needs
+                // to open a new context for UPI Intent or bank 3DS pages.
+                // Without this override Android silently drops the call, which
+                // prevents the UPI tab from working and breaks 3DS card payments.
+                //
+                // We create a transient child WebView, wire it to the Message
+                // transport that Razorpay provided, and let the SDK drive it.
+                // The child WebView is not added to any visible layout — Razorpay
+                // manages its own overlay UI; we only need to satisfy the contract.
+                override fun onCreateWindow(
+                    view: WebView?,
+                    isDialog: Boolean,
+                    isUserGesture: Boolean,
+                    resultMsg: Message?
+                ): Boolean {
+                    Log.d(TAG, "[WebView] onCreateWindow triggered — isDialog=$isDialog isUserGesture=$isUserGesture")
+
+                    val transport = resultMsg?.obj as? WebView.WebViewTransport
+                    if (transport == null) {
+                        Log.w(TAG, "[WebView] onCreateWindow: resultMsg transport is null — ignoring")
+                        return false
+                    }
+
+                    val childWebView = WebView(view!!.context).apply {
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled  = true
+                        // Child WebView needs its own WebViewClient so that UPI
+                        // deep links triggered inside the popup are intercepted
+                        // the same way as the parent WebView.
+                        webViewClient = object : WebViewClient() {
+                            override fun shouldOverrideUrlLoading(
+                                childView: WebView?,
+                                request: WebResourceRequest?
+                            ): Boolean {
+                                val url = request?.url.toString()
+                                if (url.startsWith("upi:")) {
+                                    Log.d(TAG, "[WebView] Child popup intercepted UPI URL: $url")
+                                    launchUpiIntent(url)
+                                    return true
+                                }
+                                return false
+                            }
+                        }
+                    }
+
+                    transport.webView = childWebView
+                    resultMsg.sendToTarget()
+
+                    Log.d(TAG, "[WebView] onCreateWindow: child WebView created and wired to Razorpay transport")
+                    return true
+                }
+                // ─────────────────────────────────────────────────────────────
             }
         }
     }

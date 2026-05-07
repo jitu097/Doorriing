@@ -199,6 +199,18 @@ const CheckoutPayment = () => {
           description: "Order Payment",
           order_id: order.id,
 
+          // ── WebView UPI Intent flag ─────────────────────────────────────
+          // CRITICAL for Android app: Without this flag, Razorpay detects
+          // the Android WebView user-agent and silently hides the UPI tab
+          // entirely. It cannot use the Collect flow (VPA entry) reliably
+          // on mobile, and without this flag it assumes Intent flow is also
+          // not set up — so UPI is dropped from the modal altogether.
+          // Setting this to true tells Razorpay to use the Intent flow:
+          // the user picks GPay / PhonePe / Paytm / BHIM from a chooser.
+          // On desktop browsers this flag is ignored harmlessly.
+          webview_intent: true,
+          // ───────────────────────────────────────────────────────────────
+
           // ── UPI-first display config ────────────────────────────────────
           // Forces Razorpay modal to show UPI as the first/primary tab,
           // followed by Card, Netbanking, Wallet. This is essential for
