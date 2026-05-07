@@ -163,12 +163,27 @@ const CheckoutPayment = () => {
     }
 
     // -------- Razorpay Payment --------
-    if (paymentMethod === "Card") {
+    if (paymentMethod === "Online") {
       try {
         setLoading(true);
 
+        console.log("[Payment] Initiating Razorpay payment", {
+          paymentMethod,
+          grandTotal,
+          selectedAddressId,
+          userAgent: navigator.userAgent,
+          isAndroidWebView: /Android/.test(navigator.userAgent),
+        });
+
         const order = await api.post("/user/orders/initiate-payment", {
           amount: grandTotal,
+        });
+
+        console.log("[Payment] Razorpay order created", {
+          razorpayOrderId: order.id,
+          amount: order.amount,
+          currency: order.currency,
+          status: order.status,
         });
 
         if (!window.Razorpay) {
@@ -184,11 +199,44 @@ const CheckoutPayment = () => {
           description: "Order Payment",
           order_id: order.id,
 
+          // ── UPI-first display config ────────────────────────────────────
+          // Forces Razorpay modal to show UPI as the first/primary tab,
+          // followed by Card, Netbanking, Wallet. This is essential for
+          // Android WebView where UPI apps (GPay, PhonePe, Paytm, BHIM)
+          // are triggered via UPI intent from the Razorpay SDK.
+          config: {
+            display: {
+              blocks: {
+                upi: {
+                  name: "Pay using UPI",
+                  instruments: [
+                    { method: "upi" },
+                  ],
+                },
+                other: {
+                  name: "Other Payment Methods",
+                  instruments: [
+                    { method: "card" },
+                    { method: "netbanking" },
+                    { method: "wallet" },
+                  ],
+                },
+              },
+              sequence: ["block.upi", "block.other"],
+              preferences: {
+                show_default_blocks: false,
+              },
+            },
+          },
+          // ───────────────────────────────────────────────────────────────
+
           handler: async function (response) {
             try {
-              console.log("[Payment] Razorpay handler called, verifying payment...", {
+              console.log("[Payment] Razorpay handler called — payment SUCCESS", {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
+                // method is only present when Razorpay includes it (UPI sets this)
+                method: response.razorpay_payment_id?.startsWith('pay_') ? 'captured' : 'unknown',
               });
 
               const verifyData = await api.post("/user/orders/verify-payment", {
@@ -276,7 +324,7 @@ const CheckoutPayment = () => {
             on_dismiss: function () {
               // User closed the Razorpay modal without completing payment.
               // Reset all locks so they can try again cleanly.
-              console.log("[Payment] Razorpay modal dismissed by user");
+              console.log("[Payment] Razorpay modal dismissed by user — payment cancelled");
               setLoading(false);
               isProcessing.current = false;
               localStorage.removeItem(PENDING_PAYMENT_KEY); // user explicitly cancelled
@@ -285,6 +333,16 @@ const CheckoutPayment = () => {
           },
         };
 
+        console.log("[Payment] Razorpay options built", {
+          key: options.key ? `${options.key.slice(0, 8)}...` : 'MISSING',
+          amount: options.amount,
+          currency: options.currency,
+          order_id: options.order_id,
+          hasConfigDisplay: !!options.config?.display,
+          upiEnabled: !!options.config?.display?.blocks?.upi,
+          sequence: options.config?.display?.sequence,
+        });
+
         const rzp = new window.Razorpay(options);
         rzp.on("payment.failed", function (response) {
           // Payment was declined / cancelled at UPI app / bank level.
@@ -292,7 +350,14 @@ const CheckoutPayment = () => {
           const reason = response.error?.description
             || response.error?.reason
             || "Payment failed";
-          console.error("[Payment] payment.failed event:", response.error);
+          console.error("[Payment] payment.failed event", {
+            code:        response.error?.code,
+            description: response.error?.description,
+            source:      response.error?.source,
+            step:        response.error?.step,
+            reason:      response.error?.reason,
+            metadata:    response.error?.metadata,
+          });
           setLoading(false);
           isProcessing.current = false;
           localStorage.removeItem(PENDING_PAYMENT_KEY); // clear — payment definitely failed
@@ -312,7 +377,9 @@ const CheckoutPayment = () => {
         }));
         console.log('[Payment] Pending payment stored in localStorage', { razorpayOrderId: order.id });
 
+        console.log('[Payment] Opening Razorpay modal...');
         rzp.open();
+        console.log('[Payment] Razorpay modal open() called — waiting for user interaction');
       } catch (error) {
         // initiate-payment call failed (network error, server error, etc.)
         console.error("[Payment] initiate-payment error:", error);
@@ -482,13 +549,13 @@ const CheckoutPayment = () => {
             <label>
               <input
                 type="radio"
-                value="Card"
-                checked={paymentMethod === "Card"}
+                value="Online"
+                checked={paymentMethod === "Online"}
                 onChange={(e) =>
                   setPaymentMethod(e.target.value)
                 }
               />
-              Online Payment (UPI / Card)
+              Online Payment (UPI / Card / Wallet)
             </label>
           </div>
 

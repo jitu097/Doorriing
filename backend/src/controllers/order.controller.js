@@ -1,4 +1,4 @@
-﻿import { orderService } from '../services/order.service.js';
+import { orderService } from '../services/order.service.js';
 import paymentRecoveryService from '../services/paymentRecovery.service.js';
 import paymentAuditService from '../services/paymentAudit.service.js';
 import refundService from '../services/refund.service.js';
@@ -432,34 +432,6 @@ export const orderController = {
             });
         }
     },
-    /**
-     * Trigger an idempotent refund for a specific order.
-     * POST /api/user/orders/:id/refund-payment
-     */
-    async refundPayment(req, res) {
-        const customerId = req.user?.customerId;
-        const { id: orderId } = req.params;
-        const { reason = 'customer_requested' } = req.body;
-        if (!orderId) {
-            return res.status(400).json({ success: false, message: 'Order ID is required' });
-        }
-        logger.info('[refundPayment] Refund requested', { customerId, orderId, reason });
-        try {
-            const result = await refundService.initiateRefund({ orderId, customerId, reason, skipOwnerCheck: false });
-            const statusCode = result.status === 'not_eligible' ? 422 : 200;
-            return res.status(statusCode).json({
-                success: result.status !== 'not_eligible',
-                status: result.status,
-                message: result.message,
-                data: result.refundId ? { refundId: result.refundId, refundAmount: result.refundAmount } : null,
-            });
-        } catch (error) {
-            logger.error('[refundPayment] Error', { error: error.message, orderId, customerId });
-            if (error.message.includes('not found') || error.message.includes('Unauthorized')) {
-                return res.status(404).json({ success: false, message: error.message });
-            }
-            return res.status(500).json({ success: false, message: error.message || 'Refund request failed.' });
-        }
-    },
+    // Duplicate refundPayment removed — single definition above (lines 393–434) is canonical.
 };
 
