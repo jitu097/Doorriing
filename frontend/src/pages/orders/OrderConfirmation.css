@@ -1,224 +1,540 @@
-.order-confirmation-page {
-    padding: 2rem 1rem;
-    background-color: #f8f9fa;
-    min-height: calc(100vh - 80px); /* Adjust based on navbar height */
+/* ═══════════════════════════════════════════════════════════════════
+   OrderConfirmation.css
+   Premium delivery-app style success screen (Swiggy / Zomato / Zepto
+   inspired). Mobile-first, fully animated.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Root page wrapper ────────────────────────────────────────────── */
+.oc-page {
+    min-height: 100dvh;
+    background: #f4f6f8;
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    padding-bottom: 32px;
 }
 
-.confirmation-container {
-    background-color: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    padding: 2rem;
+/* ── Hero section ────────────────────────────────────────────────── */
+.oc-hero {
     width: 100%;
-    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px 36px;
     text-align: center;
+    position: relative;
+    overflow: hidden;
 }
 
-.success-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 1.5rem;
+/* Paid (online) hero: rich green */
+.oc-hero--paid {
+    background: linear-gradient(145deg, #0a6e1e 0%, #1a9e35 60%, #22c55e 100%);
+    color: #fff;
 }
 
-.checkmark {
+/* COD hero: warm deep green */
+.oc-hero--cod {
+    background: linear-gradient(145deg, #14532d 0%, #166534 60%, #15803d 100%);
+    color: #fff;
+}
+
+/* Loading hero shimmer placeholder */
+.oc-hero--loading {
+    background: linear-gradient(145deg, #1e3a2f 0%, #166534 100%);
+    min-height: 280px;
+    justify-content: center;
+    gap: 16px;
+}
+
+/* Decorative radial glow in hero */
+.oc-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.12) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* ── Animated checkmark ──────────────────────────────────────────── */
+.oc-check-wrapper {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+    color: #fff;
+    animation: oc-scale-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.oc-check-ring {
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    animation: oc-pulse-ring 2.4s ease-in-out infinite;
+}
+
+.oc-check-svg {
     width: 100%;
     height: 100%;
-    animation: scale-up 0.5s ease-out;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.25));
 }
 
-.success-title {
-    font-size: 1.75rem;
-    color: #1f2937;
-    margin-bottom: 1.5rem;
+/* Circle stroke animation */
+.oc-circle {
+    stroke-dasharray: 226;
+    stroke-dashoffset: 226;
+    animation: oc-draw-circle 0.55s ease-out 0.1s forwards;
+    transform-origin: center;
+    transform: rotate(-90deg);
 }
 
-.status-alert {
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 2rem;
-    text-align: center;
+/* Tick/check stroke animation */
+.oc-tick {
+    stroke-dasharray: 65;
+    stroke-dashoffset: 65;
+    animation: oc-draw-tick 0.38s ease-out 0.55s forwards;
 }
 
-.status-alert strong {
-    display: block;
-    font-size: 1.125rem;
-    margin-bottom: 0.25rem;
-}
-
-.status-alert p {
-    margin: 0;
-    font-size: 0.875rem;
-}
-
-.badge-yellow { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-.badge-blue { background-color: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
-.badge-orange { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
-.badge-purple { background-color: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
-.badge-green { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-.badge-red { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-.badge-gray { background-color: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
-.badge-dark-red { background-color: #991b1b; color: white; border: 1px solid #7f1d1d; }
-
-.order-summary-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    text-align: left;
-    overflow: hidden;
-    margin-bottom: 2rem;
-}
-
-.summary-header {
-    background-color: #f9fafb;
-    padding: 1rem;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.summary-header h2 {
-    margin: 0;
-    font-size: 1.25rem;
-    color: #374151;
-}
-
-.order-number {
+/* ── Hero badge ──────────────────────────────────────────────────── */
+.oc-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    color: #fff;
+    font-size: 13px;
     font-weight: 600;
-    color: #6b7280;
+    padding: 5px 14px;
+    border-radius: 99px;
+    letter-spacing: 0.3px;
+    margin-bottom: 14px;
+    animation: oc-fade-up 0.4s ease 0.3s both;
 }
 
-.summary-details {
-    padding: 1.5rem;
+/* ── Hero title & subtitle ───────────────────────────────────────── */
+.oc-hero-title {
+    font-size: clamp(22px, 5vw, 28px);
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 10px;
+    line-height: 1.2;
+    animation: oc-fade-up 0.4s ease 0.4s both;
 }
 
-.detail-group {
-    margin-bottom: 1.5rem;
+.oc-hero-sub {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.82);
+    margin: 0 0 22px;
+    max-width: 340px;
+    line-height: 1.5;
+    animation: oc-fade-up 0.4s ease 0.5s both;
 }
 
-.detail-group:last-child {
-    margin-bottom: 0;
-}
-
-.detail-group h3 {
-    font-size: 1rem;
-    color: #4b5563;
-    margin-top: 0;
-    margin-bottom: 0.75rem;
-    border-bottom: 1px solid #e5e7eb;
-    padding-bottom: 0.5rem;
-}
-
-.detail-group p {
-    margin: 0.25rem 0;
-    color: #6b7280;
-    font-size: 0.875rem;
-}
-
-.address-name {
-    font-weight: 600;
-    color: #374151 !important;
-}
-
-.summary-item {
+/* ── Order ID pill ───────────────────────────────────────────────── */
+.oc-order-id-pill {
     display: flex;
     align-items: center;
-    padding: 0.5rem 0;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.22);
+    border-radius: 12px;
+    padding: 10px 18px;
+    animation: oc-fade-up 0.4s ease 0.6s both;
 }
 
-.item-qty {
-    width: 30px;
-    font-weight: 600;
-    color: #4b5563;
-}
-
-.item-name {
-    flex-grow: 1;
-    color: #374151;
-}
-
-.item-price {
+.oc-order-id-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
     font-weight: 500;
-    color: #111827;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.total-row {
+.oc-order-id-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.5px;
+}
+
+/* ── Body section ────────────────────────────────────────────────── */
+.oc-body {
+    width: 100%;
+    max-width: 480px;
+    padding: 20px 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: oc-fade-up 0.45s ease 0.5s both;
+}
+
+/* ── Payment chip ────────────────────────────────────────────────── */
+.oc-payment-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border-left: 4px solid #22c55e;
+}
+
+.oc-payment-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.oc-payment-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a1a;
+    flex: 1;
+}
+
+.oc-payment-badge {
+    font-size: 11px;
+    font-weight: 700;
+    background: #dcfce7;
+    color: #15803d;
+    padding: 3px 9px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+/* ── Generic card ────────────────────────────────────────────────── */
+.oc-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.oc-card--shop {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+}
+
+.oc-card--shop .oc-card-icon {
+    font-size: 20px;
+}
+
+.oc-card--shop .oc-card-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.oc-card-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.oc-card-icon {
+    font-size: 16px;
+}
+
+.oc-card-value {
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ── Items list ─────────────────────────────────────────────────── */
+.oc-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.oc-item-row {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    padding: 6px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.oc-item-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.oc-item-qty {
+    font-weight: 700;
+    color: #15803d;
+    font-size: 13px;
+}
+
+.oc-item-name {
+    color: #374151;
+    font-weight: 500;
+}
+
+.oc-item-price {
+    font-weight: 600;
+    color: #1a1a1a;
+    text-align: right;
+}
+
+/* ── Bill card ─────────────────────────────────────────────────── */
+.oc-bill-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.oc-bill-row {
     display: flex;
     justify-content: space-between;
-    padding: 0.5rem 0;
-    color: #6b7280;
+    font-size: 14px;
+    color: #4b5563;
+    padding: 4px 0;
 }
 
-.grand-total {
-    font-weight: 700;
-    color: #111827;
-    font-size: 1.125rem;
-    border-top: 1px dashed #d1d5db;
-    margin-top: 0.5rem;
-    padding-top: 1rem;
+.oc-bill-row--total {
+    border-top: 1px dashed #e5e7eb;
+    padding-top: 10px;
+    margin-top: 4px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
 }
 
-.success-actions {
+/* ── ETA card ──────────────────────────────────────────────────── */
+.oc-eta-card {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border: 1px solid #bbf7d0;
+    border-radius: 14px;
+    padding: 16px;
     display: flex;
-    gap: 1rem;
-    flex-direction: column;
+    align-items: center;
+    gap: 14px;
 }
 
-.btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 6px;
+.oc-eta-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.oc-eta-label {
+    font-size: 12px;
     font-weight: 600;
-    text-align: center;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.2s;
-    border: none;
+    color: #16a34a;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 2px;
+}
+
+.oc-eta-value {
+    font-size: 18px;
+    font-weight: 800;
+    color: #14532d;
+}
+
+/* ── Action buttons ─────────────────────────────────────────────── */
+.oc-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.oc-btn {
     width: 100%;
+    padding: 15px 20px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.18s ease;
+    letter-spacing: 0.2px;
 }
 
-.btn-primary {
-    background-color: #0c831f;
-    color: white;
+.oc-btn:active {
+    transform: scale(0.97);
 }
 
-.btn-primary:hover {
-    background-color: #0a6b19;
+.oc-btn--primary {
+    background: linear-gradient(135deg, #15803d, #22c55e);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
 }
 
-.btn-secondary {
-    background-color: #f3f4f6;
+.oc-btn--primary:hover {
+    background: linear-gradient(135deg, #166534, #16a34a);
+    box-shadow: 0 6px 18px rgba(34, 197, 94, 0.4);
+}
+
+.oc-btn--secondary {
+    background: #f9fafb;
+    color: #15803d;
+    border: 2px solid #bbf7d0;
+}
+
+.oc-btn--secondary:hover {
+    background: #f0fdf4;
+    border-color: #86efac;
+}
+
+.oc-btn--ghost {
+    background: transparent;
+    color: #6b7280;
+    border: none;
+    font-weight: 500;
+    padding: 10px;
+}
+
+.oc-btn--ghost:hover {
     color: #374151;
-    border: 1px solid #d1d5db;
 }
 
-.btn-secondary:hover {
-    background-color: #e5e7eb;
+/* ── Error state ────────────────────────────────────────────────── */
+.oc-error-card {
+    width: 100%;
+    max-width: 380px;
+    margin: 48px 16px 0;
+    background: #fff;
+    border-radius: 20px;
+    padding: 40px 28px;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
 
-.loading-spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #0c831f;
+.oc-error-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.oc-error-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 10px;
+}
+
+.oc-error-msg {
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.5;
+    margin: 0 0 8px;
+}
+
+.oc-error-hint {
+    font-size: 13px;
+    color: #9ca3af;
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 12px 0 20px;
+}
+
+/* ── Skeleton loader ────────────────────────────────────────────── */
+.oc-skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.08) 75%);
+    background-size: 200% 100%;
+    animation: oc-shimmer 1.4s infinite;
+    border-radius: 8px;
+}
+
+.oc-skeleton--circle {
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 1rem;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.oc-skeleton--bar {
+    height: 20px;
+    margin: 8px auto 0;
 }
 
-@keyframes scale-up {
-    0% { transform: scale(0.5); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
+.oc-skeleton--line {
+    height: 16px;
+    margin: 10px 0;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: oc-shimmer 1.4s infinite;
 }
 
-@media (min-width: 640px) {
-    .success-actions {
-        flex-direction: row;
+/* ═══════════════════════════════════════════════════════════════════
+   Keyframe animations
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes oc-scale-in {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+
+@keyframes oc-draw-circle {
+    to { stroke-dashoffset: 0; }
+}
+
+@keyframes oc-draw-tick {
+    to { stroke-dashoffset: 0; }
+}
+
+@keyframes oc-pulse-ring {
+    0%   { transform: scale(0.92); opacity: 0.6; }
+    50%  { transform: scale(1.08); opacity: 0.2; }
+    100% { transform: scale(0.92); opacity: 0.6; }
+}
+
+@keyframes oc-fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes oc-shimmer {
+    from { background-position: -200% 0; }
+    to   { background-position: 200% 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Responsive — larger screens get a centred card layout
+   ═══════════════════════════════════════════════════════════════════ */
+@media (min-width: 520px) {
+    .oc-hero {
+        border-radius: 0 0 28px 28px;
+    }
+
+    .oc-body {
+        padding-top: 24px;
+    }
+
+    .oc-card {
+        border-radius: 16px;
+    }
+}
+
+@media (min-width: 768px) {
+    .oc-page {
+        padding-top: 32px;
+        background: #e9ecef;
+    }
+
+    .oc-hero {
+        max-width: 520px;
+        border-radius: 20px;
+        margin-top: 0;
+    }
+
+    .oc-body {
+        max-width: 520px;
     }
 }

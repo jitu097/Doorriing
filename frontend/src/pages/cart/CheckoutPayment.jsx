@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useAddress } from "../../context/AddressContext";
@@ -19,6 +19,10 @@ const CheckoutPayment = () => {
   const [errorMsg, setErrorMsg] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Synchronous lock — prevents duplicate payment attempts from double-tap
+  // before React re-renders the disabled button state.
+  const isProcessing = useRef(false);
+
   const subtotal = getCartTotal();
   const resolvedDeliveryFee = deliveryFee ?? 0;
   const resolvedConvenienceFee = convenienceFee ?? 0;
@@ -29,6 +33,74 @@ const CheckoutPayment = () => {
       navigate("/home", { replace: true });
     }
   }, [cartItems, navigate]);
+
+  // ── Payment Recovery Check ───────────────────────────────────────────────
+  // On every mount of CheckoutPayment, silently check if there is a pending
+  // Razorpay payment stored in localStorage from a previous session that was
+  // interrupted before verifyPayment could complete.
+  //
+  // Recovery window: 30 minutes. After that the pending record is discarded
+  // (Razorpay's own refund timelines make older recoveries unsafe to auto-retry).
+  const PENDING_PAYMENT_KEY = 'doorriing_pending_razorpay';
+  const RECOVERY_WINDOW_MS  = 30 * 60 * 1000; // 30 minutes
+
+  useEffect(() => {
+    const raw = localStorage.getItem(PENDING_PAYMENT_KEY);
+    if (!raw) return;
+
+    let pending;
+    try {
+      pending = JSON.parse(raw);
+    } catch {
+      localStorage.removeItem(PENDING_PAYMENT_KEY);
+      return;
+    }
+
+    const ageMs = Date.now() - (pending.timestamp || 0);
+    if (ageMs > RECOVERY_WINDOW_MS) {
+      console.log('[Recovery] Pending payment record expired — clearing');
+      localStorage.removeItem(PENDING_PAYMENT_KEY);
+      return;
+    }
+
+    if (!pending.razorpayOrderId || !pending.addressId) {
+      localStorage.removeItem(PENDING_PAYMENT_KEY);
+      return;
+    }
+
+    console.log('[Recovery] Found pending payment, checking status...', {
+      razorpayOrderId: pending.razorpayOrderId,
+      ageMinutes: Math.round(ageMs / 60000),
+    });
+
+    // Non-blocking: run recovery silently in the background.
+    // User sees the normal checkout screen while we check.
+    orderService
+      .recoverPayment(pending.razorpayOrderId, pending.addressId)
+      .then((data) => {
+        if (data?.status === 'recovered' || data?.status === 'already_exists') {
+          const orderId = data?.data?.orderId;
+          console.log('[Recovery] Payment recovered! Redirecting to confirmation.', { orderId });
+          localStorage.removeItem(PENDING_PAYMENT_KEY);
+          if (orderId) {
+            navigate(`/order-confirmation?orderId=${orderId}&payment=success&recovered=1`, { replace: true });
+          }
+        } else if (data?.status === 'not_found' || data?.status === 'failed') {
+          // Payment was never captured — safe to clear the record
+          console.log('[Recovery] Payment not captured — clearing pending record', { status: data.status });
+          localStorage.removeItem(PENDING_PAYMENT_KEY);
+        } else {
+          // status === 'pending': Razorpay is still processing, keep record and check next time
+          console.log('[Recovery] Payment still pending — will retry on next mount');
+        }
+      })
+      .catch((err) => {
+        // Non-fatal: user can still checkout normally, recovery runs again next mount
+        console.error('[Recovery] Recovery check failed:', err);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);  // ← intentionally run only on mount
+  // ── End Recovery Check ───────────────────────────────────────────────────
 
   const selectedAddress = useMemo(() => {
     if (!addresses || addresses.length === 0) return null;
@@ -65,7 +137,19 @@ const CheckoutPayment = () => {
     e.preventDefault();
     setErrorMsg(null);
 
+    // ── Duplicate-tap guard ──────────────────────────────────────────────
+    // Synchronous ref check runs before any React state update, blocking
+    // a second invocation that might fire before the button re-renders as
+    // disabled (React state updates are async; refs are synchronous).
+    if (isProcessing.current) {
+      console.warn("[Payment] Blocked duplicate payment attempt — already processing");
+      return;
+    }
+    isProcessing.current = true;
+    // ────────────────────────────────────────────────────────────────────
+
     if (!selectedAddressId) {
+      isProcessing.current = false;
       setErrorMsg(
         "Missing delivery address. Please go back and select one."
       );
@@ -73,6 +157,7 @@ const CheckoutPayment = () => {
     }
 
     if (platformSettingsLoading && deliveryFee === null) {
+      isProcessing.current = false;
       setErrorMsg("Loading delivery charges. Please wait a moment.");
       return;
     }
@@ -101,30 +186,80 @@ const CheckoutPayment = () => {
 
           handler: async function (response) {
             try {
+              console.log("[Payment] Razorpay handler called, verifying payment...", {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+              });
+
               const verifyData = await api.post("/user/orders/verify-payment", {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
+                // Pass address + pricing so backend can create the DB order
+                addressId: selectedAddressId,
+                pricing: {
+                  subtotal,
+                  deliveryFee: resolvedDeliveryFee,
+                  convenienceFee: resolvedConvenienceFee,
+                  finalAmount: grandTotal,
+                },
               });
 
               if (verifyData.success) {
                 await clearCart();
-                // Fetch order details to display in notification
-                try {
-                  const orderResponse = await orderService.getOrderById(order.id);
-                  if (orderResponse.success && orderResponse.data) {
-                    setOrderAsRecent(orderResponse.data);
+
+                // Use the real Supabase UUID returned by verifyPayment,
+                // NOT the Razorpay order.id (which is not a DB UUID).
+                const dbOrderId = verifyData.data?.orderId;
+                console.log("[Payment] Order created successfully, DB orderId:", dbOrderId);
+
+                if (dbOrderId) {
+                  try {
+                    const orderResponse = await orderService.getOrderById(dbOrderId);
+                    if (orderResponse.success && orderResponse.data) {
+                      setOrderAsRecent(orderResponse.data);
+                    }
+                  } catch (err) {
+                    console.error("[Payment] Failed to fetch order details after payment:", err);
                   }
-                } catch (err) {
-                  console.error("Failed to fetch order details:", err);
                 }
 
-                navigate("/home");
+                // Payment fully processed — clear the pending payment record
+                localStorage.removeItem(PENDING_PAYMENT_KEY);
+
+                // isProcessing stays true — component will unmount on navigate
+                // Navigate to confirmation screen with payment=success flag
+                navigate(
+                  dbOrderId
+                    ? `/order-confirmation?orderId=${dbOrderId}&payment=success`
+                    : "/home"
+                );
               } else {
-                setErrorMsg("Payment verification failed. Please try again.");
+                // verifyPayment returned success:false but didn't throw
+                // This is unusual — log it and show a clear error
+                console.error("[Payment] verifyPayment returned success:false", verifyData);
+                isProcessing.current = false;
+                setErrorMsg(
+                  "Payment verification failed. Please contact support if money was deducted."
+                );
               }
             } catch (err) {
-              setErrorMsg(err.message || "Payment verification failed.");
+              // Check if this is the specific case where payment was captured
+              // but order creation failed (backend returns paymentId in this case)
+              const paymentId = err?.data?.paymentId || response.razorpay_payment_id;
+              const isOrderCreationFailure = err?.message?.includes("captured");
+
+              if (isOrderCreationFailure && paymentId) {
+                console.error("[Payment] CRITICAL: payment captured but order creation failed", { paymentId });
+                setErrorMsg(
+                  `Payment was captured but your order could not be created. ` +
+                  `Please contact support with Payment ID: ${paymentId}`
+                );
+              } else {
+                console.error("[Payment] verifyPayment error:", err);
+                setErrorMsg(err.message || "Payment verification failed. Please try again.");
+              }
+              isProcessing.current = false;
             }
           },
 
@@ -139,23 +274,54 @@ const CheckoutPayment = () => {
           },
           modal: {
             on_dismiss: function () {
+              // User closed the Razorpay modal without completing payment.
+              // Reset all locks so they can try again cleanly.
+              console.log("[Payment] Razorpay modal dismissed by user");
               setLoading(false);
+              isProcessing.current = false;
+              localStorage.removeItem(PENDING_PAYMENT_KEY); // user explicitly cancelled
+              // Do NOT clear cart, do NOT create order.
             },
           },
         };
 
         const rzp = new window.Razorpay(options);
         rzp.on("payment.failed", function (response) {
+          // Payment was declined / cancelled at UPI app / bank level.
+          // Reset state so user can retry. Cart and order are untouched.
+          const reason = response.error?.description
+            || response.error?.reason
+            || "Payment failed";
+          console.error("[Payment] payment.failed event:", response.error);
           setLoading(false);
-          setErrorMsg(response.error.description || "Payment failed.");
+          isProcessing.current = false;
+          localStorage.removeItem(PENDING_PAYMENT_KEY); // clear — payment definitely failed
+          setErrorMsg(
+            `${reason}. Your cart is safe — tap "Place Order" to try again.`
+          );
         });
+
+        // Store pending payment BEFORE opening the modal.
+        // This is the crash-safety record: if the app closes after payment
+        // but before verifyPayment completes, the next mount will find this
+        // and trigger auto-recovery.
+        localStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify({
+          razorpayOrderId: order.id,   // Razorpay order ID (not our DB UUID)
+          addressId: selectedAddressId,
+          timestamp: Date.now(),
+        }));
+        console.log('[Payment] Pending payment stored in localStorage', { razorpayOrderId: order.id });
+
         rzp.open();
       } catch (error) {
+        // initiate-payment call failed (network error, server error, etc.)
+        console.error("[Payment] initiate-payment error:", error);
         setErrorMsg(
           error.message ||
           "Failed to create payment order. Please try again."
         );
         setLoading(false);
+        isProcessing.current = false;
       }
 
       return;
@@ -181,31 +347,42 @@ const CheckoutPayment = () => {
       });
 
       await clearCart();
+
+      // Prefer the real Supabase UUID; order_number is a readable fallback.
+      // "success" is a last-resort sentinel that the confirmation page handles.
       const orderId =
         response.data?.order?.id ||
-        response.data?.order?.order_number ||
         response.data?.id ||
-        "success";
+        response.data?.order?.order_number ||
+        null;
 
       // Fetch order details to display in notification
-      try {
-        const orderResponse = await orderService.getOrderById(orderId);
-        if (orderResponse.success && orderResponse.data) {
-          setOrderAsRecent(orderResponse.data);
+      if (orderId) {
+        try {
+          const orderResponse = await orderService.getOrderById(orderId);
+          if (orderResponse.success && orderResponse.data) {
+            setOrderAsRecent(orderResponse.data);
+          }
+        } catch (err) {
+          console.error("Failed to fetch order details:", err);
         }
-      } catch (err) {
-        console.error("Failed to fetch order details:", err);
       }
 
-      navigate("/home");
+      // Navigate to confirmation screen (no payment=success flag for COD)
+      navigate(
+        orderId
+          ? `/order-confirmation?orderId=${orderId}`
+          : "/home"
+      );
     } catch (error) {
-      console.error("Checkout failed:", error);
+      console.error("[COD] Checkout failed:", error);
       setErrorMsg(
         error.message ||
         "Failed to place order. Please try again."
       );
     } finally {
       setLoading(false);
+      isProcessing.current = false;  // always unlock for COD
     }
   };
 
@@ -317,10 +494,15 @@ const CheckoutPayment = () => {
 
           <button
             type="submit"
+            id="btn-place-order"
             className="place-order-btn"
-            disabled={loading || (platformSettingsLoading && deliveryFee === null)}
+            disabled={loading || isProcessing.current || (platformSettingsLoading && deliveryFee === null)}
           >
-            {loading ? "Processing..." : (platformSettingsLoading && deliveryFee === null ? "Loading charges..." : "Place Order")}
+            {loading
+              ? "Processing..."
+              : (platformSettingsLoading && deliveryFee === null
+                ? "Loading charges..."
+                : "Place Order")}
           </button>
         </form>
       </div>

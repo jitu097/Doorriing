@@ -383,14 +383,9 @@ class MainActivity : AppCompatActivity() {
                     val url = request?.url.toString()
                     
                     if (url.startsWith("upi:")) {
-                        try {
-                            val intent = Intent(Intent.ACTION_VIEW, request?.url)
-                            startActivity(intent)
-                            return true
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Error opening UPI app for URL: $url", e)
-                            return true 
-                        }
+                        Log.d(TAG, "[UPI] Intercepted UPI URL: $url")
+                        launchUpiIntent(request?.url.toString())
+                        return true
                     }
 
                     if (url.contains("accounts.google.com")) {
@@ -440,6 +435,89 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    /**
+     * Safely launch the device UPI app chooser for a given upi:// URL.
+     *
+     * Flow:
+     *  1. Build a VIEW intent for the UPI URI.
+     *  2. Query PackageManager — if NO app can handle it, show a Snackbar and return.
+     *  3. If exactly one app is installed, launch it directly (no chooser popup).
+     *  4. If multiple apps are installed, open an Intent.createChooser() so the user
+     *     picks their preferred UPI app (GPay, PhonePe, Paytm, BHIM, etc.).
+     *  5. FLAG_ACTIVITY_NEW_TASK ensures the intent works from any execution context.
+     *
+     * Never silently swallows failures — always gives the user visible feedback.
+     */
+    private fun launchUpiIntent(upiUrl: String) {
+        val uri = try {
+            android.net.Uri.parse(upiUrl)
+        } catch (e: Exception) {
+            Log.e(TAG, "[UPI] Failed to parse UPI URI: $upiUrl", e)
+            showUpiError("Invalid payment link. Please try again.")
+            return
+        }
+
+        val upiIntent = Intent(Intent.ACTION_VIEW, uri).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        // ── Check which apps can handle this UPI intent ──────────────────────
+        val resolveFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PackageManager.MATCH_ALL
+        } else {
+            0
+        }
+
+        val availableApps = packageManager.queryIntentActivities(upiIntent, resolveFlag)
+
+        Log.d(TAG, "[UPI] Apps that can handle UPI intent: ${availableApps.size}")
+        availableApps.forEach { resolveInfo ->
+            Log.d(TAG, "[UPI]   → ${resolveInfo.activityInfo.packageName}")
+        }
+
+        if (availableApps.isEmpty()) {
+            Log.w(TAG, "[UPI] No UPI app found on device. URL was: $upiUrl")
+            showUpiError(
+                "No UPI app found. Please install Google Pay, PhonePe, Paytm, or BHIM to pay online."
+            )
+            return
+        }
+
+        // ── Launch chooser (or direct launch if only one app) ────────────────
+        try {
+            if (availableApps.size == 1) {
+                // Only one UPI app — launch directly without chooser overhead
+                Log.d(TAG, "[UPI] Launching single UPI app: ${availableApps[0].activityInfo.packageName}")
+                startActivity(upiIntent)
+            } else {
+                // Multiple apps — let user pick
+                Log.d(TAG, "[UPI] Opening chooser with ${availableApps.size} UPI apps")
+                val chooser = Intent.createChooser(upiIntent, "Pay with UPI")
+                    .apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+                startActivity(chooser)
+            }
+            Log.d(TAG, "[UPI] Intent launched successfully for: $upiUrl")
+        } catch (e: Exception) {
+            Log.e(TAG, "[UPI] Exception while launching UPI intent", e)
+            showUpiError("Could not open the payment app. Please try again.")
+        }
+    }
+
+    /**
+     * Show a user-visible Snackbar when UPI launch fails.
+     * Always called on the main thread via runOnUiThread.
+     */
+    private fun showUpiError(message: String) {
+        runOnUiThread {
+            Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG)
+                .setAction("OK") { /* dismiss */ }
+                .setBackgroundTint(resources.getColor(android.R.color.holo_red_dark, theme))
+                .setTextColor(resources.getColor(android.R.color.white, theme))
+                .setActionTextColor(resources.getColor(android.R.color.white, theme))
+                .show()
+        }
     }
 
     private fun showNoInternetError() {

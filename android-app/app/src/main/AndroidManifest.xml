@@ -12,11 +12,41 @@
     <uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION" tools:node="remove"/>
     <uses-permission android:name="android.permission.ACCESS_ADSERVICES_TOPICS" tools:node="remove"/>
 
+    <!--
+        UPI app visibility — required for Android 11+ (API 30+).
+        Without these entries, PackageManager.queryIntentActivities() returns
+        an empty list and no UPI app can be launched from the WebView.
+
+        We declare BOTH:
+          1. The generic upi:// scheme intent   — catch-all for any UPI app
+          2. Explicit package names             — required on many OEM builds
+             (Xiaomi, OnePlus, Realme, Vivo, Samsung) where generic scheme
+             visibility is blocked by aggressive package filtering.
+    -->
     <queries>
+        <!-- Generic UPI scheme — catch-all -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="upi" />
         </intent>
+
+        <!-- Google Pay -->
+        <package android:name="com.google.android.apps.nbu.paisa.user" />
+
+        <!-- PhonePe -->
+        <package android:name="com.phonepe.app" />
+
+        <!-- Paytm -->
+        <package android:name="net.one97.paytm" />
+
+        <!-- BHIM (NPCI official) -->
+        <package android:name="in.org.npci.upiapp" />
+
+        <!-- Amazon Pay -->
+        <package android:name="in.amazon.mShop.android.shopping" />
+
+        <!-- WhatsApp (Pay) — uses UPI under the hood -->
+        <package android:name="com.whatsapp" />
     </queries>
 
     <application

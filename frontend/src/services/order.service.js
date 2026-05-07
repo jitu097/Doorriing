@@ -51,7 +51,26 @@ export const orderService = {
     verifyPayment: async (paymentData) => {
         const authHeader = await getAuthHeader();
         return api.post('/order/verify-payment', paymentData, authHeader);
-    }
+    },
+
+    /**
+     * Attempt to recover a pending payment that never completed.
+     *
+     * Called automatically on app reopen if localStorage has a pending payment
+     * record. The backend will:
+     *  1. Check if the order already exists in DB (most common case)
+     *  2. If not, query Razorpay to see if the payment was captured
+     *  3. If captured, create the missing order and return it
+     *
+     * @param {string} razorpayOrderId - From localStorage ('doorriing_pending_razorpay')
+     * @param {string} addressId       - From localStorage ('doorriing_pending_razorpay')
+     * @returns {Promise<{ status, data?: { orderId, orderNumber }, message }>}
+     */
+    recoverPayment: async (razorpayOrderId, addressId) => {
+        const authHeader = await getAuthHeader();
+        const params = new URLSearchParams({ razorpayOrderId, addressId }).toString();
+        return api.get(`/user/orders/recover-payment-status?${params}`, authHeader);
+    },
 };
 
 export default orderService;
