@@ -24,7 +24,10 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.doorriing.user.databinding.ActivityMainBinding
 import com.doorriing.user.network.FcmTokenRequest
+import com.doorriing.user.network.InitiatePaymentRequest
+import com.doorriing.user.network.PricingData
 import com.doorriing.user.network.RetrofitClient
+import com.doorriing.user.network.VerifyPaymentRequest
 import com.doorriing.user.repository.AuthRepository
 import com.doorriing.user.utils.NetworkUtils
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -50,15 +53,24 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val BASE_URL = "https://doorriing.com"
-    // Default in-app entry point: go directly to /home instead of the landing page.
-    // The landing page is a marketing page for new web visitors — inside the app
-    // we always want to start at the home screen and let Firebase restore the session.
     private val HOME_URL = "$BASE_URL/home"
 
     private lateinit var auth: FirebaseAuth
     private lateinit var googleSignInClient: GoogleSignInClient
     private var isGoogleSigningIn = false
     private var lastProcessedIntentId: String? = null
+
+    // ── Razorpay Native SDK ────────────────────────────────────────────────
+    // Initialized in onCreate(). Manages the native payment sheet and
+    // delegates success/error back to handlePaymentSuccess / handlePaymentError.
+    private lateinit var razorpayManager: RazorpayPaymentManager
+
+    // Pricing + address context stored when the JS bridge fires, so the
+    // Android-side verify-payment call can pass the same payload the React
+    // handler would have sent.
+    private var pendingAddressId: String  = ""
+    private var pendingPricing:   PricingData? = null
+    // ──────────────────────────────────────────────────────────────────────
 
     private val authRepository: AuthRepository by lazy {
         AuthRepository(RetrofitClient.instance)
@@ -133,6 +145,21 @@ class MainActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
         googleSignInClient = buildGoogleSignInClient()
+
+        // ── Razorpay Native SDK setup ───────────────────────────────────────
+        razorpayManager = RazorpayPaymentManager(
+            activity = this,
+            onSuccess = { paymentId, orderId, signature ->
+                handlePaymentSuccess(paymentId, orderId, signature)
+            },
+            onError = { code, description ->
+                handlePaymentError(code, description)
+            }
+        )
+        // Preload Razorpay resources so the first payment open is instant.
+        RazorpayPaymentManager.preload(this)
+        Log.d(TAG, "[Razorpay] Native SDK initialized")
+        // ───────────────────────────────────────────────────────────────────
 
         askNotificationPermission()
         setupWebView()
@@ -225,6 +252,40 @@ class MainActivity : AppCompatActivity() {
             DoorriingApp.prefs.saveToken(token)
             fetchFcmToken()
         }
+
+        // ── Razorpay Native SDK bridge method ─────────────────────────────
+        // Called from CheckoutPayment.jsx when running on Android WebView.
+        // React has already:
+        //   1. Called the backend to create a Razorpay order
+        //   2. Packaged the result + address + pricing into orderJson
+        // Android takes over from here and opens the Native SDK sheet.
+        @JavascriptInterface
+        fun initiateRazorpayPayment(orderJson: String) {
+            Log.d(TAG, "[Razorpay] initiateRazorpayPayment bridge called")
+            try {
+                val json      = JSONObject(orderJson)
+                val pricing   = json.getJSONObject("pricing")
+
+                // Store context needed for the verify-payment call after SDK success
+                pendingAddressId = json.getString("addressId")
+                pendingPricing   = PricingData(
+                    subtotal        = pricing.getDouble("subtotal"),
+                    deliveryFee     = pricing.getDouble("deliveryFee"),
+                    convenienceFee  = pricing.getDouble("convenienceFee"),
+                    finalAmount     = pricing.getDouble("finalAmount")
+                )
+
+                Log.d(TAG, "[Razorpay] Stored pendingAddressId=$pendingAddressId pricing=$pendingPricing")
+
+                runOnUiThread {
+                    razorpayManager.startPayment(orderJson)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "[Razorpay] Failed to parse orderJson from JS bridge", e)
+                postErrorToReact("Payment could not be started. Please try again.")
+            }
+        }
+        // ──────────────────────────────────────────────────────────────────
     }
 
     private fun askNotificationPermission() {
@@ -241,6 +302,121 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    // ── Razorpay payment result handlers ────────────────────────────────────
+
+    /**
+     * Called by RazorpayPaymentManager.onPaymentSuccess after the native SDK
+     * confirms payment. Calls the backend /verify-payment endpoint (same one
+     * the React frontend uses) and navigates to order confirmation on success.
+     */
+    private fun handlePaymentSuccess(
+        razorpayPaymentId: String,
+        razorpayOrderId: String,
+        razorpaySignature: String
+    ) {
+        Log.d(TAG, "[Razorpay] handlePaymentSuccess — verifying with backend")
+
+        val addressId = pendingAddressId
+        val pricing   = pendingPricing
+
+        if (addressId.isBlank() || pricing == null) {
+            Log.e(TAG, "[Razorpay] handlePaymentSuccess: missing pending context — addressId=$addressId pricing=$pricing")
+            postErrorToReact("Payment succeeded but order context was lost. Contact support with Payment ID: $razorpayPaymentId")
+            return
+        }
+
+        // Get the auth token that was saved by saveAuthToken() from JS bridge.
+        val authToken = DoorriingApp.prefs.getToken()
+        if (authToken.isNullOrBlank()) {
+            Log.e(TAG, "[Razorpay] handlePaymentSuccess: no auth token found")
+            postErrorToReact("Session expired. Payment succeeded — contact support with Payment ID: $razorpayPaymentId")
+            return
+        }
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                Log.d(TAG, "[Razorpay] Calling verify-payment backend")
+                val response = RetrofitClient.instance.verifyPayment(
+                    authorization = "Bearer $authToken",
+                    request = VerifyPaymentRequest(
+                        razorpayOrderId  = razorpayOrderId,
+                        razorpayPaymentId = razorpayPaymentId,
+                        razorpaySignature = razorpaySignature,
+                        addressId        = addressId,
+                        pricing          = pricing
+                    )
+                )
+
+                if (response.isSuccessful) {
+                    val dbOrderId = response.body()?.data?.orderId
+                    Log.d(TAG, "[Razorpay] verify-payment succeeded — dbOrderId=$dbOrderId")
+
+                    // Reset pending context
+                    pendingAddressId = ""
+                    pendingPricing   = null
+
+                    // Notify React → navigate to order confirmation
+                    val escapedOrderId = JSONObject.quote(dbOrderId ?: "")
+                    runOnUiThread {
+                        binding.webView.evaluateJavascript(
+                            "window.onRazorpaySuccess && window.onRazorpaySuccess($escapedOrderId);",
+                            null
+                        )
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                    Log.e(TAG, "[Razorpay] verify-payment HTTP ${response.code()}: $errorBody")
+                    postErrorToReact(
+                        "Payment verified but order creation failed. Contact support with Payment ID: $razorpayPaymentId"
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "[Razorpay] verify-payment network error", e)
+                postErrorToReact(
+                    "Network error during order confirmation. Contact support with Payment ID: $razorpayPaymentId"
+                )
+            }
+        }
+    }
+
+    /**
+     * Called by RazorpayPaymentManager.onPaymentError.
+     * Cart is NOT cleared — user can retry.
+     */
+    private fun handlePaymentError(code: Int, description: String) {
+        Log.w(TAG, "[Razorpay] handlePaymentError — code=$code description=$description")
+        // code == 0 means user cancelled (dismissed the SDK sheet)
+        val message = when (code) {
+            0    -> "Payment cancelled. Your cart is safe — tap \"Place Order\" to try again."
+            else -> "$description. Your cart is safe — tap \"Place Order\" to try again."
+        }
+        postErrorToReact(message)
+    }
+
+    /** Post an error message back to the React checkout page via JS bridge. */
+    private fun postErrorToReact(message: String) {
+        val escaped = JSONObject.quote(message)
+        runOnUiThread {
+            binding.webView.evaluateJavascript(
+                "window.onRazorpayError && window.onRazorpayError($escaped);",
+                null
+            )
+        }
+    }
+
+    /**
+     * Required by the Razorpay Native SDK for some payment flows (e.g. NetBanking
+     * redirect, Card 3DS). The SDK needs onActivityResult forwarded to complete
+     * the payment cycle. Without this, card payments may silently not confirm.
+     */
+    @Suppress("DEPRECATION")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        com.razorpay.Checkout.handleActivityResult(requestCode, resultCode, data)
+        Log.d(TAG, "[Razorpay] onActivityResult forwarded to Razorpay SDK — requestCode=$requestCode resultCode=$resultCode")
+    }
+    // ────────────────────────────────────────────────────────────────────────
 
     private fun fetchFcmToken() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
@@ -394,12 +570,54 @@ class MainActivity : AppCompatActivity() {
             webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url.toString()
-                    
+
+                    // ── intent:// — Razorpay UPI Intent scheme ───────────────────
+                    // MUST come before the upi: check.
+                    // When the user taps GPay / PhonePe / Paytm / BHIM inside the
+                    // Razorpay modal, Razorpay fires an intent:// URI that encodes
+                    // the target app package + UPI payment parameters, e.g.:
+                    //   intent://pay?pa=...#Intent;scheme=upi;
+                    //     package=com.google.android.apps.nbu.paisa.user;...End;
+                    // This must be parsed with Intent.parseUri(), NOT Uri.parse().
+                    // Without this block the URL falls through to return false,
+                    // WebView tries to load it as a webpage, fails silently, and
+                    // Razorpay JS waits forever → "Processing your payment…" stuck.
+                    if (url.startsWith("intent:")) {
+                        Log.d(TAG, "[UPI] Parent intercepted intent:// URL: $url")
+                        try {
+                            val intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME)
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+                            if (packageManager.resolveActivity(intent, 0) != null) {
+                                Log.d(TAG, "[UPI] Launching UPI app: ${intent.`package`}")
+                                startActivity(intent)
+                            } else {
+                                // Target UPI app not installed — use browser_fallback_url
+                                val fallbackUrl = intent.getStringExtra("browser_fallback_url")
+                                Log.w(TAG, "[UPI] Target app not found, fallback: $fallbackUrl")
+                                if (!fallbackUrl.isNullOrBlank()) {
+                                    view?.loadUrl(fallbackUrl)
+                                } else {
+                                    showUpiError(
+                                        "No UPI app found. Please install Google Pay, PhonePe or Paytm."
+                                    )
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "[UPI] Failed to parse intent:// URI", e)
+                            showUpiError("Could not open payment app. Please try again.")
+                        }
+                        return true
+                    }
+                    // ────────────────────────────────────────────────────────────
+
+                    // ── upi:// — direct UPI scheme (fallback for older flows) ───
                     if (url.startsWith("upi:")) {
-                        Log.d(TAG, "[UPI] Intercepted UPI URL: $url")
+                        Log.d(TAG, "[UPI] Parent intercepted upi:// URL: $url")
                         launchUpiIntent(request?.url.toString())
                         return true
                     }
+                    // ────────────────────────────────────────────────────────────
 
                     if (url.contains("accounts.google.com")) {
                         val intent = Intent(Intent.ACTION_VIEW, request?.url)
@@ -436,15 +654,23 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 // ── Handle Razorpay popup / new-window requests ───────────────
-                // Razorpay Standard Checkout calls window.open() when it needs
-                // to open a new context for UPI Intent or bank 3DS pages.
-                // Without this override Android silently drops the call, which
-                // prevents the UPI tab from working and breaks 3DS card payments.
+                // Razorpay calls window.open() for UPI Intent and bank 3DS pages.
+                // We satisfy the transport contract with a "redirect-trap" child
+                // WebView that immediately redirects any payment URL externally.
                 //
-                // We create a transient child WebView, wire it to the Message
-                // transport that Razorpay provided, and let the SDK drive it.
-                // The child WebView is not added to any visible layout — Razorpay
-                // manages its own overlay UI; we only need to satisfy the contract.
+                // TWO INTERCEPTION POINTS — both are required:
+                //
+                //  1. onPageStarted — PRIMARY.
+                //     Android does NOT call shouldOverrideUrlLoading for the very
+                //     first URL loaded into a popup WebView via the transport
+                //     mechanism. That initial URL (the intent:// Razorpay fires
+                //     when the user taps GPay/PhonePe/Paytm/BHIM) arrives here
+                //     instead. Without this, intent:// is swallowed and the screen
+                //     stays stuck on "Processing your payment" forever.
+                //
+                //  2. shouldOverrideUrlLoading — SECONDARY.
+                //     Catches all JS-initiated navigation inside the popup after
+                //     the initial load (e.g. server-side redirects to intent://).
                 override fun onCreateWindow(
                     view: WebView?,
                     isDialog: Boolean,
@@ -462,33 +688,92 @@ class MainActivity : AppCompatActivity() {
                     val childWebView = WebView(view!!.context).apply {
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled  = true
-                        // Child WebView needs its own WebViewClient so that UPI
-                        // deep links triggered inside the popup are intercepted
-                        // the same way as the parent WebView.
+
                         webViewClient = object : WebViewClient() {
+
+                            // PRIMARY — initial URL load (bypasses shouldOverrideUrlLoading)
+                            override fun onPageStarted(
+                                childView: WebView?,
+                                url: String?,
+                                favicon: Bitmap?
+                            ) {
+                                if (url == null || url == "about:blank") return
+                                Log.d(TAG, "[WebView] Child onPageStarted: $url")
+                                if (url.startsWith("intent:") || url.startsWith("upi:")) {
+                                    childView?.stopLoading()     // don't try to render it
+                                    dispatchPopupUrl(url, childView)
+                                }
+                                // https:// (bank OTP pages) load normally — no interference
+                            }
+
+                            // SECONDARY — JS-initiated navigation after initial load
                             override fun shouldOverrideUrlLoading(
                                 childView: WebView?,
                                 request: WebResourceRequest?
                             ): Boolean {
-                                val url = request?.url.toString()
-                                if (url.startsWith("upi:")) {
-                                    Log.d(TAG, "[WebView] Child popup intercepted UPI URL: $url")
-                                    launchUpiIntent(url)
+                                val url = request?.url?.toString() ?: return false
+                                Log.d(TAG, "[WebView] Child shouldOverrideUrlLoading: $url")
+                                if (url.startsWith("intent:") || url.startsWith("upi:")) {
+                                    dispatchPopupUrl(url, childView)
                                     return true
                                 }
-                                return false
+                                return false   // let https:// load normally
                             }
                         }
                     }
 
                     transport.webView = childWebView
                     resultMsg.sendToTarget()
-
-                    Log.d(TAG, "[WebView] onCreateWindow: child WebView created and wired to Razorpay transport")
+                    Log.d(TAG, "[WebView] onCreateWindow: redirect-trap child WebView wired to Razorpay transport")
                     return true
                 }
                 // ─────────────────────────────────────────────────────────────
             }
+        }
+    }
+
+    /**
+     * Dispatch a payment URL that arrived inside the popup child WebView.
+     *
+     * Called from both onPageStarted (initial URL — primary path) and
+     * shouldOverrideUrlLoading (subsequent navigation — secondary path).
+     *
+     * Handles:
+     *   intent:// — Razorpay UPI Intent scheme (parsed with Intent.parseUri)
+     *   upi://    — direct UPI scheme fallback (routed to launchUpiIntent)
+     */
+    private fun dispatchPopupUrl(url: String, childView: WebView?) {
+        when {
+            url.startsWith("intent:") -> {
+                Log.d(TAG, "[UPI] dispatchPopupUrl intent://: $url")
+                try {
+                    val intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+                    if (packageManager.resolveActivity(intent, 0) != null) {
+                        Log.d(TAG, "[UPI] Launching UPI app from popup: ${intent.`package`}")
+                        startActivity(intent)
+                    } else {
+                        val fallbackUrl = intent.getStringExtra("browser_fallback_url")
+                        Log.w(TAG, "[UPI] UPI app not found, fallback: $fallbackUrl")
+                        if (!fallbackUrl.isNullOrBlank()) {
+                            childView?.loadUrl(fallbackUrl)
+                        } else {
+                            showUpiError(
+                                "No UPI app found. Please install Google Pay, PhonePe or Paytm."
+                            )
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "[UPI] Failed to parse intent:// in popup", e)
+                    showUpiError("Could not open payment app. Please try again.")
+                }
+            }
+            url.startsWith("upi:") -> {
+                Log.d(TAG, "[UPI] dispatchPopupUrl upi://: $url")
+                launchUpiIntent(url)
+            }
+            else -> Log.w(TAG, "[UPI] dispatchPopupUrl called with unexpected URL: $url")
         }
     }
 

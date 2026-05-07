@@ -102,6 +102,39 @@ const CheckoutPayment = () => {
   }, []);  // ← intentionally run only on mount
   // ── End Recovery Check ───────────────────────────────────────────────────
 
+  // ── Android Native SDK callbacks ─────────────────────────────────────────
+  // Registered on mount so the Android JS bridge can call back after the
+  // Razorpay Native SDK completes (success or failure).
+  // These are ONLY exercised inside the Android app WebView — on desktop
+  // browsers they are never called and have zero effect on the web flow.
+  useEffect(() => {
+    window.onRazorpaySuccess = (dbOrderId) => {
+      console.log('[Payment][Android] Native SDK success — dbOrderId:', dbOrderId);
+      clearCart();
+      localStorage.removeItem(PENDING_PAYMENT_KEY);
+      navigate(
+        dbOrderId
+          ? `/order-confirmation?orderId=${dbOrderId}&payment=success`
+          : '/home'
+      );
+    };
+
+    window.onRazorpayError = (message) => {
+      console.error('[Payment][Android] Native SDK error:', message);
+      setErrorMsg(message);
+      setLoading(false);
+      isProcessing.current = false;
+      // Cart is intentionally NOT cleared — user can retry
+    };
+
+    return () => {
+      // Clean up on unmount to prevent stale callbacks
+      delete window.onRazorpaySuccess;
+      delete window.onRazorpayError;
+    };
+  }, [navigate, clearCart]);
+  // ─────────────────────────────────────────────────────────────────────────
+
   const selectedAddress = useMemo(() => {
     if (!addresses || addresses.length === 0) return null;
 
@@ -186,10 +219,53 @@ const CheckoutPayment = () => {
           status: order.status,
         });
 
-        if (!window.Razorpay) {
-          setErrorMsg("Razorpay SDK not loaded");
+        // ── Android WebView path — Native SDK ──────────────────────────────
+        // When running inside the Android app, hand off to the Razorpay
+        // Native SDK via the AndroidAuth JS bridge instead of opening the
+        // WebView-based modal. The Native SDK opens GPay / PhonePe / Paytm /
+        // BHIM natively, bypassing all WebView intent:// limitations.
+        //
+        // Detection: Android UA + bridge method present (both must be true).
+        // On desktop browsers neither condition is true — the web path runs.
+        const isAndroidWebView =
+          /Android/.test(navigator.userAgent) &&
+          typeof window.AndroidAuth?.initiateRazorpayPayment === 'function';
+
+        if (isAndroidWebView) {
+          console.log('[Payment][Android] AndroidAuth bridge detected — handing off to Native SDK');
+
+          const orderPayload = JSON.stringify({
+            razorpayOrderId: order.id,
+            amount:          order.amount,
+            currency:        order.currency || 'INR',
+            addressId:       selectedAddressId,
+            pricing: {
+              subtotal:       subtotal,
+              deliveryFee:    resolvedDeliveryFee,
+              convenienceFee: resolvedConvenienceFee,
+              finalAmount:    grandTotal,
+            },
+            prefill: {
+              name:    selectedAddress?.name    || 'Customer',
+              contact: selectedAddress?.phone   || '',
+            },
+          });
+
+          // Store pending payment record for crash-safety recovery
+          localStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify({
+            razorpayOrderId: order.id,
+            addressId:       selectedAddressId,
+            timestamp:       Date.now(),
+          }));
+
+          console.log('[Payment][Android] Calling initiateRazorpayPayment on AndroidAuth bridge');
+          window.AndroidAuth.initiateRazorpayPayment(orderPayload);
+          // Android takes over from here.
+          // Results come back via window.onRazorpaySuccess / window.onRazorpayError.
           return;
         }
+        // ── END Android path ───────────────────────────────────────────────
+
 
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,

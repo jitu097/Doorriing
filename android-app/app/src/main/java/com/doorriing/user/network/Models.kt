@@ -36,3 +36,46 @@ data class ApiResponse<T>(
     @SerializedName("data") val data: T?,
     @SerializedName("message") val message: String?
 )
+
+// ── Razorpay Native SDK models ─────────────────────────────────────────────
+// Used by RazorpayPaymentManager to call the same backend endpoints
+// that the frontend React app uses. No backend changes required.
+
+/** Request body for POST /api/v1/user/orders/initiate-payment */
+data class InitiatePaymentRequest(
+    @SerializedName("amount") val amount: Double
+)
+
+/** Response from POST /api/v1/user/orders/initiate-payment */
+data class RazorpayOrderResponse(
+    @SerializedName("id") val id: String,           // Razorpay order_id (rzp_order_...)
+    @SerializedName("amount") val amount: Int,       // amount in paise
+    @SerializedName("currency") val currency: String,
+    @SerializedName("status") val status: String
+)
+
+/** Pricing breakdown passed to verify-payment (mirrors the frontend payload) */
+data class PricingData(
+    @SerializedName("subtotal") val subtotal: Double,
+    @SerializedName("deliveryFee") val deliveryFee: Double,
+    @SerializedName("convenienceFee") val convenienceFee: Double,
+    @SerializedName("finalAmount") val finalAmount: Double
+)
+
+/** Request body for POST /api/v1/user/orders/verify-payment */
+data class VerifyPaymentRequest(
+    @SerializedName("razorpay_order_id") val razorpayOrderId: String,
+    @SerializedName("razorpay_payment_id") val razorpayPaymentId: String,
+    @SerializedName("razorpay_signature") val razorpaySignature: String,
+    @SerializedName("addressId") val addressId: String,
+    @SerializedName("pricing") val pricing: PricingData
+)
+
+/** The `data` object inside the verify-payment response */
+data class VerifyPaymentData(
+    @SerializedName("orderId") val orderId: String?,
+    @SerializedName("orderNumber") val orderNumber: String?,
+    @SerializedName("status") val status: String?,
+    @SerializedName("paymentStatus") val paymentStatus: String?
+)
+// ──────────────────────────────────────────────────────────────────────────

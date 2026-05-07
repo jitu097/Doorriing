@@ -19,6 +19,10 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Razorpay publishable key — NOT secret (same as VITE_RAZORPAY_KEY_ID in frontend .env)
+        // Only the SECRET key (used for HMAC verification) must stay on the backend server.
+        buildConfigField("String", "RAZORPAY_KEY_ID", "\"rzp_live_ST90zfYrJRTjmh\"")
     }
 
     signingConfigs {
@@ -109,6 +113,12 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
+
+    // Razorpay Native Android SDK
+    // Replaces the WebView-based Standard Checkout for mobile UPI payments.
+    // The Native SDK opens GPay / PhonePe / Paytm / BHIM directly without
+    // the WebView intent:// limitations that caused the "Processing..." stuck state.
+    implementation("com.razorpay:checkout:1.6.40")
 
     // UI (Compose + Material 3)
     implementation("androidx.activity:activity-compose:1.9.3")
