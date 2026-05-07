@@ -41,11 +41,13 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.messaging.FirebaseMessaging
+import com.razorpay.PaymentData
+import com.razorpay.PaymentResultWithDataListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
 
     companion object {
         private const val TAG = "MainActivity"
@@ -147,19 +149,15 @@ class MainActivity : AppCompatActivity() {
         googleSignInClient = buildGoogleSignInClient()
 
         // ── Razorpay Native SDK setup ───────────────────────────────────────
-        razorpayManager = RazorpayPaymentManager(
-            activity = this,
-            onSuccess = { paymentId, orderId, signature ->
-                handlePaymentSuccess(paymentId, orderId, signature)
-            },
-            onError = { code, description ->
-                handlePaymentError(code, description)
-            }
-        )
+        // MainActivity implements PaymentResultWithDataListener so the SDK
+        // routes onPaymentSuccess / onPaymentError directly here after
+        // checkout.open(this, options) is called from RazorpayPaymentManager.
+        razorpayManager = RazorpayPaymentManager(activity = this)
         // Preload Razorpay resources so the first payment open is instant.
         RazorpayPaymentManager.preload(this)
         Log.d(TAG, "[Razorpay] Native SDK initialized")
         // ───────────────────────────────────────────────────────────────────
+
 
         askNotificationPermission()
         setupWebView()
@@ -405,18 +403,45 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Required by the Razorpay Native SDK for some payment flows (e.g. NetBanking
-     * redirect, Card 3DS). The SDK needs onActivityResult forwarded to complete
-     * the payment cycle. Without this, card payments may silently not confirm.
-     */
-    @Suppress("DEPRECATION")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        com.razorpay.Checkout.handleActivityResult(requestCode, resultCode, data)
-        Log.d(TAG, "[Razorpay] onActivityResult forwarded to Razorpay SDK — requestCode=$requestCode resultCode=$resultCode")
+    // ── Razorpay SDK callbacks (PaymentResultWithDataListener) ───────────────
+    // These are called by the Razorpay SDK on the UI thread after the user
+    // completes or cancels a payment in the native checkout sheet.
+
+    override fun onPaymentSuccess(razorpayPaymentId: String?, data: PaymentData?) {
+        val paymentId = razorpayPaymentId ?: ""
+        val orderId   = data?.orderId   ?: ""
+        val signature = data?.signature ?: ""
+
+        Log.d(TAG, "[Razorpay] onPaymentSuccess — paymentId=$paymentId orderId=$orderId")
+
+        if (paymentId.isBlank() || orderId.isBlank() || signature.isBlank()) {
+            Log.e(TAG, "[Razorpay] onPaymentSuccess: incomplete data — paymentId=$paymentId orderId=$orderId")
+            handlePaymentError(-1, "Payment data incomplete. Please contact support.")
+            return
+        }
+        handlePaymentSuccess(paymentId, orderId, signature)
+    }
+
+    override fun onPaymentError(code: Int, description: String?, data: PaymentData?) {
+        Log.w(TAG, "[Razorpay] onPaymentError — code=$code description=$description")
+        handlePaymentError(code, description ?: "Payment failed")
+    }
+
+    /** Called by RazorpayPaymentManager if startPayment() itself throws before opening. */
+    fun onRazorpayStartError(message: String) {
+        Log.e(TAG, "[Razorpay] onRazorpayStartError: $message")
+        handlePaymentError(-1, message)
     }
     // ────────────────────────────────────────────────────────────────────────
+
+    // ────────────────────────────────────────────────────────────────────────
+    // NOTE: Checkout.handleActivityResult() is intentionally NOT called here.
+    // The Native SDK 1.6.x delivers all payment results via the
+    // PaymentResultWithDataListener interface (onPaymentSuccess / onPaymentError)
+    // which this Activity implements. No static forwarding is needed.
+
+
+
 
     private fun fetchFcmToken() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
