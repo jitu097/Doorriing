@@ -3,12 +3,13 @@ import React from 'react';
 const AddressForm = ({ formData, setFormData, onSubmit, onCancel, isEditing }) => {
     const addressTypes = ['Home', 'Work', 'Other'];
     const deliveryAreas = ['Areadhrampur', 'Jublee Chowk', 'Thana Chowk', 'Bypass', 'Bustand', 'Mako', 'Station'];
+    const postalCodes = ['829206', '829207'];
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
         
         // Prevent changes to locked fields
-        if (['city', 'state', 'postalCode'].includes(name)) {
+        if (['city', 'state'].includes(name)) {
             return;
         }
 
@@ -91,7 +92,11 @@ const AddressForm = ({ formData, setFormData, onSubmit, onCancel, isEditing }) =
                         </div>
                         <div className="form-group">
                             <label className="form-label">Postal Code *</label>
-                            <input type="text" name="postalCode" value="829206" readOnly className="locked-input" placeholder="ZIP code" required />
+                            <select name="postalCode" value={formData.postalCode || '829206'} onChange={handleInputChange} required className="area-dropdown">
+                                {postalCodes.map(code => (
+                                    <option key={code} value={code}>{code}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 
