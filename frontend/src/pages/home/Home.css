@@ -197,7 +197,7 @@
 
 @media (max-width: 600px) {
   .home-content {
-    margin-top: 330px;
+    margin-top: 190px;
     padding: 1.5rem 1rem;
   }
 
@@ -331,6 +331,26 @@
   border-bottom: 2px solid #f88f2d;
 }
 
+.shops-section-title-grocery {
+  font-size: 1.6rem;
+}
+
+.home-page .shops-carousel-item .card-status {
+  top: 8px;
+  left: 8px;
+  padding: 2px 7px;
+  font-size: 0.62rem;
+}
+
+.home-page .shops-carousel-item-grocery {
+  flex-basis: 248px;
+  min-width: 248px;
+}
+
+.home-page .shops-carousel-item-grocery .shop-card {
+  max-width: 248px;
+}
+
 .shops-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -460,10 +480,23 @@
     min-width: 185px;
   }
 
+  .home-page .shops-carousel-item-grocery {
+    flex-basis: 166px;
+    min-width: 166px;
+  }
+
+  .home-page .shops-carousel-item-grocery .shop-card {
+    max-width: 166px;
+  }
+
   .shops-section-title {
     font-size: 1.4rem;
     margin-top: 1.5rem;
     margin-bottom: 1.25rem;
+  }
+
+  .shops-section-title-grocery {
+    font-size: 1.2rem;
   }
 
   .shops-carousel-container {
@@ -491,31 +524,59 @@
   }
 
   .shops-carousel-item {
-    flex: 0 0 150px;
-    min-width: 150px;
+    flex: 0 0 96px;
+    min-width: 96px;
+  }
+
+  .home-page .shops-carousel-item-grocery {
+    flex: 0 0 82px;
+    min-width: 82px;
   }
 
   .home-page .shops-carousel-item .shop-card {
-    max-width: 150px;
+    max-width: 96px;
+  }
+
+  .home-page .shops-carousel-item-grocery .shop-card {
+    max-width: 82px;
   }
 
   .home-page .shops-carousel-item .shop-card-image {
-    height: 96px;
+    height: 62px;
+  }
+
+  .home-page .shops-carousel-item-grocery .shop-card-image {
+    height: 48px;
   }
 
   .home-page .shops-carousel-item .shop-card-content {
-    padding: 8px;
+    padding: 6px;
+  }
+
+  .home-page .shops-carousel-item-grocery .shop-card-content {
+    padding: 4px;
   }
 
   .home-page .shops-carousel-item .shop-card-title {
-    font-size: 0.82rem;
-    margin-bottom: 4px;
+    font-size: 0.76rem;
+    margin-bottom: 2px;
+  }
+
+  .home-page .shops-carousel-item-grocery .shop-card-title {
+    font-size: 0.68rem;
+    margin-bottom: 1px;
   }
 
   .home-page .shops-carousel-item .shop-card-description,
   .home-page .shops-carousel-item .shop-card-location {
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     line-height: 1.2;
+  }
+
+  .home-page .shops-carousel-item-grocery .shop-card-description,
+  .home-page .shops-carousel-item-grocery .shop-card-location {
+    font-size: 0.56rem;
+    line-height: 1.15;
   }
 
   .shops-section-title {
@@ -526,8 +587,8 @@
   }
 
   .home-shops-section {
-    margin-top: -40px;
-    margin-bottom: 40px;
+    margin-top: -24px;
+    margin-bottom: 18px;
   }
 
   .shops-carousel-container {
@@ -540,19 +601,69 @@
   .shops-carousel-container::-webkit-scrollbar {
     height: 3px;
   }
+
+  .home-page .shops-carousel-item .card-status {
+    top: 6px;
+    left: 6px;
+    padding: 2px 6px;
+    font-size: 0.58rem;
+  }
 }
 
 @media (max-width: 480px) {
   .shops-carousel-item {
-    flex: 0 0 138px;
-    min-width: 138px;
+    flex: 0 0 86px;
+    min-width: 86px;
+  }
+
+  .home-page .shops-carousel-item-grocery {
+    flex: 0 0 74px;
+    min-width: 74px;
   }
 
   .home-page .shops-carousel-item .shop-card {
-    max-width: 138px;
+    max-width: 86px;
+  }
+
+  .home-page .shops-carousel-item-grocery .shop-card {
+    max-width: 74px;
   }
 
   .home-page .shops-carousel-item .shop-card-image {
-    height: 88px;
+    height: 54px;
+  }
+
+  .home-page .shops-carousel-item-grocery .shop-card-image {
+    height: 44px;
+  }
+
+  .home-page .shops-carousel-item .card-status {
+    top: 5px;
+    left: 5px;
+    padding: 1px 5px;
+    font-size: 0.54rem;
+  }
+
+  .home-page .shops-carousel-item-grocery .card-status {
+    top: 4px;
+    left: 4px;
+    padding: 1px 4px;
+    font-size: 0.48rem;
+  }
+
+  .home-page .shops-carousel-item .shop-card-content {
+    padding: 5px;
+  }
+
+  .home-page .shops-carousel-item-grocery .shop-card-content {
+    padding: 4px;
+  }
+
+  .home-page .shops-carousel-item .shop-card-title {
+    font-size: 0.7rem;
+  }
+
+  .home-page .shops-carousel-item-grocery .shop-card-title {
+    font-size: 0.62rem;
   }
 }

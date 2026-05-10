@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ImageScroller from '../../components/common/ImageScroller';
-import HomeButtons from './HomeButtons';
 import ItemCard from '../../components/common/ItemCard';
 import OrderNotification from '../../components/common/OrderNotification';
 import ShopCard from '../shopcard/shopcard';
@@ -275,13 +274,16 @@ const Home = () => {
 
     return (
       <div className="home-shops-section">
-        <h2 className="shops-section-title">
-          {businessType === 'grocery' ? '🛒 Popular Stores' : '🍔 Top Restaurants'}
-        </h2>
+        <h6 className={`shops-section-title ${businessType === 'grocery' ? 'shops-section-title-grocery' : ''}`}>
+          {businessType === 'grocery' ? ' Popular Stores' : ' Top Restaurants'}
+        </h6>
         <div className="shops-carousel-container">
           <div className="shops-carousel-track">
             {scrollingShops.map((shop, index) => (
-              <div key={`${shop.id}-${index}`} className="shops-carousel-item">
+              <div
+                key={`${shop.id}-${index}`}
+                className={`shops-carousel-item ${businessType === 'grocery' ? 'shops-carousel-item-grocery' : ''}`}
+              >
                 <ShopCard
                   shop={shop}
                   routePrefix={businessType}
@@ -326,7 +328,6 @@ const Home = () => {
   return (
     <div className="home-page">
       <ImageScroller />
-      <HomeButtons />
       <OrderNotification />
       <div className="home-content">
         {!searchQuery && (
