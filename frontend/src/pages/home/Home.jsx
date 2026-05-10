@@ -5,7 +5,9 @@ import ImageScroller from '../../components/common/ImageScroller';
 import HomeButtons from './HomeButtons';
 import ItemCard from '../../components/common/ItemCard';
 import OrderNotification from '../../components/common/OrderNotification';
+import ShopCard from '../shopcard/shopcard';
 import { itemService } from '../../services/item.service';
+import { getHomeShops } from '../../services/shop.service';
 import './Home.css';
 import { computeFinalPrice } from '../../utils/pricing';
 
@@ -156,36 +158,38 @@ const Home = () => {
   const searchQuery = searchParams.get('search') || '';
   const [groceryItems, setGroceryItems] = useState([]);
   const [restaurantItems, setRestaurantItems] = useState([]);
+  const [groceryShops, setGroceryShops] = useState([]);
+  const [restaurantShops, setRestaurantShops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeSection, setActiveSection] = useState(SECTION_CONFIG.grocery.key);
 
   useEffect(() => {
-    const fetchHomeItems = async () => {
+    const fetchHomeData = async () => {
       try {
         setLoading(true);
         setError('');
 
-        // DEBUG: Check raw API response
-        const response = await itemService.getHomeItems();
-        console.log('[DEBUG] Raw response from itemService:', response);
-        console.log('[DEBUG] response type:', typeof response);
-        console.log('[DEBUG] response keys:', Object.keys(response || {}));
+        // Fetch items
+        const itemResponse = await itemService.getHomeItems();
+        const itemPayload = itemResponse || {};
 
-        // FIX: Response is already the data object, not wrapped in .data
-        const payload = response || {};
-        console.log('[DEBUG] Payload for normalization:', payload);
-        console.log('[DEBUG] Grocery items from API:', payload.grocery_items);
-        console.log('[DEBUG] Restaurant items from API:', payload.restaurant_items);
-
-        const normalizedGrocery = normalizeItems(payload.grocery_items);
-        const normalizedRestaurant = normalizeItems(payload.restaurant_items);
-
-        console.log('[DEBUG] Normalized grocery items:', normalizedGrocery);
-        console.log('[DEBUG] Normalized restaurant items:', normalizedRestaurant);
+        const normalizedGrocery = normalizeItems(itemPayload.grocery_items);
+        const normalizedRestaurant = normalizeItems(itemPayload.restaurant_items);
 
         setGroceryItems(normalizedGrocery);
         setRestaurantItems(normalizedRestaurant);
+
+        // Fetch shops
+        try {
+          const shopsData = await getHomeShops(8); // Fetch up to 8 shops
+          setGroceryShops(shopsData.grocery || []);
+          setRestaurantShops(shopsData.restaurant || []);
+        } catch (shopError) {
+          console.error('Error fetching shops:', shopError);
+          setGroceryShops([]);
+          setRestaurantShops([]);
+        }
       } catch (err) {
         console.error('Error fetching home items:', err);
         setError(err.message || 'Failed to load items');
@@ -196,7 +200,7 @@ const Home = () => {
       }
     };
 
-    fetchHomeItems();
+    fetchHomeData();
   }, []);
 
   const renderItemsSection = (title, items, emptyMessage) => {
@@ -258,6 +262,38 @@ const Home = () => {
     );
   };
 
+  const renderShopsSection = (shops, businessType) => {
+    const safeShops = Array.isArray(shops) ? shops : [];
+    const shopsCount = safeShops.length;
+
+    if (shopsCount === 0) {
+      return null;
+    }
+
+    // Duplicate shops for continuous scrolling effect
+    const scrollingShops = [...safeShops, ...safeShops];
+
+    return (
+      <div className="home-shops-section">
+        <h2 className="shops-section-title">
+          {businessType === 'grocery' ? '🛒 Popular Stores' : '🍔 Top Restaurants'}
+        </h2>
+        <div className="shops-carousel-container">
+          <div className="shops-carousel-track">
+            {scrollingShops.map((shop, index) => (
+              <div key={`${shop.id}-${index}`} className="shops-carousel-item">
+                <ShopCard
+                  shop={shop}
+                  routePrefix={businessType}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const activeItems = activeSection === SECTION_CONFIG.grocery.key ? groceryItems : restaurantItems;
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
@@ -294,8 +330,18 @@ const Home = () => {
       <OrderNotification />
       <div className="home-content">
         {!searchQuery && (
-          <h1 className="home-main-title">Welcome to Doorriing</h1>
+          <h1 className="home-main-title"></h1>
         )}
+        
+        {/* Display Shops Sections */}
+        {!searchQuery && !loading && (
+          <>
+            {renderShopsSection(groceryShops, 'grocery')}
+            {renderShopsSection(restaurantShops, 'restaurant')}
+          </>
+        )}
+
+        {/* Items Section with Toggle */}
         <div className="home-section-toggle">
           <button
             type="button"

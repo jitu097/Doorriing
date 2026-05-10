@@ -115,7 +115,7 @@ const Navbar = ({ onCartClick }) => {
   };
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar ${!user ? 'navbar-no-user' : ''}`}>
       <div className="navbar-container">
         {/* Logo */}
         {/* Doorriing logo removed as per request */}

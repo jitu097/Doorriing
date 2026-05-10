@@ -1,14 +1,14 @@
 @media (max-width: 600px) {
   .item-card,
   .item-card.item-card {
-    width: 100 !important;
+    width: 100% !important;
     min-width: 0 !important;
     max-width: 100% !important;
     margin: 0 0 14px 0 !important;
     display: flex !important;
-    flex-direction: row !important;
+    flex-direction: column !important;
     align-items: stretch !important;
-    height: 110px !important;
+    height: auto !important;
     box-sizing: border-box !important;
   }
   .item-card-list,
@@ -19,11 +19,11 @@
   }
   .item-card-image,
   .item-card .item-card-image {
-    width: 34% !important;
-    min-width: 90px !important;
-    max-width: 120px !important;
-    height: 100% !important;
-    border-radius: 12px 0 0 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 140px !important;
+    border-radius: 12px 12px 0 0 !important;
     overflow: hidden !important;
     flex-shrink: 0 !important;
     background: #f8f8f8 !important;
@@ -36,7 +36,7 @@
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;
-    border-radius: 12px 0 0 12px !important;
+    border-radius: 12px 12px 0 0 !important;
   }
   .item-card-body,
   .item-card .item-card-body {
@@ -44,8 +44,8 @@
     padding: 10px 12px !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: center !important;
-    gap: 0px !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
     min-width: 0 !important;
   }
   .item-card-title-row,
@@ -54,11 +54,11 @@
   }
   .item-card-name,
   .item-card .item-card-name {
-    font-size: 1.0rem !important;
-    font-weight: 800 !important;
-    white-space: nowrap !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    white-space: normal !important;
     overflow: hidden !important;
-    text-overflow: ellipsis !important;
+    text-overflow: clip !important;
     margin-bottom: 4px;
     margin-top: 6px;
   }
