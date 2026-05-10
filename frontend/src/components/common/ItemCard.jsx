@@ -465,25 +465,18 @@ const ItemCard = ({
           </div>
         )}
 
-        {hasVariantChips && showVariants ? null : !isInCart ? (
-          <button
-            className="restaurant-add-main"
-            type="button"
-            disabled={!isAvailable}
-            onClick={handleAddToCart}
-          >
-            {!isAvailable ? 'UNAVAILABLE' : 'Add'}
-          </button>
-        ) : (
-          <div className="restaurant-qty-controls restaurant-main-qty">
-            <button onClick={() => decreaseQty(clientItemId)} aria-label="Decrease quantity">
-              −
-            </button>
-            <span>{cartItem.quantity}</span>
-            <button onClick={() => increaseQty(clientItemId)} aria-label="Increase quantity">
-              +
-            </button>
-          </div>
+        {hasVariantChips && showVariants ? null : (
+          isInCart ? (
+            <div className="restaurant-qty-controls restaurant-main-qty">
+              <button onClick={() => decreaseQty(clientItemId)} aria-label="Decrease quantity">
+                −
+              </button>
+              <span>{cartItem.quantity}</span>
+              <button onClick={() => increaseQty(clientItemId)} aria-label="Increase quantity">
+                +
+              </button>
+            </div>
+          ) : null
         )}
       </div>
     );
@@ -518,6 +511,18 @@ const ItemCard = ({
                 style={{ width: 20, height: 20, verticalAlign: 'middle' }}
               />
             </span>
+          )}
+          {isRestaurantCard && !isInCart && !showVariants && (
+            <div className="restaurant-add-under-image">
+              <button
+                className="restaurant-add-main"
+                type="button"
+                disabled={!isAvailable}
+                onClick={handleAddToCart}
+              >
+                {!isAvailable ? 'UNAVAILABLE' : 'Add'}
+              </button>
+            </div>
           )}
         </div>
       )}

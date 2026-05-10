@@ -6,11 +6,11 @@ const HomeButtons = () => {
   const navigate = useNavigate();
   return (
     <div className="home-buttons-container">
-      <button className="home-button grocery-button" onClick={() => navigate('/grocery')}>
+      <button className="home-button grocery-button" onClick={() => navigate('/grocery/browse')}>
         <img src="/store.webp" alt="Grocery Store" className="store-icon mobile-image" loading="lazy" />
         <img src="/Gbut.png" alt="Grocery Store" className="store-icon desktop-image" loading="lazy" />
       </button>
-      <button className="home-button restaurant-button" onClick={() => navigate('/restaurant')}>
+      <button className="home-button restaurant-button" onClick={() => navigate('/restaurant/browse')}>
         <img src="/Rbuttonn.png" alt="Restaurant" className="restaurant-icon mobile-image" loading="lazy" />
         <img src="/Rbut.png" alt="Restaurant" className="restaurant-icon desktop-image" loading="lazy" />
       </button>

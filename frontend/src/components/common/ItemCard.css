@@ -602,9 +602,9 @@
 
 .restaurant-chip-price-stack {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 2px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
   width: auto;
   margin-right: 0px;
 }
@@ -784,6 +784,28 @@
   box-shadow: 0 16px 30px rgba(233, 83, 34, 0.35);
 }
 
+.restaurant-add-under-image {
+  position: absolute;
+  bottom: -8px;
+  margin-left: 129px;
+  transform: translateX(-50%);
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* When add is moved under image for restaurant cards, hide the footer add to avoid duplicates */
+.restaurant-card .restaurant-footer-collapsed .restaurant-add-main {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .restaurant-add-under-image {
+    bottom: -6px;
+  }
+}
+
 .restaurant-variant-panel {
   display: flex;
   flex-direction: column;
@@ -807,6 +829,7 @@
   width: 100%;
   min-width: 0;
   margin-bottom: 0px;
+  transform: translateX(-8px);
 }
 
 .restaurant-variant-info {
@@ -828,9 +851,9 @@
 
 .restaurant-variant-price-stack {
   display: flex;
-  flex-direction: row;
-  gap: 1px;
-  align-items: center;
+  flex-direction: column;
+  gap: 0;
+  align-items: flex-start;
   min-width: 0;
 }
 
@@ -840,6 +863,7 @@
   text-decoration: line-through;
   white-space: nowrap;
   flex-shrink: 0;
+  line-height: 1;
 }
 
 .restaurant-variant-final {
@@ -848,6 +872,7 @@
   color: #e53945;
   white-space: nowrap;
   flex-shrink: 0;
+  line-height: 1.05;
 }
 
 .restaurant-variant-add {
@@ -887,6 +912,7 @@
   align-items: center;
   gap: 4px;
   white-space: nowrap;
+  transform: translateX(-4px);
 }
 
 /* Simple (non-variant) restaurant product price display */
@@ -901,27 +927,26 @@
 .restaurant-qty-controls {
   display: flex;
   align-items: center;
-  gap: 2px !important;
+  gap: -3px !important;
   border-radius: 999px;
   justify-content: space-between;
-  padding: 0px 4px !important;
+  padding: 0px 3px !important;
   background: #fff5f6;
   border: 1px solid #ffc4ce;
   width: auto;
-  min-width: 72px;
-  margin-left: auto !important;
+  min-width: 66px;
+  margin-left: 20px!important;
   margin-top: 0 !important;
 }
 
 .restaurant-qty-controls button {
   border: none;
   background: #ffffff;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  
   color: #e53945;
   cursor: pointer;
   transition: background 0.2s ease;
@@ -932,27 +957,27 @@
 }
 
 .restaurant-qty-controls span {
-  min-width: 14px;
+  min-width: 12px;
   text-align: center;
   font-weight: 600;
   color: #2b2b2b;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
 
 .restaurant-main-qty {
   justify-content: space-between;
   margin-top: 0 !important;
-  padding: 0px 4px !important;
+  padding: 0px 3px !important;
 }
 
 .restaurant-main-qty button {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   margin: 0;
   border-radius: 50%;
   border: none;
   background: #ffffff;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: #e53945;
   cursor: pointer;

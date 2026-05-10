@@ -28,9 +28,7 @@ const ShopDetails = lazy(() => import('../pages/shop/ShopDetails'));
 const ProtectedRoute = lazy(() => import('./ProtectedRoute'));
 const PageLayout = lazy(() => import('../components/layout/PageLayout'));
 const Grocery = lazy(() => import('../pages/Grocery/Grocery'));
-const GroceryLanding = lazy(() => import('../pages/Grocery/GroceryLanding'));
 const Restaurant = lazy(() => import('../pages/Restaurant/Restaurant'));
-const RestaurantLanding = lazy(() => import('../pages/Restaurant/RestaurantLanding'));
 const ItemCategory = lazy(() => import('../pages/Grocery/itemcategory'));
 const CategoryItem = lazy(() => import('../pages/Restaurant/categoryitem'));
 const SubCategory = lazy(() => import('../pages/Restaurant/subcategory'));
@@ -72,8 +70,8 @@ const UserRoutes = () => {
       </Route>
 
       {/* Public Grocery & Restaurant Pages - Browse without navbar */}
-      <Route path="/grocery" element={<GroceryLanding />} />
-      <Route path="/restaurant" element={<RestaurantLanding />} />
+      <Route path="/grocery" element={<Navigate to="/grocery/browse" replace />} />
+      <Route path="/restaurant" element={<Navigate to="/restaurant/browse" replace />} />
 
       {/* Public Grocery & Restaurant Browsing - With navbar */}
       <Route element={<PageLayout />}>
