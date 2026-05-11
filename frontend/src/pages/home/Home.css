@@ -451,6 +451,57 @@
   max-width: 100%;
 }
 
+/* Keep all home shop cards same height and clamp long text */
+.home-page .shops-carousel-item .shop-card {
+  height: 210px;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-page .shops-carousel-item-grocery .shop-card {
+  height: 190px;
+}
+
+.home-page .shops-carousel-item .shop-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.home-page .shops-carousel-item .shop-card-title,
+.home-page .shops-carousel-item .shop-card-description,
+.home-page .shops-carousel-item .shop-card-location {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+}
+
+.home-page .shops-carousel-item .shop-card-title {
+  -webkit-line-clamp: 1;
+}
+
+.home-page .shops-carousel-item .shop-card-description {
+  -webkit-line-clamp: 2;
+}
+
+.home-page .shops-carousel-item .shop-card-location {
+  -webkit-line-clamp: 1;
+}
+
+.home-page .shops-carousel-item .card-meta {
+  margin-top: auto;
+  overflow: hidden;
+}
+
+.home-page .shops-carousel-item .card-meta-pill {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
 /* Responsive - Tablet */
 @media (max-width: 1024px) {
   .shops-sections-wrapper {
@@ -551,10 +602,12 @@
 
   .home-page .shops-carousel-item .shop-card {
     max-width: 96px;
+    height: 145px;
   }
 
   .home-page .shops-carousel-item-grocery .shop-card {
     max-width: 82px;
+    height: 130px;
   }
 
   .home-page .shops-carousel-item .shop-card-image {
@@ -639,10 +692,12 @@
 
   .home-page .shops-carousel-item .shop-card {
     max-width: 86px;
+    height: 136px;
   }
 
   .home-page .shops-carousel-item-grocery .shop-card {
     max-width: 74px;
+    height: 122px;
   }
 
   .home-page .shops-carousel-item .shop-card-image {
