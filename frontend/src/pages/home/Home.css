@@ -113,12 +113,14 @@
   gap: 1.5rem;
   justify-content: center;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-top: -2rem;
+  margin-bottom: -1rem;
   background: #fff;
   padding: 0.75rem;
   border-radius: 999px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
   max-width: 520px;
+
   margin-left: auto;
   margin-right: auto;
 }
@@ -211,9 +213,10 @@
   }
 
   .home-section-toggle {
-    gap: 0.5rem;
+    gap: 0.1rem;
     border-radius: 24px;
     padding: 0.5rem;
+   
   }
 
   .home-toggle-btn {
@@ -303,7 +306,7 @@
 
 /* Shops Section Styles */
 .home-shops-section {
-  margin-bottom: 4rem;
+  margin-bottom: 0.14rem;
   animation: fadeIn 0.5s ease-in;
 }
 
@@ -322,13 +325,26 @@
   font-size: 1.8rem;
   font-weight: 700;
   color: #222;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   margin-top: 2rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #f88f2d;
+  /* removed orange underline to keep footer/content flow intact */
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/* Show an orange line that starts after the title text and fills the remaining row */
+.shops-section-title::after {
+  content: '';
+  display: block;
+  flex: 1 1 auto;
+  height: 2px;
+  background: #f88f2d;
+  margin-left: 0.75rem;
+  border-radius: 1px;
+  align-self: center;
 }
 
 .shops-section-title-grocery {
@@ -587,8 +603,8 @@
   }
 
   .home-shops-section {
-    margin-top: -24px;
-    margin-bottom: 18px;
+    margin-top: -40px;
+    margin-bottom: 50px;
   }
 
   .shops-carousel-container {
