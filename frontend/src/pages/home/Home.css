@@ -351,6 +351,63 @@
   font-size: 1.6rem;
 }
 
+.shops-section-title.shops-section-title-grocery::after {
+  display: none;
+}
+
+.shops-title-icons {
+  position: relative;
+  display: inline-block;
+  width: 2.5em;
+  height: 2.5em;
+  margin-left: 0.4rem;
+  margin-top:10px;
+}
+
+.shops-title-icon {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.5em;
+  height: 1.5em;
+  object-fit: contain;
+  opacity: 0;
+  transform: translateY(6px) scale(0.85);
+  animation: shops-icon-jump 4s infinite;
+}
+
+.shops-title-icon:nth-child(2) {
+  animation-delay: 1s;
+}
+
+.shops-title-icon:nth-child(3) {
+  animation-delay: 2s;
+}
+
+.shops-title-icon:nth-child(4) {
+  animation-delay: 3s;
+}
+
+@keyframes shops-icon-jump {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.85);
+  }
+  8% {
+    opacity: 1;
+    transform: translateY(-5px) scale(1.05);
+  }
+  16% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  24% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.92);
+  }
+}
+
 .home-page .shops-carousel-item .card-status {
   top: 8px;
   left: 8px;

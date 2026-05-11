@@ -275,7 +275,18 @@ const Home = () => {
     return (
       <div className="home-shops-section">
         <h6 className={`shops-section-title ${businessType === 'grocery' ? 'shops-section-title-grocery' : ''}`}>
-          {businessType === 'grocery' ? ' Popular Stores' : ' Top Restaurants'}
+          {businessType === 'grocery' ? (
+            <>
+              {' Explore Shops'}
+              <span className="shops-title-icons" aria-hidden="true">
+                {['/D.png', '/E.png', '/G.png', '/H.png', '/J.png', '/K.png'].map((src) => (
+                  <img key={src} src={src} alt="" className="shops-title-icon" />
+                ))}
+              </span>
+            </>
+          ) : (
+            ' Top Restaurants'
+          )}
         </h6>
         <div className="shops-carousel-container">
           <div className="shops-carousel-track">
