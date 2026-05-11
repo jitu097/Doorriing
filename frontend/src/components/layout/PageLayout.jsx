@@ -6,6 +6,7 @@ import MainFooter from './Footer';
 import MobileFooter from '../common/Footer';
 import FloatingCart from '../common/FloatingCart';
 import CartDrawer from '../common/CartDrawer';
+import './PageLayout.css';
 
 
 const PageLayout = () => {
@@ -26,30 +27,45 @@ const PageLayout = () => {
 
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
 
-  // Scroll direction detection
+  // Scroll direction detection on main content
   useEffect(() => {
+    const mainContent = document.querySelector('.main-content');
+    if (!mainContent) return;
+
     const handleScroll = () => {
-      const currentY = window.scrollY;
-      if (currentY > lastScrollY.current + 10) {
+      const currentY = mainContent.scrollTop;
+      const threshold = 20;
+      
+      // Show footer when at top
+      if (currentY <= 50) {
+        setFooterVisible(true);
+        lastScrollY.current = currentY;
+        return;
+      }
+
+      // Hide/show based on scroll direction
+      if (currentY > lastScrollY.current + threshold) {
         // Scrolling down
         setFooterVisible(false);
-      } else if (currentY < lastScrollY.current - 10) {
+      } else if (currentY < lastScrollY.current - threshold) {
         // Scrolling up
         setFooterVisible(true);
       }
       lastScrollY.current = currentY;
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    mainContent.addEventListener('scroll', handleScroll);
+    return () => mainContent.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
     <div className="page-layout">
       <Navbar onCartClick={handleCartOpen} />
-      <main className="main-content">
+      <main className="main-content" style={{ paddingBottom: !hideFooterAndCart ? '70px' : '0px' }}>
         <Outlet />
+        {/* keep the desktop footer inside main-content so it scrolls with the page */}
+        {isHomePage && <MainFooter />}
       </main>
-      {isHomePage && <MainFooter />}
       {!hideFooterAndCart && <MobileFooter visible={footerVisible} onCartClick={handleCartOpen} />}
       {!hideFloatingCart && <FloatingCart onCartClick={handleCartOpen} footerVisible={footerVisible} />}
       <CartDrawer isOpen={showCart} onClose={handleCartClose} />

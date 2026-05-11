@@ -22,9 +22,7 @@ const Footer = ({ visible = true, onCartClick = noop }) => {
         <button className="footer-btn" onClick={() => navigate('/orders')}>
           <img src="/order.webp" alt="Orders" className="footer-icon" />
         </button>
-        <button className="footer-btn" onClick={onCartClick}>
-          <img src="/carty.webp" alt="Cart" className="footer-icon" />
-        </button>
+       
         <div className="footer-notification-item">
           <NotificationBell />
         </div>
