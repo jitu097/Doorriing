@@ -2,6 +2,57 @@ import { supabase } from '../../config/supabaseClient.js';
 import { logger } from '../../utils/logger.js';
 import { cacheManager } from '../../utils/cache.manager.js';
 
+const MAX_RATING_SUMMARY_ITEMS = 200;
+
+const enrichItemsWithRatings = async (items = []) => {
+  if (!Array.isArray(items) || items.length === 0) {
+    return [];
+  }
+
+  const itemIds = items.map((item) => item?.id).filter(Boolean);
+  if (itemIds.length === 0 || itemIds.length > MAX_RATING_SUMMARY_ITEMS) {
+    return items;
+  }
+
+  const { data, error } = await supabase
+    .from('item_reviews')
+    .select('item_id, rating')
+    .in('item_id', itemIds)
+    .not('rating', 'is', null);
+
+  if (error) {
+    logger.warn('Failed to fetch category item rating summary', { error: error.message });
+    return items;
+  }
+
+  const countByItemId = new Map();
+  const totalByItemId = new Map();
+
+  (data || []).forEach((review) => {
+    const itemId = review?.item_id;
+    const rating = Number(review?.rating);
+
+    if (!itemId || !Number.isFinite(rating)) {
+      return;
+    }
+
+    countByItemId.set(itemId, (countByItemId.get(itemId) || 0) + 1);
+    totalByItemId.set(itemId, (totalByItemId.get(itemId) || 0) + rating);
+  });
+
+  return items.map((item) => {
+    const itemId = item?.id;
+    const reviewCount = countByItemId.get(itemId) || 0;
+    const averageRating = reviewCount > 0 ? Number(((totalByItemId.get(itemId) || 0) / reviewCount).toFixed(1)) : null;
+
+    return {
+      ...item,
+      average_rating: item?.average_rating ?? averageRating,
+      review_count: item?.review_count ?? reviewCount,
+    };
+  });
+};
+
 class CategoryService {
   /**
    * Get all categories for a specific shop
@@ -141,6 +192,8 @@ class CategoryService {
         throw new Error('Failed to fetch items');
       }
 
+      const ratedItems = await enrichItemsWithRatings(items || []);
+
       // Step 4: Group items based on whether subcategories exist
       let groupedItems;
 
@@ -151,12 +204,12 @@ class CategoryService {
           subcategory_id: subcategory.id,
           subcategory_name: subcategory.name,
           subcategory_description: subcategory.description,
-          items: items.filter(item => item.subcategory_id === subcategory.id),
+          items: ratedItems.filter(item => item.subcategory_id === subcategory.id),
         }));
 
         // Also include items that belong to the category but NOT to any subcategory
         // These are items where subcategory_id is NULL
-        const ungroupedItems = items.filter(item => item.subcategory_id === null);
+        const ungroupedItems = ratedItems.filter(item => item.subcategory_id === null);
         if (ungroupedItems.length > 0) {
           groupedItems.push({
             subcategory_id: null,
@@ -172,7 +225,7 @@ class CategoryService {
           subcategory_id: null,
           subcategory_name: null,
           subcategory_description: null,
-          items: items,
+          items: ratedItems,
         }];
       }
 

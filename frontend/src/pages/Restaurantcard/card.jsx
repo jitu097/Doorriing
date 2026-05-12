@@ -4,6 +4,7 @@ import './card.css';
 import {
   resolveShopImage,
   getShopCategoryCount,
+  getShopRatingSummary,
   getShopStockCount,
   getShopStatusMeta,
   formatCount,
@@ -18,6 +19,8 @@ const RestaurantCard = ({ shop }) => {
   const image = resolveShopImage(safeShop);
   const city = safeShop.city;
   const categoryCount = getShopCategoryCount(safeShop);
+  const ratingSummary = getShopRatingSummary(safeShop);
+  const roundedStars = ratingSummary.hasRating ? Math.round(ratingSummary.average) : 0;
   const stockCount = getShopStockCount(safeShop);
   const statusMeta = getShopStatusMeta(safeShop);
   const isClosed = statusMeta.isClosed;
@@ -25,7 +28,7 @@ const RestaurantCard = ({ shop }) => {
   const hasItemCount = stockCount !== null && Number(stockCount) > 0;
   const formattedStock = hasItemCount ? `${formatCount(stockCount)} items` : null;
   const description = safeShop.description || (categoryCount ? `${categoryCount} categories available` : null);
-  const showMeta = categoryCount !== null || formattedStock;
+  const showMeta = categoryCount !== null || formattedStock || ratingSummary.hasRating;
   
   // Check if booking is enabled for this restaurant
   const isBookingEnabled = safeShop.is_booking_enabled === true;
@@ -103,6 +106,22 @@ const RestaurantCard = ({ shop }) => {
           {city && <p className="restaurant-card-location">{city}</p>}
           {showMeta && (
             <div className="card-meta">
+              {ratingSummary.hasRating && (
+                <span className="card-meta-pill card-meta-pill-rating" aria-label={`Rated ${ratingSummary.average} out of 5 from ${ratingSummary.count} reviews`}>
+                  <span className="rating-stars" aria-hidden="true">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <span
+                        key={index}
+                        className={`rating-star-icon ${index < roundedStars ? 'filled' : 'empty'}`}
+                      >
+                        ★
+                      </span>
+                    ))}
+                  </span>
+                  <span className="rating-value">{ratingSummary.average.toFixed(1)}</span>
+                  <span className="rating-count">({formatCount(ratingSummary.count)})</span>
+                </span>
+              )}
               {categoryCount !== null && (
                 <span className="card-meta-pill">
                   {categoryCount === 1 ? '1 category' : `${categoryCount} categories`}

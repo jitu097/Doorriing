@@ -240,6 +240,8 @@ const Home = () => {
                   isAvailable={item.is_available}
                   stockQuantityLabel={stockLabel}
                   stockQuantityValue={item.stock_quantity}
+                  averageRating={item.average_rating}
+                  reviewCount={item.review_count}
                   shopId={item.shopId}
                   shopType={item.shopType}
                   halfPortionPrice={item.halfPortionPrice}

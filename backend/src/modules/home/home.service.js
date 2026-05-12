@@ -4,6 +4,8 @@ import { logger } from '../../utils/logger.js';
 
 const MAX_HOME_ITEMS_LIMIT = 20;
 
+const MAX_RATING_SUMMARY_ITEMS = 200;
+
 const ITEM_SELECT_COLUMNS = `
   id,
   shop_id,
@@ -72,6 +74,55 @@ class HomeService {
     return data || [];
   }
 
+  async #enrichItemsWithRatings(items = []) {
+    if (!Array.isArray(items) || items.length === 0) {
+      return [];
+    }
+
+    const itemIds = items.map((item) => item?.id).filter(Boolean);
+    if (itemIds.length === 0 || itemIds.length > MAX_RATING_SUMMARY_ITEMS) {
+      return items;
+    }
+
+    const { data, error } = await supabase
+      .from('item_reviews')
+      .select('item_id, rating')
+      .in('item_id', itemIds)
+      .not('rating', 'is', null);
+
+    if (error) {
+      logger.warn('Failed to fetch home item rating summary', { error: error.message });
+      return items;
+    }
+
+    const countByItemId = new Map();
+    const totalByItemId = new Map();
+
+    (data || []).forEach((review) => {
+      const itemId = review?.item_id;
+      const rating = Number(review?.rating);
+
+      if (!itemId || !Number.isFinite(rating)) {
+        return;
+      }
+
+      countByItemId.set(itemId, (countByItemId.get(itemId) || 0) + 1);
+      totalByItemId.set(itemId, (totalByItemId.get(itemId) || 0) + rating);
+    });
+
+    return items.map((item) => {
+      const itemId = item?.id;
+      const reviewCount = countByItemId.get(itemId) || 0;
+      const averageRating = reviewCount > 0 ? Number(((totalByItemId.get(itemId) || 0) / reviewCount).toFixed(1)) : null;
+
+      return {
+        ...item,
+        average_rating: item?.average_rating ?? averageRating,
+        review_count: item?.review_count ?? reviewCount,
+      };
+    });
+  }
+
   async getHomeItems(limit) {
     try {
       const normalizedLimit = this.#sanitizeLimit(limit);
@@ -81,9 +132,14 @@ class HomeService {
         this.#fetchItemsByBusinessType(BUSINESS_TYPE.RESTAURANT, normalizedLimit),
       ]);
 
+      const [groceryItemsWithRatings, restaurantItemsWithRatings] = await Promise.all([
+        this.#enrichItemsWithRatings(groceryItems),
+        this.#enrichItemsWithRatings(restaurantItems),
+      ]);
+
       return {
-        grocery_items: groceryItems,
-        restaurant_items: restaurantItems,
+        grocery_items: groceryItemsWithRatings,
+        restaurant_items: restaurantItemsWithRatings,
       };
     } catch (error) {
       logger.error('Error getting home items', { error: error.message });

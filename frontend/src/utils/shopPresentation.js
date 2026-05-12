@@ -66,6 +66,47 @@ export const getShopStockCount = (shop = {}) => {
   return null;
 };
 
+export const getShopRatingSummary = (shop = {}) => {
+  const averageCandidates = [
+    shop.average_rating,
+    shop.avg_rating,
+    shop.rating,
+    shop.rating_average,
+  ];
+
+  const countCandidates = [
+    shop.review_count,
+    shop.reviews_count,
+    shop.total_reviews,
+    shop.rating_count,
+  ];
+
+  let average = null;
+  let count = 0;
+
+  for (const entry of averageCandidates) {
+    const parsed = parseNumeric(entry);
+    if (parsed !== null) {
+      average = Number(parsed.toFixed(1));
+      break;
+    }
+  }
+
+  for (const entry of countCandidates) {
+    const parsed = parseNumeric(entry);
+    if (parsed !== null) {
+      count = Math.max(0, Math.trunc(parsed));
+      break;
+    }
+  }
+
+  return {
+    average,
+    count,
+    hasRating: average !== null && count > 0,
+  };
+};
+
 export const getShopStatusMeta = (shop = {}) => {
   const isActive = shop.is_active !== false;
   const isOpen = typeof shop.is_open === 'boolean' ? shop.is_open : isActive;

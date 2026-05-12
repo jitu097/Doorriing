@@ -19,6 +19,7 @@ const SHOP_IMAGE_KEYS = [
 ];
 
 const STOCK_SUMMARY_LIMIT = 200;
+const RATING_SUMMARY_LIMIT = 200;
 
 const normalizeImage = (shop = {}) => {
   for (const key of SHOP_IMAGE_KEYS) {
@@ -140,6 +141,88 @@ const enrichShopsWithInventory = async (shops = []) => {
   });
 };
 
+const getRatingSummaryByShop = async (shopIds = []) => {
+  const sanitized = (shopIds || []).filter(Boolean);
+
+  if (sanitized.length === 0 || sanitized.length > RATING_SUMMARY_LIMIT) {
+    if (sanitized.length > RATING_SUMMARY_LIMIT) {
+      logger.warn('Skipping rating summary aggregation due to large shop set', {
+        shopCount: sanitized.length,
+      });
+    }
+
+    return {
+      reviewCountByShop: new Map(),
+      avgRatingByShop: new Map(),
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('shop_id, rating')
+    .in('shop_id', sanitized)
+    .not('rating', 'is', null);
+
+  if (error) {
+    logger.warn('Failed to fetch rating summary for shops', { error: error.message });
+    return {
+      reviewCountByShop: new Map(),
+      avgRatingByShop: new Map(),
+    };
+  }
+
+  const reviewCountByShop = new Map();
+  const ratingTotalByShop = new Map();
+
+  (data || []).forEach((review) => {
+    const shopId = review?.shop_id;
+    const numericRating = Number(review?.rating);
+
+    if (!shopId || !Number.isFinite(numericRating)) {
+      return;
+    }
+
+    reviewCountByShop.set(shopId, (reviewCountByShop.get(shopId) || 0) + 1);
+    ratingTotalByShop.set(shopId, (ratingTotalByShop.get(shopId) || 0) + numericRating);
+  });
+
+  const avgRatingByShop = new Map();
+
+  reviewCountByShop.forEach((count, shopId) => {
+    const total = ratingTotalByShop.get(shopId) || 0;
+    avgRatingByShop.set(shopId, count > 0 ? Number((total / count).toFixed(1)) : null);
+  });
+
+  return {
+    reviewCountByShop,
+    avgRatingByShop,
+  };
+};
+
+const enrichShopsWithRatings = async (shops = []) => {
+  if (!Array.isArray(shops) || shops.length === 0) {
+    return [];
+  }
+
+  const shopIds = shops.map((shop) => shop?.id).filter(Boolean);
+  const { reviewCountByShop, avgRatingByShop } = await getRatingSummaryByShop(shopIds);
+
+  return shops.map((shop) => {
+    const shopId = shop?.id;
+
+    return {
+      ...shop,
+      average_rating: shop?.average_rating ?? avgRatingByShop.get(shopId) ?? null,
+      review_count: shop?.review_count ?? reviewCountByShop.get(shopId) ?? 0,
+    };
+  });
+};
+
+const enrichShopsForCards = async (shops = []) => {
+  const withInventory = await enrichShopsWithInventory(shops || []);
+  return enrichShopsWithRatings(withInventory);
+};
+
 class ShopService {
   /**
    * Get all active shops with filtering and pagination
@@ -179,7 +262,7 @@ class ShopService {
         throw new Error('Failed to fetch shops');
       }
 
-      const formattedShops = await enrichShopsWithInventory(data || []);
+      const formattedShops = await enrichShopsForCards(data || []);
 
       return {
         shops: formattedShops,
@@ -390,7 +473,7 @@ class ShopService {
         };
       });
 
-      const formattedShops = await enrichShopsWithInventory(shopsWithCategories);
+      const formattedShops = await enrichShopsForCards(shopsWithCategories);
 
       return {
         shops: formattedShops,
@@ -440,8 +523,8 @@ class ShopService {
       }
 
       const [groceryFormatted, restaurantFormatted] = await Promise.all([
-        enrichShopsWithInventory(groceryShops || []),
-        enrichShopsWithInventory(restaurantShops || []),
+        enrichShopsForCards(groceryShops || []),
+        enrichShopsForCards(restaurantShops || []),
       ]);
 
       return {
@@ -475,7 +558,7 @@ class ShopService {
       throw new Error('Failed to fetch shops');
     }
 
-    return enrichShopsWithInventory(data || []);
+    return enrichShopsForCards(data || []);
   }
 }
 

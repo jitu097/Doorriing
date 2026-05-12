@@ -169,6 +169,8 @@ const SubCategoryItem = () => {
                     description={item.description}
                     stockQuantityLabel={stockLabel}
                     stockQuantityValue={stockValue}
+                    averageRating={item.average_rating}
+                    reviewCount={item.review_count}
                     image={item.image_url}
                     shopId={shopId}
                     shopType="grocery"

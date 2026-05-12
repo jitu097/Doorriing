@@ -21,7 +21,26 @@ export const NotificationProvider = ({ children }) => {
       const result = await getNotifications();
       setNotifications(result.notifications || []);
     } catch (err) {
-      setError(err.message || 'Failed to load notifications');
+      // Log detailed error for debugging
+      console.error('Notification fetch error:', {
+        message: err.message,
+        status: err.status,
+        error: err,
+      });
+      
+      // Set user-friendly error message
+      const errorMsg = err.status === 401 
+        ? 'Please sign in to view notifications'
+        : err.status === 403
+        ? 'You do not have permission to view notifications'
+        : err.status === 0 || err.message?.includes('Failed to fetch')
+        ? 'Backend is currently unavailable. Please refresh the page.'
+        : err.message || 'Failed to load notifications';
+      
+      setError(errorMsg);
+      
+      // Don't crash the app - gracefully set empty notifications
+      setNotifications([]);
     } finally {
       setLoading(false);
     }
@@ -55,11 +74,32 @@ export const NotificationProvider = ({ children }) => {
   }, [notifications]);
 
   useEffect(() => {
-    fetchNotifications();
+    let interval;
+    let failureCount = 0;
+    const maxConsecutiveFailures = 3;
 
-    const interval = window.setInterval(() => {
-      fetchNotifications();
-    }, 15000);
+    const initFetch = async () => {
+      await fetchNotifications();
+      failureCount = 0; // Reset on success
+      
+      // Poll every 30 seconds (reduced from 15 to be less aggressive)
+      interval = window.setInterval(async () => {
+        try {
+          await fetchNotifications();
+        } catch (err) {
+          failureCount++;
+          console.warn(`Notification fetch failed (${failureCount}/${maxConsecutiveFailures})`, err.message);
+          
+          // Stop polling if we've failed too many times
+          if (failureCount >= maxConsecutiveFailures) {
+            clearInterval(interval);
+            setError('Notification service temporarily unavailable');
+          }
+        }
+      }, 30000);
+    };
+
+    initFetch();
 
     return () => window.clearInterval(interval);
   }, [fetchNotifications]);

@@ -127,6 +127,46 @@
   font-weight: 600;
 }
 
+.shop-card .card-meta-pill-rating {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #9a3412;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  font-size: 0.68rem;
+}
+
+.shop-card .rating-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.shop-card .rating-star-icon {
+  font-size: 0.62rem;
+  line-height: 1;
+}
+
+.shop-card .rating-star-icon.filled {
+  color: #f59e0b;
+}
+
+.shop-card .rating-star-icon.empty {
+  color: #d6d3d1;
+}
+
+.shop-card .rating-value {
+  font-weight: 700;
+  font-size: 0.68rem;
+}
+
+.shop-card .rating-count {
+  color: #78716c;
+  font-size: 0.65rem;
+}
+
 /* Responsive Shop Card for Mobile */
 
 /* Tablet */

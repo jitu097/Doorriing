@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { orderService } from '../../services/order.service.js';
 import { getStatusLabel } from '../../utils/orderUtils.js';
+import ReviewModal from '../../components/common/ReviewModal.jsx';
+import ItemReviewModal from '../../components/common/ItemReviewModal.jsx';
+import { submitOrderReview, getOrderReview, submitOrderItemReview, getOrderItemReviews } from '../../services/review.service.js';
 import './OrderDetails.css';
 
 const OrderDetails = () => {
@@ -12,6 +15,12 @@ const OrderDetails = () => {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
   const [remainingTime, setRemainingTime] = useState(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewStatusKnown, setReviewStatusKnown] = useState(false);
+  const [selectedItemForReview, setSelectedItemForReview] = useState(null);
+  const [itemReviewsByItemId, setItemReviewsByItemId] = useState({});
 
   useEffect(() => {
     let timerId;
@@ -43,7 +52,7 @@ const OrderDetails = () => {
             }
           }
           
-          setOrder({
+          const newOrder = {
             id: o.id,
             orderNumber: o.order_number,
             shopName: o.shops?.name || 'BazarSe Shop',
@@ -51,6 +60,7 @@ const OrderDetails = () => {
             shopPhone: o.shops?.phone || '',
             items: (o.order_items || []).map(oi => ({
               id: oi.id,
+              itemId: oi.item_id,
               name: oi.item_name,
               quantity: oi.quantity,
               price: oi.item_price,
@@ -66,7 +76,37 @@ const OrderDetails = () => {
             orderDate: o.created_at,
             paymentMethod: o.payment_method === 'cod' ? 'Cash on Delivery' : 'Online',
             deliveryAddress: deliveryAddressText || 'Not available',
-          });
+          };
+
+          // Check if delivered order already has a review before showing modal.
+          if (newOrder.status === 'delivered' && !reviewSubmitted && !showReviewModal) {
+            if (!reviewStatusKnown) {
+              try {
+                const existingReview = await getOrderReview(orderId);
+                if (existingReview) {
+                  setReviewSubmitted(true);
+                  setShowReviewModal(false);
+                  setReviewStatusKnown(true);
+                } else {
+                  setReviewStatusKnown(true);
+                  // Show review modal after a short delay for smoother UX.
+                  setTimeout(() => {
+                    setShowReviewModal(true);
+                  }, 2000);
+                }
+              } catch (reviewCheckError) {
+                console.error('Error checking existing review:', reviewCheckError);
+                setReviewStatusKnown(true);
+              }
+            } else {
+              // Show review modal after a short delay for smoother UX.
+              setTimeout(() => {
+                setShowReviewModal(true);
+              }, 2000);
+            }
+          }
+
+          setOrder(newOrder);
           setRemainingTime(o.remaining_time ?? null);
         } else {
           setErrorMsg('Order not found');
@@ -93,7 +133,89 @@ const OrderDetails = () => {
         clearInterval(timerId);
       };
     }
-  }, [orderId]);
+  }, [orderId, reviewSubmitted, showReviewModal, reviewStatusKnown]);
+
+  const handleReviewSubmit = async (reviewData) => {
+    setReviewLoading(true);
+    try {
+      await submitOrderReview(reviewData.orderId, reviewData.rating, reviewData.comment);
+      setReviewSubmitted(true);
+      setReviewStatusKnown(true);
+      setShowReviewModal(false);
+    } catch (error) {
+      if (error?.status === 409) {
+        // Review already exists (duplicate submission / retry case).
+        setReviewSubmitted(true);
+        setReviewStatusKnown(true);
+        setShowReviewModal(false);
+        return;
+      }
+      console.error('Error submitting review:', error);
+      throw error;
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchItemReviews = async () => {
+      if (!orderId || !order || order.status !== 'delivered') {
+        return;
+      }
+
+      try {
+        const itemReviews = await getOrderItemReviews(orderId);
+        const mapped = (itemReviews || []).reduce((acc, review) => {
+          if (review?.item_id) {
+            acc[review.item_id] = review;
+          }
+          return acc;
+        }, {});
+        setItemReviewsByItemId(mapped);
+      } catch (error) {
+        console.error('Failed to fetch item reviews:', error);
+      }
+    };
+
+    fetchItemReviews();
+  }, [orderId, order]);
+
+  const handleItemReviewSubmit = async (reviewData) => {
+    try {
+      const review = await submitOrderItemReview(
+        reviewData.orderId,
+        reviewData.itemId,
+        reviewData.rating,
+        reviewData.comment
+      );
+
+      setItemReviewsByItemId((prev) => ({
+        ...prev,
+        [reviewData.itemId]: {
+          ...(review || {}),
+          item_id: reviewData.itemId,
+          rating: reviewData.rating,
+          comment: reviewData.comment,
+        },
+      }));
+
+      setSelectedItemForReview(null);
+    } catch (error) {
+      if (error?.status === 409) {
+        const latest = await getOrderItemReviews(reviewData.orderId);
+        const mapped = (latest || []).reduce((acc, review) => {
+          if (review?.item_id) {
+            acc[review.item_id] = review;
+          }
+          return acc;
+        }, {});
+        setItemReviewsByItemId(mapped);
+        setSelectedItemForReview(null);
+        return;
+      }
+      throw error;
+    }
+  };
 
   if (loading) return (
     <div className="order-details-loading">
@@ -167,6 +289,23 @@ const OrderDetails = () => {
                       {item.baseQuantity !== null && item.baseQuantity !== undefined && item.unit ? (
                         <span className="base-quantity">{item.baseQuantity}{item.unit}</span>
                       ) : null}
+                      {order.status === 'delivered' && item.itemId ? (
+                        <div className="item-review-row">
+                          {itemReviewsByItemId[item.itemId] ? (
+                            <span className="item-reviewed-badge">
+                              Reviewed: {'★'.repeat(Math.max(0, Math.min(5, itemReviewsByItemId[item.itemId].rating || 0)))}
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="item-review-btn"
+                              onClick={() => setSelectedItemForReview(item)}
+                            >
+                              Rate item
+                            </button>
+                          )}
+                        </div>
+                      ) : null}
                     </div>
                     <span className="price">₹{item.price * item.quantity}</span>
                   </div>
@@ -213,6 +352,24 @@ const OrderDetails = () => {
           </aside>
         </div>
       </div>
+
+      {showReviewModal && order && (
+        <ReviewModal
+          orderId={order.id}
+          shopName={order.shopName}
+          onClose={() => setShowReviewModal(false)}
+          onSubmit={handleReviewSubmit}
+        />
+      )}
+
+      {selectedItemForReview && order && (
+        <ItemReviewModal
+          orderId={order.id}
+          item={selectedItemForReview}
+          onClose={() => setSelectedItemForReview(null)}
+          onSubmit={handleItemReviewSubmit}
+        />
+      )}
     </div>
   );
 };

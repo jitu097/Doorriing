@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import shopController from './shop.controller.js';
+import reviewController from '../review/review.controller.js';
 import { optionalAuth } from '../../middlewares/auth.middleware.js';
 
 const router = Router();
@@ -15,6 +16,16 @@ router.get('/browse/:businessType', optionalAuth, shopController.getShopsByBusin
 
 // Get all shops with filters
 router.get('/', optionalAuth, shopController.getShops);
+
+// ---------------------------
+// Shop Review Routes (must be after specific routes)
+// ---------------------------
+
+// GET /api/shops/:shopId/reviews - Get all reviews for a shop
+router.get('/:shopId/reviews', reviewController.getShopReviews);
+
+// GET /api/shops/:shopId/rating-stats - Get rating stats for a shop
+router.get('/:shopId/rating-stats', reviewController.getShopRatingStats);
 
 // Get shop by ID (must be last among single-segment routes)
 router.get('/:id', optionalAuth, shopController.getShopById);

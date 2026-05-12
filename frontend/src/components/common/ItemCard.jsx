@@ -74,6 +74,8 @@ const ItemCard = ({
   foodType,
   baseQuantity,
   unit,
+  averageRating,
+  reviewCount,
 }) => {
   const { addToCart, getCartItem, increaseQty, decreaseQty } = useCart();
   const [showVariants, setShowVariants] = useState(false);
@@ -147,6 +149,10 @@ const ItemCard = ({
   const stockLabelClass = hasStockLabel && typeof stockQuantityValue === 'number' && stockQuantityValue <= 5
     ? 'item-card-quantity low'
     : 'item-card-quantity';
+  const numericAverageRating = Number(averageRating);
+  const numericReviewCount = Number(reviewCount);
+  const hasRating = Number.isFinite(numericAverageRating) && numericAverageRating > 0 && Number.isFinite(numericReviewCount) && numericReviewCount > 0;
+  const roundedRatingStars = hasRating ? Math.round(numericAverageRating) : 0;
 
   const handleAddToCart = () => {
     if (!isAvailable) {
@@ -538,6 +544,23 @@ const ItemCard = ({
         </div>
 
         {secondaryText && <p className="item-card-subtitle">{secondaryText}</p>}
+
+        {hasRating && (
+          <div className="item-card-rating" aria-label={`Rated ${numericAverageRating.toFixed(1)} out of 5 from ${numericReviewCount} reviews`}>
+            <span className="item-card-rating-stars" aria-hidden="true">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <span
+                  key={index}
+                  className={`item-card-rating-star ${index < roundedRatingStars ? 'filled' : 'empty'}`}
+                >
+                  ★
+                </span>
+              ))}
+            </span>
+            <span className="item-card-rating-value">{numericAverageRating.toFixed(1)}</span>
+            <span className="item-card-rating-count">({numericReviewCount})</span>
+          </div>
+        )}
 
         {(baseQuantity || unit) && (
           <p className="item-card-measure">{baseQuantity ? baseQuantity : ''}{unit ? ` ${unit}` : ''}</p>

@@ -1,6 +1,7 @@
 import express from 'express';
 import { Router } from 'express';
 import { orderController } from '../controllers/order.controller.js';
+import reviewController from '../modules/review/review.controller.js';
 import { authenticate } from '../middlewares/auth.middleware.js';
 import crypto from 'crypto';
 import { supabase } from '../config/supabaseClient.js';
@@ -178,6 +179,25 @@ router.patch('/:id/cancel', orderController.cancelOrder);
 // Idempotent refund trigger. Safe to call multiple times for the same order.
 // Returns existing refund details if already processed.
 router.post('/:id/refund-payment', orderController.refundPayment);
+
+// ---------------------------
+// Review Routes
+// ---------------------------
+
+// POST /api/user/orders/:orderId/review
+router.post('/:orderId/review', (req, res, next) => reviewController.submitReview(req, res, next));
+
+// GET /api/user/orders/:orderId/review
+router.get('/:orderId/review', (req, res, next) => reviewController.getReview(req, res, next));
+
+// POST /api/user/orders/:orderId/items/:itemId/review
+router.post('/:orderId/items/:itemId/review', (req, res, next) => reviewController.submitItemReview(req, res, next));
+
+// GET /api/user/orders/:orderId/items/:itemId/review
+router.get('/:orderId/items/:itemId/review', (req, res, next) => reviewController.getItemReview(req, res, next));
+
+// GET /api/user/orders/:orderId/item-reviews
+router.get('/:orderId/item-reviews', (req, res, next) => reviewController.getOrderItemReviews(req, res, next));
 
 
 export default router;

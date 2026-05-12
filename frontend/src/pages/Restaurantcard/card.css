@@ -127,6 +127,46 @@
   font-weight: 600;
 }
 
+.restaurant-card .card-meta-pill-rating {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  font-size: 0.68rem;
+}
+
+.restaurant-card .rating-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.restaurant-card .rating-star-icon {
+  font-size: 0.62rem;
+  line-height: 1;
+}
+
+.restaurant-card .rating-star-icon.filled {
+  color: #f59e0b;
+}
+
+.restaurant-card .rating-star-icon.empty {
+  color: #d6d3d1;
+}
+
+.restaurant-card .rating-value {
+  font-weight: 700;
+  font-size: 0.68rem;
+}
+
+.restaurant-card .rating-count {
+  color: #78716c;
+  font-size: 0.65rem;
+}
+
 /* Booking Action Buttons */
 .card-booking-actions {
   position: absolute;

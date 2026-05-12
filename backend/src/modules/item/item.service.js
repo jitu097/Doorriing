@@ -2,6 +2,74 @@ import { supabase } from '../../config/supabaseClient.js';
 import { logger } from '../../utils/logger.js';
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../../utils/constants.js';
 
+const MAX_RATING_SUMMARY_ITEMS = 200;
+
+const buildItemRatingSummary = async (itemIds = []) => {
+  const sanitized = (itemIds || []).filter(Boolean);
+
+  if (sanitized.length === 0 || sanitized.length > MAX_RATING_SUMMARY_ITEMS) {
+    return {
+      countByItemId: new Map(),
+      averageByItemId: new Map(),
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('item_reviews')
+    .select('item_id, rating')
+    .in('item_id', sanitized)
+    .not('rating', 'is', null);
+
+  if (error) {
+    logger.warn('Failed to fetch item rating summary', { error: error.message });
+    return {
+      countByItemId: new Map(),
+      averageByItemId: new Map(),
+    };
+  }
+
+  const countByItemId = new Map();
+  const totalByItemId = new Map();
+
+  (data || []).forEach((review) => {
+    const itemId = review?.item_id;
+    const rating = Number(review?.rating);
+
+    if (!itemId || !Number.isFinite(rating)) {
+      return;
+    }
+
+    countByItemId.set(itemId, (countByItemId.get(itemId) || 0) + 1);
+    totalByItemId.set(itemId, (totalByItemId.get(itemId) || 0) + rating);
+  });
+
+  const averageByItemId = new Map();
+  countByItemId.forEach((count, itemId) => {
+    const total = totalByItemId.get(itemId) || 0;
+    averageByItemId.set(itemId, count > 0 ? Number((total / count).toFixed(1)) : null);
+  });
+
+  return { countByItemId, averageByItemId };
+};
+
+const enrichItemsWithRatings = async (items = []) => {
+  if (!Array.isArray(items) || items.length === 0) {
+    return [];
+  }
+
+  const itemIds = items.map((item) => item?.id).filter(Boolean);
+  const { countByItemId, averageByItemId } = await buildItemRatingSummary(itemIds);
+
+  return items.map((item) => {
+    const itemId = item?.id;
+    return {
+      ...item,
+      average_rating: item?.average_rating ?? averageByItemId.get(itemId) ?? null,
+      review_count: item?.review_count ?? countByItemId.get(itemId) ?? 0,
+    };
+  });
+};
+
 class ItemService {
   /**
    * Get items by shop ID
@@ -59,8 +127,10 @@ class ItemService {
         throw new Error('Failed to fetch items');
       }
 
+      const items = await enrichItemsWithRatings(data || []);
+
       return {
-        items: data || [],
+        items,
         pagination: {
           page,
           pageSize: limit,
@@ -158,8 +228,10 @@ class ItemService {
         throw new Error('Failed to fetch items');
       }
 
+      const items = await enrichItemsWithRatings(data || []);
+
       return {
-        items: data,
+        items,
         pagination: {
           page,
           pageSize: limit,
@@ -200,8 +272,10 @@ class ItemService {
         throw new Error('Failed to fetch items');
       }
 
+      const items = await enrichItemsWithRatings(data || []);
+
       return {
-        items: data || [],
+        items,
         pagination: {
           page,
           pageSize: limit,
