@@ -15,6 +15,7 @@ const OrdersList = lazy(() => import('../pages/orders/OrdersList'));
 const OrderDetails = lazy(() => import('../pages/orders/OrderDetails'));
 const Profile = lazy(() => import('../pages/profile/Profile'));
 const Address = lazy(() => import('../pages/Address/Address'));
+const CallDriver = lazy(() => import('../pages/orders/CallDriver'));
 const About = lazy(() => import('../pages/legal/About'));
 const Contact = lazy(() => import('../pages/legal/Contact'));
 const PrivacyPolicy = lazy(() => import('../pages/legal/PrivacyPolicy'));
@@ -92,6 +93,7 @@ const UserRoutes = () => {
           <Route path="/orders" element={<OrdersList />} />
           <Route path="/orders/:orderId" element={<OrderDetails />} />
           <Route path="/track/:orderId" element={<TrackOrder />} />
+          <Route path="/call/:orderId" element={<CallDriver />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/address" element={<Address />} />
         </Route>

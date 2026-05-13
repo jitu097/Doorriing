@@ -67,6 +67,9 @@ const TrackOrder = () => {
 
   const currentStepIdx = getCurrentStepIndex();
   const isCancelled = ['cancelled', 'rejected', 'expired'].includes(order.status.toLowerCase());
+  const deliveryPartnerPhone = order.delivery_partner_phone || order.deliveryPartnerPhone || '';
+  const showDriverContact = Boolean(deliveryPartnerPhone) && !isCancelled;
+  const canCallDriver = showDriverContact && ['accepted', 'confirmed', 'preparing', 'ready', 'out_for_delivery'].includes(order.status.toLowerCase());
 
   return (
     <div className="track-container">
@@ -110,6 +113,27 @@ const TrackOrder = () => {
               <p>{currentStepIdx < 4 ? 'Arriving in 25-35 mins' : 'Delivered'}</p>
             </div>
           </div>
+
+          {showDriverContact && (
+            <div className="driver-contact-card">
+              <h3>Delivery Partner</h3>
+              <p className="driver-phone-label">Phone number</p>
+              <div className="driver-phone-row">
+                <span className="driver-phone-number">{deliveryPartnerPhone}</span>
+                {canCallDriver && (
+                  <button
+                    type="button"
+                    className="driver-call-icon"
+                    onClick={() => navigate(`/call/${orderId}`)}
+                    aria-label="Open call page"
+                    title="Call driver"
+                  >
+                    📞
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

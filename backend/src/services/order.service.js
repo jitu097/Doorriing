@@ -485,6 +485,65 @@ export const orderService = {
     },
 
     /**
+     * Get the accepted delivery partner phone for an order
+     */
+    async getDeliveryPartnerPhone(orderId) {
+        const { data: assignment, error: assignmentError } = await supabase
+            .from('order_delivery_assignments')
+            .select('delivery_partner_id, status, accepted_at')
+            .eq('order_id', orderId)
+            .not('accepted_at', 'is', null)
+            .order('accepted_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (assignmentError) {
+            logger.error('Error fetching order delivery assignment', {
+                error: assignmentError,
+                orderId,
+            });
+            return {
+                delivery_partner_phone: null,
+                delivery_assignment_status: null,
+                delivery_assigned_at: null,
+            };
+        }
+
+        if (!assignment?.delivery_partner_id) {
+            return {
+                delivery_partner_phone: null,
+                delivery_assignment_status: null,
+                delivery_assigned_at: null,
+            };
+        }
+
+        const { data: partner, error: partnerError } = await supabase
+            .from('delivery_partners')
+            .select('phone')
+            .eq('id', assignment.delivery_partner_id)
+            .maybeSingle();
+
+        if (partnerError) {
+            logger.error('Error fetching delivery partner phone', {
+                error: partnerError,
+                orderId,
+                deliveryPartnerId: assignment.delivery_partner_id,
+            });
+            return {
+                delivery_partner_phone: null,
+                delivery_assignment_status: assignment.status || null,
+                delivery_assigned_at: assignment.accepted_at || null,
+            };
+        }
+
+        return {
+            delivery_partner_phone: partner?.phone || null,
+            delivery_assignment_status: assignment.status || null,
+            delivery_assigned_at: assignment.accepted_at || null,
+        };
+    },
+
+    /**
      * Get Order Details
      */
     async getOrderById(customerId, orderId) {
@@ -524,6 +583,13 @@ export const orderService = {
                 await supabase.from('orders').update({ status: 'expired' }).eq('id', order.id);
                 order.status = 'expired';
             }
+        }
+
+        if (order) {
+            const deliveryPartner = await this.getDeliveryPartnerPhone(order.id);
+            order.delivery_partner_phone = deliveryPartner.delivery_partner_phone;
+            order.delivery_assignment_status = deliveryPartner.delivery_assignment_status;
+            order.delivery_assigned_at = deliveryPartner.delivery_assigned_at;
         }
         return order;
     },
