@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ImageScroller from '../../components/common/ImageScroller';
 import ItemCard from '../../components/common/ItemCard';
+import ItemCardSkeleton, { ItemCardSkeletonGrid } from '../../components/common/ItemCardSkeleton';
 import OrderNotification from '../../components/common/OrderNotification';
 import ShopCard from '../shopcard/shopcard';
 import { itemService } from '../../services/item.service';
@@ -212,7 +213,8 @@ const Home = () => {
     return (
       <div className="home-items-section">
         {loading ? (
-          <div className="loading-message">Loading items...</div>
+          // Show skeleton loaders while loading
+          <ItemCardSkeletonGrid count={8} />
         ) : error ? (
           <p className="error-message">{error}</p>
         ) : itemCount > 0 ? (

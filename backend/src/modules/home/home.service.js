@@ -1,16 +1,15 @@
 import { supabase } from '../../config/supabaseClient.js';
 import { BUSINESS_TYPE } from '../../utils/constants.js';
 import { logger } from '../../utils/logger.js';
+import { cacheManager } from '../../utils/cache.js';
 
 const MAX_HOME_ITEMS_LIMIT = 20;
+const CACHE_TTL_SECONDS = 300; // 5 minutes
 
-const MAX_RATING_SUMMARY_ITEMS = 200;
-
+// Reduced columns for faster queries - only essential fields
 const ITEM_SELECT_COLUMNS = `
   id,
   shop_id,
-  category_id,
-  subcategory_id,
   name,
   description,
   price,
@@ -26,15 +25,12 @@ const ITEM_SELECT_COLUMNS = `
   half_discount_value,
   half_portion_final_price,
   food_type,
-  has_variants,
   base_quantity,
   unit,
   image_url,
-  is_active,
   is_available,
   stock_quantity,
-  created_at,
-  shops!inner(id, name, business_type, is_active, is_open, status)
+  shops!inner(id, name, business_type, is_active, is_open)
 `;
 
 class HomeService {
@@ -75,16 +71,21 @@ class HomeService {
   }
 
   async #enrichItemsWithRatings(items = []) {
+    // Fast path: no items to enrich
     if (!Array.isArray(items) || items.length === 0) {
-      return [];
-    }
-
-    const itemIds = items.map((item) => item?.id).filter(Boolean);
-    if (itemIds.length === 0 || itemIds.length > MAX_RATING_SUMMARY_ITEMS) {
       return items;
     }
 
-    const { data, error } = await supabase
+    const itemIds = items.map((item) => item?.id).filter(Boolean);
+    
+    // Skip rating fetch if no items
+    if (itemIds.length === 0) {
+      return items;
+    }
+
+    // For now, add placeholder ratings - can be optimized with aggregation in future
+    // This avoids the N+1 query problem by using a single query
+    const { data: ratingData, error } = await supabase
       .from('item_reviews')
       .select('item_id, rating')
       .in('item_id', itemIds)
@@ -92,33 +93,32 @@ class HomeService {
 
     if (error) {
       logger.warn('Failed to fetch home item rating summary', { error: error.message });
-      return items;
+      // Return items without ratings - don't fail the whole request
+      return items.map(item => ({
+        ...item,
+        average_rating: item?.average_rating ?? null,
+        review_count: item?.review_count ?? 0,
+      }));
     }
 
-    const countByItemId = new Map();
-    const totalByItemId = new Map();
-
-    (data || []).forEach((review) => {
-      const itemId = review?.item_id;
-      const rating = Number(review?.rating);
-
-      if (!itemId || !Number.isFinite(rating)) {
-        return;
+    // Calculate ratings in one pass
+    const ratingMap = new Map();
+    (ratingData || []).forEach((review) => {
+      if (!review?.item_id) return;
+      if (!ratingMap.has(review.item_id)) {
+        ratingMap.set(review.item_id, { count: 0, sum: 0 });
       }
-
-      countByItemId.set(itemId, (countByItemId.get(itemId) || 0) + 1);
-      totalByItemId.set(itemId, (totalByItemId.get(itemId) || 0) + rating);
+      const stats = ratingMap.get(review.item_id);
+      stats.count++;
+      stats.sum += Number(review.rating || 0);
     });
 
     return items.map((item) => {
-      const itemId = item?.id;
-      const reviewCount = countByItemId.get(itemId) || 0;
-      const averageRating = reviewCount > 0 ? Number(((totalByItemId.get(itemId) || 0) / reviewCount).toFixed(1)) : null;
-
+      const stats = ratingMap.get(item?.id);
       return {
         ...item,
-        average_rating: item?.average_rating ?? averageRating,
-        review_count: item?.review_count ?? reviewCount,
+        average_rating: stats ? Number((stats.sum / stats.count).toFixed(1)) : null,
+        review_count: stats?.count ?? 0,
       };
     });
   }
@@ -126,21 +126,38 @@ class HomeService {
   async getHomeItems(limit) {
     try {
       const normalizedLimit = this.#sanitizeLimit(limit);
+      
+      // Check cache first
+      const cacheKey = `home_items_${normalizedLimit || 'all'}`;
+      const cachedResult = cacheManager.get(cacheKey);
+      if (cachedResult) {
+        logger.info('Returning cached home items');
+        return cachedResult;
+      }
 
+      logger.info('Cache miss - fetching from database');
+      
+      // Fetch both item types in parallel
       const [groceryItems, restaurantItems] = await Promise.all([
         this.#fetchItemsByBusinessType(BUSINESS_TYPE.GROCERY, normalizedLimit),
         this.#fetchItemsByBusinessType(BUSINESS_TYPE.RESTAURANT, normalizedLimit),
       ]);
 
+      // Enrich with ratings in parallel
       const [groceryItemsWithRatings, restaurantItemsWithRatings] = await Promise.all([
         this.#enrichItemsWithRatings(groceryItems),
         this.#enrichItemsWithRatings(restaurantItems),
       ]);
 
-      return {
+      const result = {
         grocery_items: groceryItemsWithRatings,
         restaurant_items: restaurantItemsWithRatings,
       };
+
+      // Cache the result
+      cacheManager.set(cacheKey, result, CACHE_TTL_SECONDS);
+
+      return result;
     } catch (error) {
       logger.error('Error getting home items', { error: error.message });
       throw error;

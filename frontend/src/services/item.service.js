@@ -1,5 +1,12 @@
 import { api } from './api';
 
+// Simple client-side cache for home items (5 minutes)
+const HOME_ITEMS_CACHE = {
+  data: null,
+  timestamp: null,
+  TTL: 5 * 60 * 1000, // 5 minutes
+};
+
 export const itemService = {
     /**
      * Get items by shop ID
@@ -52,25 +59,52 @@ export const itemService = {
 
     /**
      * Get grouped home items (grocery + restaurant)
+     * With client-side caching for performance
      * @param {number} [limit]
      */
     getHomeItems: async (limit) => {
-        const config = {};
+        const now = Date.now();
+        
+        // Check if cache is still valid
+        if (
+            HOME_ITEMS_CACHE.data && 
+            HOME_ITEMS_CACHE.timestamp &&
+            (now - HOME_ITEMS_CACHE.timestamp) < HOME_ITEMS_CACHE.TTL
+        ) {
+            console.log('[itemService] Returning cached home items');
+            return HOME_ITEMS_CACHE.data;
+        }
 
+        const config = {};
         if (typeof limit === 'number' && limit > 0) {
             config.params = { limit };
         }
 
-        console.log('[itemService] Fetching home items...');
-        const payload = await api.get('/home/items', config);
-        console.log('[itemService] Full API Response:', payload);
-        console.log('[itemService] payload.data:', payload.data);
+        console.log('[itemService] Fetching home items (cache miss)...');
+        const startTime = performance.now();
         
-        const result = payload.data || { grocery_items: [], restaurant_items: [] };
-        console.log('[itemService] Final result:', result);
-        console.log('[itemService] Grocery count:', result.grocery_items ? result.grocery_items.length : 0);
-        console.log('[itemService] Restaurant count:', result.restaurant_items ? result.restaurant_items.length : 0);
-        return result;
+        try {
+            const response = await api.get('/home/items', config);
+            const result = response.data || { grocery_items: [], restaurant_items: [] };
+            
+            const fetchTime = performance.now() - startTime;
+            console.log(`[itemService] Home items fetched in ${fetchTime.toFixed(2)}ms`);
+            console.log(`[itemService] Grocery: ${result.grocery_items?.length || 0} items, Restaurant: ${result.restaurant_items?.length || 0} items`);
+            
+            // Cache the result
+            HOME_ITEMS_CACHE.data = result;
+            HOME_ITEMS_CACHE.timestamp = now;
+            
+            return result;
+        } catch (error) {
+            console.error('[itemService] Error fetching home items:', error);
+            // Return cached data if available, even if stale
+            if (HOME_ITEMS_CACHE.data) {
+                console.log('[itemService] Returning stale cache due to error');
+                return HOME_ITEMS_CACHE.data;
+            }
+            throw error;
+        }
     }
 };
 
