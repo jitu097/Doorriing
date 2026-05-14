@@ -119,6 +119,8 @@ class CategoryService {
       const { validateUUIDs } = await import('../../utils/uuid.validator.js');
       validateUUIDs({ 'Category ID': categoryId, 'Shop ID': shopId });
 
+      logger.debug('getCategoryWithDetails: Starting fetch', { categoryId, shopId });
+
       // Step 1: Fetch category details
       const { data: category, error: categoryError } = await supabase
         .from('categories')
@@ -130,11 +132,19 @@ class CategoryService {
 
       if (categoryError) {
         if (categoryError.code === 'PGRST116') {
+          // Log for debugging
+          logger.warn('Category not found for shop', {
+            categoryId,
+            shopId,
+            error_code: categoryError.code,
+          });
           throw new Error('Category not found');
         }
-        logger.error('Failed to fetch category', { error: categoryError, categoryId });
+        logger.error('Failed to fetch category', { error: categoryError, categoryId, shopId });
         throw new Error('Failed to fetch category');
       }
+
+      logger.debug('Category found', { categoryId, categoryName: category?.name });
 
       // Step 2: Fetch subcategories for this category (if any)
       // Subcategories are OPTIONAL - a category may have zero subcategories
@@ -149,6 +159,11 @@ class CategoryService {
         logger.error('Failed to fetch subcategories', { error: subcategoryError, categoryId });
         throw new Error('Failed to fetch subcategories');
       }
+
+      logger.debug('Subcategories fetched', {
+        categoryId,
+        subcategoryCount: subcategories?.length || 0,
+      });
 
       // Step 3: Fetch items for this category
       // Items must be filtered by: shop_id, category_id, is_active, is_available
@@ -188,9 +203,11 @@ class CategoryService {
         .order('name', { ascending: true });
 
       if (itemsError) {
-        logger.error('Failed to fetch items', { error: itemsError, categoryId });
+        logger.error('Failed to fetch items', { error: itemsError, categoryId, shopId });
         throw new Error('Failed to fetch items');
       }
+
+      logger.debug('Items fetched', { categoryId, itemCount: items?.length || 0 });
 
       const ratedItems = await enrichItemsWithRatings(items || []);
 

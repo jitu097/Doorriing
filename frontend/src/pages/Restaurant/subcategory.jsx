@@ -37,9 +37,17 @@ const SubCategory = () => {
 
         setCategoryDetails(details);
       } catch (fetchError) {
-        console.error('Failed to load restaurant items', fetchError);
+        console.error('Failed to load restaurant items', {
+          error: fetchError,
+          categoryId,
+          restaurantId,
+          message: fetchError.message,
+        });
+        
         if (isMounted) {
-          setError(fetchError.message || 'Unable to fetch items right now.');
+          // Show a user-friendly error message
+          const userMessage = fetchError.message || 'Unable to fetch items right now.';
+          setError(userMessage);
         }
       } finally {
         if (isMounted) {
@@ -47,6 +55,12 @@ const SubCategory = () => {
         }
       }
     };
+
+    if (!categoryId || !restaurantId) {
+      setError('Invalid category or restaurant ID');
+      setLoading(false);
+      return;
+    }
 
     loadCategoryDetails();
 

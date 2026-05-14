@@ -49,16 +49,20 @@ class CategoryController {
         return sendError(res, 'Shop ID is required', 400);
       }
 
+      logger.debug('Fetching category details', { categoryId, shop_id });
+
       const categoryDetails = await categoryService.getCategoryWithDetails(categoryId, shop_id);
       return sendSuccess(res, categoryDetails, 'Category details fetched successfully');
     } catch (error) {
       // Handle validation errors
       if (error.message.includes('Invalid')) {
+        logger.warn('Validation error in getCategoryWithDetails', { error: error.message });
         return sendError(res, error.message, 400);
       }
       // Handle not found errors
       if (error.message === 'Category not found') {
-        return sendError(res, 'Category not found', 404);
+        logger.warn('Category not found', { categoryId: req.params.categoryId, shop_id: req.query.shop_id });
+        return sendError(res, 'Category not found or has been deactivated', 404);
       }
       logger.error('GetCategoryWithDetails controller error', { error: error.message, categoryId: req.params.categoryId, shop_id: req.query.shop_id });
       next(error);

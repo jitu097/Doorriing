@@ -14,13 +14,32 @@ export const getCategoryWithDetails = async (categoryId, shopId) => {
     throw new Error('categoryId and shopId are required');
   }
 
-  const response = await api.get(`/categories/${categoryId}`, {
-    params: {
-      shop_id: shopId,
-    },
-  });
+  try {
+    const response = await api.get(`/categories/${categoryId}`, {
+      params: {
+        shop_id: shopId,
+      },
+    });
 
-  return response.data;
+    // Return unwrapped data (response.data contains the actual category details)
+    return response.data || { grouped_items: [] };
+  } catch (error) {
+    console.error('Failed to fetch category details:', {
+      categoryId,
+      shopId,
+      status: error.status,
+      message: error.message,
+      payload: error.payload,
+    });
+
+    // Provide more helpful error messages
+    if (error.status === 404) {
+      throw new Error(
+        `Category "${categoryId}" not found for this restaurant. It may have been removed or deactivated.`
+      );
+    }
+    throw error;
+  }
 };
 
 export const getSubcategoriesByCategory = async (categoryId) => {

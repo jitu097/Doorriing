@@ -59,6 +59,11 @@ const CategoryItem = () => {
   );
 
   const handleCategoryClick = (category) => {
+    if (!category || !category.id) {
+      console.error('Invalid category:', category);
+      setError('Invalid category selected');
+      return;
+    }
     navigate(`/restaurant/shop/${restaurantId}/category/${category.id}`, {
       state: { categoryName: category.name },
     });
