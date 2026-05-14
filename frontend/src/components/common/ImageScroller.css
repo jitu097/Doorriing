@@ -126,19 +126,19 @@
 /* Mobile View */
 @media (max-width: 600px) {
   .scroller-img-container, .scroller-img {
-    height: 135px;
+    height: 185px;
     min-width: 100vw;
-    margin-bottom: -10px;
+    margin-bottom: 0;
     width: 100vw;
   }
   .image-scroller-wrapper {
-    position: fixed;
-    top: 60px;
-    left: 0;
-    right: 0;
-    margin-bottom: 0;
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    margin-top: 22px;
+    margin-bottom: 5px;
     width: 100vw;
-    z-index: 50;
     background: #fff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   }

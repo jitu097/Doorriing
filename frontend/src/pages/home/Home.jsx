@@ -280,11 +280,7 @@ const Home = () => {
           {businessType === 'grocery' ? (
             <>
               {' Explore Shops'}
-              <span className="shops-title-icons" aria-hidden="true">
-                {['/D.png', '/E.png', '/G.png', '/H.png', '/J.png', '/K.png'].map((src) => (
-                  <img key={src} src={src} alt="" className="shops-title-icon" />
-                ))}
-              </span>
+              
             </>
           ) : (
             ' Top Restaurants'
