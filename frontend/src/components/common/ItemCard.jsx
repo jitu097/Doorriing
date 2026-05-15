@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useCart } from '../../context/CartContext';
+import { useAppAvailability } from '../../context/AppAvailabilityContext';
 import './ItemCard.css';
 
 const formatPrice = (price) => {
@@ -78,8 +79,15 @@ const ItemCard = ({
   reviewCount,
 }) => {
   const { addToCart, getCartItem, increaseQty, decreaseQty } = useCart();
+  const { isOpen: appIsOpen, isLoading: appAvailabilityLoading } = useAppAvailability();
   const [showVariants, setShowVariants] = useState(false);
+  const [availabilityToast, setAvailabilityToast] = useState(null);
   const isRestaurantCard = shopType === 'restaurant';
+
+  // App is closed = not open AND not still loading (fail-open during first poll)
+  const appClosed = !appAvailabilityLoading && !appIsOpen;
+  // Combined disabled: item not in stock OR app is closed
+  const orderingDisabled = !isAvailable || appClosed;
 
   const normalizedFoodType = isRestaurantCard
     ? (foodType || '').toLowerCase().replace(/\s+/g, '').replace(/-/g, '')
@@ -154,8 +162,16 @@ const ItemCard = ({
   const hasRating = Number.isFinite(numericAverageRating) && numericAverageRating > 0 && Number.isFinite(numericReviewCount) && numericReviewCount > 0;
   const roundedRatingStars = hasRating ? Math.round(numericAverageRating) : 0;
 
-  const handleAddToCart = () => {
-    if (!isAvailable) {
+  const showUnavailableToast = (message) => {
+    setAvailabilityToast(message);
+    setTimeout(() => setAvailabilityToast(null), 3500);
+  };
+
+  const handleAddToCart = async () => {
+    if (orderingDisabled) {
+      if (appClosed) {
+        showUnavailableToast('Currently unavailable for orders. Please try again later.');
+      }
       return;
     }
 
@@ -166,47 +182,66 @@ const ItemCard = ({
     }
 
     // If no variants, add directly to cart
-    addToCart({
-      id: serverItemId,
-      clientItemId,
-      name,
-      price: priceValue ?? price,
-      image,
-      subtitle: secondaryText,
-      originalPrice,
-      isVeg: derivedIsVeg,
-      description,
-      shopId,
-      shopType,
-      baseQuantity,
-      unit,
-    });
+    try {
+      await addToCart({
+        id: serverItemId,
+        clientItemId,
+        name,
+        price: priceValue ?? price,
+        image,
+        subtitle: secondaryText,
+        originalPrice,
+        isVeg: derivedIsVeg,
+        description,
+        shopId,
+        shopType,
+        baseQuantity,
+        unit,
+      });
+    } catch (err) {
+      if (err.code === 'APP_UNAVAILABLE') {
+        showUnavailableToast(err.message);
+      } else {
+        showUnavailableToast(err.message || 'Failed to add item. Please try again.');
+      }
+    }
   };
 
-  const handleVariantAdd = (variant) => {
-    if (!isAvailable) {
+  const handleVariantAdd = async (variant) => {
+    if (orderingDisabled) {
+      if (appClosed) {
+        showUnavailableToast('Currently unavailable for orders. Please try again later.');
+      }
       return;
     }
 
     const variantSuffix = variant.key.toLowerCase();
     const variantClientId = `${clientItemId}-${variantSuffix}`;
     const variantServerId = `${serverItemId}-${variantSuffix}`;
-    addToCart({
-      id: variantServerId,
-      clientItemId: variantClientId,
-      name: `${name} (${variant.label})`,
-      price: variant.priceValue,
-      image,
-      subtitle: secondaryText,
-      originalPrice: undefined,
-      isVeg: derivedIsVeg,
-      description,
-      shopId,
-      shopType,
-      portion: variant.label,
-      baseQuantity,
-      unit,
-    });
+    try {
+      await addToCart({
+        id: variantServerId,
+        clientItemId: variantClientId,
+        name: `${name} (${variant.label})`,
+        price: variant.priceValue,
+        image,
+        subtitle: secondaryText,
+        originalPrice: undefined,
+        isVeg: derivedIsVeg,
+        description,
+        shopId,
+        shopType,
+        portion: variant.label,
+        baseQuantity,
+        unit,
+      });
+    } catch (err) {
+      if (err.code === 'APP_UNAVAILABLE') {
+        showUnavailableToast(err.message);
+      } else {
+        showUnavailableToast(err.message || 'Failed to add item. Please try again.');
+      }
+    }
   };
 
   const handleVariantUpdate = (variant, changeAmount) => {
@@ -302,18 +337,22 @@ const ItemCard = ({
 
       {!isInCart ? (
         <button
-          className="item-card-add-btn"
+          className={`item-card-add-btn${orderingDisabled ? ' item-card-add-btn-disabled' : ''}`}
           type="button"
-          disabled={!isAvailable}
+          disabled={orderingDisabled}
           onClick={handleAddToCart}
+          aria-label={orderingDisabled ? 'Currently unavailable' : 'Add to cart'}
         >
-          {!isAvailable ? 'UNAVAILABLE' : 'Add'}
+          {appClosed ? 'Unavailable' : !isAvailable ? 'UNAVAILABLE' : 'Add'}
         </button>
       ) : (
         <div className="item-card-qty-controls">
           <button
             className="qty-btn-small"
-            onClick={() => decreaseQty(clientItemId)}
+            onClick={async () => {
+              try { await decreaseQty(clientItemId); }
+              catch (err) { if (err.code === 'APP_UNAVAILABLE') showUnavailableToast(err.message); }
+            }}
             aria-label="Decrease quantity"
           >
             -
@@ -321,7 +360,10 @@ const ItemCard = ({
           <span className="qty-display-small">{cartItem.quantity}</span>
           <button
             className="qty-btn-small"
-            onClick={() => increaseQty(clientItemId)}
+            onClick={async () => {
+              try { await increaseQty(clientItemId); }
+              catch (err) { if (err.code === 'APP_UNAVAILABLE') showUnavailableToast(err.message); }
+            }}
             aria-label="Increase quantity"
           >
             +
@@ -501,7 +543,13 @@ const ItemCard = ({
   };
 
   return (
-    <div className={`item-card${!isAvailable ? ' item-card-disabled' : ''}${isRestaurantCard ? ' restaurant-card' : ''}`}>
+    <div className={`item-card${!isAvailable ? ' item-card-disabled' : ''}${appClosed ? ' item-card-app-closed' : ''}${isRestaurantCard ? ' restaurant-card' : ''}`}>
+      {/* Availability Toast — shown briefly when user tries to add during unavailability */}
+      {availabilityToast && (
+        <div className="item-card-availability-toast" role="alert" aria-live="assertive">
+          🔒 {availabilityToast}
+        </div>
+      )}
       {image && (
         <div className="item-card-image">
           <img src={image} alt={name} loading="lazy" />

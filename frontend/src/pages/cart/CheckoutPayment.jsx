@@ -12,12 +12,16 @@ const CheckoutPayment = () => {
   const location = useLocation();
   const { setOrderAsRecent } = useRecentOrder();
 
-  const { cartItems, getCartTotal, clearCart, deliveryFee, convenienceFee, platformSettingsLoading } = useCart();
+  const { cartItems, getCartTotal, clearCart, deliveryFee, convenienceFee, platformSettingsLoading,
+    appIsOpen, appAvailabilityLoading, appUnavailableReason } = useCart();
   const { addresses, activeAddress } = useAddress();
 
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [errorMsg, setErrorMsg] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Derived: app is confirmed closed (not just loading first poll)
+  const appClosed = !appAvailabilityLoading && !appIsOpen;
 
   // Synchronous lock — prevents duplicate payment attempts from double-tap
   // before React re-renders the disabled button state.
@@ -556,6 +560,44 @@ const CheckoutPayment = () => {
 
   if (!cartItems || cartItems.length === 0) return null;
 
+  // ── App Unavailability Full-Screen Block ────────────────────────────────
+  // If admin turned the toggle OFF, or we're outside delivery hours,
+  // show a clear message instead of the checkout form.
+  // Cart items are preserved — user can checkout once the app reopens.
+  if (appClosed) {
+    return (
+      <div className="checkout-page">
+        <div className="checkout-container">
+          <button
+            className="checkout-back-btn"
+            onClick={handleBackToHome}
+            aria-label="Go back"
+          >
+            ←
+          </button>
+          <div className="checkout-unavailable-block">
+            <span className="checkout-unavailable-icon">🔒</span>
+            <h2 className="checkout-unavailable-title">Orders Unavailable</h2>
+            <p className="checkout-unavailable-msg">
+              {appUnavailableReason ||
+                'We are currently not accepting orders. Please try again later.'}
+            </p>
+            <p className="checkout-unavailable-sub">
+              Your cart is saved. Come back when we reopen!
+            </p>
+            <button
+              className="checkout-unavailable-back-btn"
+              onClick={handleBackToHome}
+            >
+              ← Browse Shops
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  // ─────────────────────────────────────────────────────────────────────
+
   return (
     <div className="checkout-page">
       <div className="checkout-container">
@@ -651,13 +693,20 @@ const CheckoutPayment = () => {
             type="submit"
             id="btn-place-order"
             className="place-order-btn"
-            disabled={loading || isProcessing.current || (platformSettingsLoading && deliveryFee === null)}
+            disabled={
+              loading ||
+              isProcessing.current ||
+              (platformSettingsLoading && deliveryFee === null) ||
+              appClosed
+            }
           >
             {loading
-              ? "Processing..."
+              ? 'Processing...'
+              : appClosed
+              ? 'Orders Unavailable'
               : (platformSettingsLoading && deliveryFee === null
-                ? "Loading charges..."
-                : "Place Order")}
+                ? 'Loading charges...'
+                : 'Place Order')}
           </button>
         </form>
       </div>

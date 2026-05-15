@@ -1,4 +1,97 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   HOME UNAVAILABILITY BANNER
+   Shows at the top of the Home page when Admin toggle is OFF.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.home-unavailability-banner {
+  width: 100%;
+  background: linear-gradient(135deg, #ff4757 0%, #c0392b 100%);
+  color: #fff;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 4px 16px rgba(192, 57, 43, 0.35);
+  position: relative;
+  overflow: hidden;
+  animation: banner-slide-down 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  z-index: 100;
+}
+
+@keyframes banner-slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Pulsing shimmer overlay */
+.home-unavailability-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+  animation: banner-shimmer 2.5s ease-in-out infinite;
+}
+
+@keyframes banner-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.home-unavailability-icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.home-unavailability-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.home-unavailability-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+.home-unavailability-sub {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  line-height: 1.4;
+}
+
+/* Mobile tweaks */
 @media (max-width: 600px) {
+  .home-unavailability-banner {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+  .home-unavailability-icon {
+    font-size: 1.4rem;
+  }
+  .home-unavailability-title {
+    font-size: 0.88rem;
+  }
+  .home-unavailability-sub {
+    font-size: 0.74rem;
+  }
+}
+
+
   .doorriing-punchline-mobile {
     width: 100vw;
     background: #f8f9fa;

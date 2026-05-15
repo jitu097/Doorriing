@@ -8,6 +8,7 @@ import { CartProvider } from './context/CartContext'
 import { AddressProvider } from './context/AddressContext'
 import { NotificationProvider } from './context/NotificationContext'
 import { RecentOrderProvider } from './context/RecentOrderContext'
+import { AppAvailabilityProvider } from './context/AppAvailabilityContext'
 import { startLogStream } from './utils/logStream'
 
 // Safety check for root element
@@ -26,19 +27,21 @@ if (!rootElement) {
 try {
   ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
-      <BrowserRouter>
-        <AuthProvider>
-          <CartProvider>
-            <AddressProvider>
-              <NotificationProvider>
-                <RecentOrderProvider>
-                  <App />
-                </RecentOrderProvider>
-              </NotificationProvider>
-            </AddressProvider>
-          </CartProvider>
-        </AuthProvider>
-      </BrowserRouter>
+      <AppAvailabilityProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <CartProvider>
+              <AddressProvider>
+                <NotificationProvider>
+                  <RecentOrderProvider>
+                    <App />
+                  </RecentOrderProvider>
+                </NotificationProvider>
+              </AddressProvider>
+            </CartProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </AppAvailabilityProvider>
     </React.StrictMode>,
   )
   console.log('✅ App mounted successfully')

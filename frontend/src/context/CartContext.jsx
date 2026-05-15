@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { cartService } from '../services/cart.service';
 import { getPlatformSettings } from '../services/platform.service';
 import { useAuth } from '../hooks/useAuth';
+import { useAppAvailability } from './AppAvailabilityContext';
 
 const PLATFORM_SETTINGS_CACHE_KEY = 'platform_settings';
 
@@ -101,6 +102,12 @@ export const CartProvider = ({ children }) => {
 
     const { user, loading: authLoading } = useAuth();
     const isAuthenticated = !!user;
+
+    // ── Global App Availability ───────────────────────────────────────────────
+    // Reads the polled availability state from AppAvailabilityContext.
+    // When isOpen is false, addToCart and increaseQty are blocked.
+    // isLoading is true only for the very first poll — after that we have a value.
+    const { isOpen: appIsOpen, isLoading: appAvailabilityLoading, reason: appUnavailableReason } = useAppAvailability();
 
     const applyCartPayload = useCallback((cartPayload) => {
         const shopIdFromPayload = cartPayload?.shop_id ?? null;
@@ -230,6 +237,19 @@ export const CartProvider = ({ children }) => {
             return;
         }
 
+        // ── App Availability Guard ────────────────────────────────────────────
+        // Block add-to-cart when admin has turned off the global availability toggle
+        // or when we're outside the delivery time window.
+        // Exception: if availability is still loading (first poll), allow optimistically
+        // so the first-open UX isn't jarring. The DB trigger is the final safety net.
+        if (!appAvailabilityLoading && !appIsOpen) {
+            const reason = appUnavailableReason || 'We are currently unavailable for orders. Please try again later.';
+            const err = new Error(reason);
+            err.code = 'APP_UNAVAILABLE';
+            throw err;
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         try {
             const payloadItemId = item.id ?? item.itemId ?? item.serverItemId;
             if (!payloadItemId) {
@@ -330,6 +350,13 @@ export const CartProvider = ({ children }) => {
 
     // Increase quantity by 1
     const increaseQty = async (id) => {
+        // Block quantity increase when app is unavailable
+        if (!appAvailabilityLoading && !appIsOpen) {
+            const reason = appUnavailableReason || 'We are currently unavailable for orders.';
+            const err = new Error(reason);
+            err.code = 'APP_UNAVAILABLE';
+            throw err;
+        }
         try {
             const item = findCartItemByClientId(cartItems, id);
             if (!item) return;
@@ -468,6 +495,10 @@ export const CartProvider = ({ children }) => {
         getCartCount,
         isInCart,
         getCartItem,
+        // Expose availability so checkout and other pages can read it
+        appIsOpen,
+        appAvailabilityLoading,
+        appUnavailableReason,
     };
 
     return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
