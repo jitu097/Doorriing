@@ -12,7 +12,11 @@ const app = express();
 const corsOptions = {
   origin: [
     'http://localhost:5173',
+    'http://localhost:3000',
     'https://doorriing.com',
+    'https://www.doorriing.com',
+    /\.doorriing\.com$/,          // any subdomain of doorriing.com
+    /\.onrender\.com$/,           // all Render preview deployments
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

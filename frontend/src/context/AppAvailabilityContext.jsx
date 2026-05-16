@@ -1,7 +1,7 @@
 /**
  * AppAvailabilityContext.jsx
  *
- * Polls the Admin Panel's availability endpoint every 30 seconds.
+ * Polls the backend availability endpoint every 30 seconds.
  * Provides global isOpen / reason / blockedBy to the entire User App.
  *
  * ─── Architecture ────────────────────────────────────────────────────
@@ -21,14 +21,20 @@ import React, {
   useState,
   useEffect,
   useRef,
-  useCallback,
 } from 'react';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-// Points at the Admin Panel backend — this is the single source of truth for
-// global app availability (is_app_enabled toggle + delivery time window).
-const AVAILABILITY_API_URL =
-  'https://doorriing-delivery-3.onrender.com/api/platform/availability';
+// Resolves at build time from VITE_API_BASE_URL env var.
+// Falls back to the correct prod/dev URL when the var is not set.
+const _base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
+const AVAILABILITY_API_URL = _base
+  ? `${_base}/platform/availability`
+  : import.meta.env.MODE === 'production'
+    ? 'https://doorriing.onrender.com/api/platform/availability'
+    : 'http://localhost:5002/api/platform/availability';
+
+console.log('[AppAvailability] Polling URL:', AVAILABILITY_API_URL);
 
 /** Re-poll every 30 seconds so the UI reflects admin toggle changes quickly */
 const POLL_INTERVAL_MS = 30_000;
@@ -54,82 +60,82 @@ export const AppAvailabilityProvider = ({ children }) => {
     error:     null,
   });
 
-  const abortRef   = useRef(null);
-  const intervalRef = useRef(null);
-  const mountedRef  = useRef(true);
-
-  const fetchAvailability = useCallback(async () => {
-    // Cancel any in-flight request before starting a new one
-    if (abortRef.current) {
-      abortRef.current.abort();
-    }
-    abortRef.current = new AbortController();
-
-    try {
-      const res = await fetch(AVAILABILITY_API_URL, {
-        signal:  abortRef.current.signal,
-        headers: { 'Content-Type': 'application/json' },
-        // No auth header — this is a public endpoint
-      });
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const json = await res.json();
-
-      // Guard: validate response shape
-      if (!json?.success || !json?.data) {
-        throw new Error('Unexpected response format from availability API');
-      }
-
-      const d = json.data;
-
-      if (mountedRef.current) {
-        setState({
-          isOpen:    d.isCurrentlyOpen ?? true,
-          isLoading: false,
-          reason:    d.closedReason   ?? null,
-          blockedBy: d.blockedBy      ?? null,
-          settings:  d,
-          error:     null,
-        });
-      }
-    } catch (err) {
-      // Ignore expected abort errors (fired by cleanup / re-fetch)
-      if (err.name === 'AbortError') return;
-
-      console.warn(
-        '[AppAvailability] Poll failed — keeping last known state:', err.message
-      );
-
-      if (mountedRef.current) {
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-          error: err.message,
-          // IMPORTANT: fail open on network errors.
-          // A brief connectivity blip should never wrongly block orders.
-          // The DB trigger is the authoritative safety net.
-          isOpen: prev.isOpen ?? true,
-        }));
-      }
-    }
-  }, []);
+  // Single ref that tracks whether this provider instance is still alive.
+  // We re-set it to true at the start of each effect run so React StrictMode's
+  // double-invoke cycle doesn't leave it permanently false.
+  const mountedRef = useRef(false);
 
   useEffect(() => {
+    // Mark as mounted FIRST — critical for StrictMode correctness.
     mountedRef.current = true;
 
-    // Initial fetch immediately on mount
-    fetchAvailability();
+    let intervalId = null;
 
-    // Then poll every 30 s
-    intervalRef.current = setInterval(fetchAvailability, POLL_INTERVAL_MS);
+    const fetchAvailability = async (signal) => {
+      try {
+        console.log('[AppAvailability] Fetching:', AVAILABILITY_API_URL);
+        const res = await fetch(AVAILABILITY_API_URL, {
+          signal,
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const json = await res.json();
+
+        if (!json?.success || !json?.data) {
+          throw new Error('Unexpected response format from availability API');
+        }
+
+        const d = json.data;
+
+        // Only update state if this effect instance is still alive
+        if (mountedRef.current) {
+          setState({
+            isOpen:    d.isCurrentlyOpen ?? true,
+            isLoading: false,
+            reason:    d.closedReason   ?? null,
+            blockedBy: d.blockedBy      ?? null,
+            settings:  d,
+            error:     null,
+          });
+          console.log('[AppAvailability] ✅ isOpen:', d.isCurrentlyOpen ?? true);
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') return; // Normal cleanup — ignore silently
+
+        console.warn('[AppAvailability] Poll failed — keeping last known state:', err.message);
+
+        if (mountedRef.current) {
+          setState((prev) => ({
+            ...prev,
+            isLoading: false,
+            error: err.message,
+            // Fail-open: a network blip should never block ordering.
+            isOpen: prev.isOpen ?? true,
+          }));
+        }
+      }
+    };
+
+    // Each poll cycle gets its own AbortController so cleanup cancels only
+    // the currently in-flight request — not the next one.
+    let currentAbort = new AbortController();
+    fetchAvailability(currentAbort.signal);
+
+    intervalId = setInterval(() => {
+      currentAbort.abort();           // Cancel the previous in-flight request
+      currentAbort = new AbortController();
+      fetchAvailability(currentAbort.signal);
+    }, POLL_INTERVAL_MS);
 
     return () => {
+      // Cleanup: mark unmounted and cancel any in-flight request
       mountedRef.current = false;
-      clearInterval(intervalRef.current);
-      if (abortRef.current) abortRef.current.abort();
+      clearInterval(intervalId);
+      currentAbort.abort();
     };
-  }, [fetchAvailability]);
+  }, []); // Empty deps — runs once per actual mount lifecycle
 
   return (
     <AppAvailabilityContext.Provider value={state}>

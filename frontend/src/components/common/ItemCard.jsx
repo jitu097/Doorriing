@@ -416,10 +416,10 @@ const ItemCard = ({
                 <button
                   className="restaurant-variant-add"
                   type="button"
-                  disabled={!isAvailable}
+                  disabled={orderingDisabled}
                   onClick={() => handleVariantAdd(variant)}
                 >
-                  Add
+                  {appClosed ? 'Unavailable' : 'Add'}
                 </button>
               )}
             </div>
@@ -475,10 +475,10 @@ const ItemCard = ({
                     <button
                       className="variant-add-btn"
                       type="button"
-                      disabled={!isAvailable}
+                      disabled={orderingDisabled}
                       onClick={() => handleVariantAdd(variant)}
                     >
-                      Add
+                      {appClosed ? 'Unavailable' : 'Add'}
                     </button>
                   )}
                 </span>
@@ -569,12 +569,12 @@ const ItemCard = ({
           {isRestaurantCard && !isInCart && !showVariants && (
             <div className="restaurant-add-under-image">
               <button
-                className="restaurant-add-main"
+                className={`restaurant-add-main${orderingDisabled ? ' item-card-add-btn-disabled' : ''}`}
                 type="button"
-                disabled={!isAvailable}
+                disabled={orderingDisabled}
                 onClick={handleAddToCart}
               >
-                {!isAvailable ? 'UNAVAILABLE' : 'Add'}
+                {appClosed ? 'Unavailable' : !isAvailable ? 'UNAVAILABLE' : 'Add'}
               </button>
             </div>
           )}

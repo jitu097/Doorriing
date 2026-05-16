@@ -46,5 +46,6 @@ router.use('/user/addresses', addressRoutes);
 router.use('/bookings', bookingRoutes);
 router.use('/home', homeRoutes);
 router.use('/platform-settings', platformRoutes);
+router.use('/platform', platformRoutes); // alias used by AppAvailabilityContext
 
 export default router;
