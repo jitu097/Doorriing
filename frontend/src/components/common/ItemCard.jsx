@@ -416,10 +416,10 @@ const ItemCard = ({
                 <button
                   className="restaurant-variant-add"
                   type="button"
-                  disabled={!isAvailable}
+                  disabled={orderingDisabled}
                   onClick={() => handleVariantAdd(variant)}
                 >
-                  Add
+                  {appClosed ? 'Unavailable' : !isAvailable ? 'UNAVAILABLE' : 'Add'}
                 </button>
               )}
             </div>
@@ -475,10 +475,10 @@ const ItemCard = ({
                     <button
                       className="variant-add-btn"
                       type="button"
-                      disabled={!isAvailable}
+                      disabled={orderingDisabled}
                       onClick={() => handleVariantAdd(variant)}
                     >
-                      Add
+                      {appClosed ? 'Unavailable' : !isAvailable ? 'UNAVAILABLE' : 'Add'}
                     </button>
                   )}
                 </span>
@@ -571,27 +571,26 @@ const ItemCard = ({
               <button
                 className="restaurant-add-main"
                 type="button"
-                disabled={!isAvailable}
+                disabled={orderingDisabled}
                 onClick={handleAddToCart}
               >
-                {!isAvailable ? 'UNAVAILABLE' : 'Add'}
+                {appClosed ? 'Unavailable' : !isAvailable ? 'UNAVAILABLE' : 'Add'}
               </button>
             </div>
           )}
         </div>
       )}
+        <div className="item-card-body">
+          <div className="item-card-title-row">
+            {legacyVegIndicator ? (
+              <span className={`item-card-veg-badge ${isVeg ? 'veg' : 'non-veg'}`}>
+                <span className="veg-dot" />
+              </span>
+            ) : null}
+            <h3 className="item-card-name">{name}</h3>
+          </div>
 
-      <div className="item-card-body">
-        <div className="item-card-title-row">
-          {legacyVegIndicator ? (
-            <span className={`item-card-veg-badge ${isVeg ? 'veg' : 'non-veg'}`}>
-              <span className="veg-dot" />
-            </span>
-          ) : null}
-          <h3 className="item-card-name">{name}</h3>
-        </div>
-
-        {secondaryText && <p className="item-card-subtitle">{secondaryText}</p>}
+          {secondaryText && <p className="item-card-subtitle">{secondaryText}</p>}
 
         {hasRating && (
           <div className="item-card-rating" aria-label={`Rated ${numericAverageRating.toFixed(1)} out of 5 from ${numericReviewCount} reviews`}>
@@ -607,16 +606,16 @@ const ItemCard = ({
             </span>
             <span className="item-card-rating-value">{numericAverageRating.toFixed(1)}</span>
             <span className="item-card-rating-count">({numericReviewCount})</span>
-          </div>
-        )}
+            </div>
+          )}
 
-        {(baseQuantity || unit) && (
-          <p className="item-card-measure">{baseQuantity ? baseQuantity : ''}{unit ? ` ${unit}` : ''}</p>
-        )}
+          {(baseQuantity || unit) && (
+            <p className="item-card-measure">{baseQuantity ? baseQuantity : ''}{unit ? ` ${unit}` : ''}</p>
+          )}
 
-        {renderFooter()}
+          {renderFooter()}
+        </div>
       </div>
-    </div>
   );
 };
 
