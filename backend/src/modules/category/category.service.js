@@ -121,14 +121,59 @@ class CategoryService {
 
       logger.debug('getCategoryWithDetails: Starting fetch', { categoryId, shopId });
 
-      // Step 1: Fetch category details
-      const { data: category, error: categoryError } = await supabase
-        .from('categories')
-        .select('id, shop_id, name, image_url, is_active')
-        .eq('id', categoryId)
-        .eq('shop_id', shopId)
-        .eq('is_active', true)
-        .single();
+      // Step 1, 2, 3: Fetch category details, subcategories, and items in parallel to eliminate N+1 latency
+      const [categoryRes, subcategoriesRes, itemsRes] = await Promise.all([
+        supabase
+          .from('categories')
+          .select('id, shop_id, name, image_url, is_active')
+          .eq('id', categoryId)
+          .eq('shop_id', shopId)
+          .eq('is_active', true)
+          .single(),
+        supabase
+          .from('subcategories')
+          .select('id, category_id, name, image_url, is_active')
+          .eq('category_id', categoryId)
+          .eq('is_active', true)
+          .order('name', { ascending: true }),
+        supabase
+          .from('items')
+          .select(`
+            id,
+            shop_id,
+            category_id,
+            subcategory_id,
+            name,
+            description,
+            price,
+            discount_type,
+            discount_value,
+            final_price,
+            full_price,
+            full_discount_type,
+            full_discount_value,
+            full_final_price,
+            half_portion_price,
+            half_discount_type,
+            half_discount_value,
+            half_portion_final_price,
+            food_type,
+            has_variants,
+            image_url,
+            is_active,
+            is_available,
+            stock_quantity
+          `)
+          .eq('shop_id', shopId)
+          .eq('category_id', categoryId)
+          .eq('is_active', true)
+          .eq('is_available', true)
+          .order('name', { ascending: true })
+      ]);
+
+      const { data: category, error: categoryError } = categoryRes;
+      const { data: subcategories, error: subcategoryError } = subcategoriesRes;
+      const { data: items, error: itemsError } = itemsRes;
 
       if (categoryError) {
         if (categoryError.code === 'PGRST116') {
@@ -144,63 +189,10 @@ class CategoryService {
         throw new Error('Failed to fetch category');
       }
 
-      logger.debug('Category found', { categoryId, categoryName: category?.name });
-
-      // Step 2: Fetch subcategories for this category (if any)
-      // Subcategories are OPTIONAL - a category may have zero subcategories
-      const { data: subcategories, error: subcategoryError } = await supabase
-        .from('subcategories')
-        .select('id, category_id, name, image_url, is_active')
-        .eq('category_id', categoryId)
-        .eq('is_active', true)
-        .order('name', { ascending: true });
-
       if (subcategoryError) {
         logger.error('Failed to fetch subcategories', { error: subcategoryError, categoryId });
         throw new Error('Failed to fetch subcategories');
       }
-
-      logger.debug('Subcategories fetched', {
-        categoryId,
-        subcategoryCount: subcategories?.length || 0,
-      });
-
-      // Step 3: Fetch items for this category
-      // Items must be filtered by: shop_id, category_id, is_active, is_available
-      // IMPORTANT: We fetch ALL items for this category, regardless of subcategory
-      const { data: items, error: itemsError } = await supabase
-        .from('items')
-        .select(`
-          id,
-          shop_id,
-          category_id,
-          subcategory_id,
-          name,
-          description,
-          price,
-          discount_type,
-          discount_value,
-          final_price,
-          full_price,
-          full_discount_type,
-          full_discount_value,
-          full_final_price,
-          half_portion_price,
-          half_discount_type,
-          half_discount_value,
-          half_portion_final_price,
-          food_type,
-          has_variants,
-          image_url,
-          is_active,
-          is_available,
-          stock_quantity
-        `)
-        .eq('shop_id', shopId)
-        .eq('category_id', categoryId)
-        .eq('is_active', true)
-        .eq('is_available', true)
-        .order('name', { ascending: true });
 
       if (itemsError) {
         logger.error('Failed to fetch items', { error: itemsError, categoryId, shopId });

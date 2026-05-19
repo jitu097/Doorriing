@@ -21,6 +21,8 @@ const SHOP_IMAGE_KEYS = [
 const STOCK_SUMMARY_LIMIT = 200;
 const RATING_SUMMARY_LIMIT = 200;
 
+const SHOP_SELECT_COLUMNS = 'id, name, description, business_type, city, is_active, is_open, created_at, image_url, image, logo_url, banner_url, thumbnail_url, cover_image, profile_image, shop_image, shop_image_url, shop_logo, photo_url, display_image';
+
 const normalizeImage = (shop = {}) => {
   for (const key of SHOP_IMAGE_KEYS) {
     const rawValue = shop[key];
@@ -122,25 +124,6 @@ const getInventorySummaryByShop = async (shopIds = []) => {
   return { itemCountByShop, stockTotalByShop };
 };
 
-const enrichShopsWithInventory = async (shops = []) => {
-  if (!Array.isArray(shops) || shops.length === 0) {
-    return [];
-  }
-
-  const shopIds = shops.map((shop) => shop?.id).filter(Boolean);
-  const { itemCountByShop, stockTotalByShop } = await getInventorySummaryByShop(shopIds);
-
-  return shops.map((shop) => {
-    const shopId = shop?.id;
-    const extras = {
-      item_count: shop?.item_count ?? itemCountByShop.get(shopId) ?? null,
-      total_stock_quantity: shop?.total_stock_quantity ?? stockTotalByShop.get(shopId) ?? null,
-    };
-
-    return formatShopRecord(shop, extras);
-  });
-};
-
 const getRatingSummaryByShop = async (shopIds = []) => {
   const sanitized = (shopIds || []).filter(Boolean);
 
@@ -199,28 +182,33 @@ const getRatingSummaryByShop = async (shopIds = []) => {
   };
 };
 
-const enrichShopsWithRatings = async (shops = []) => {
+const enrichShopsForCards = async (shops = []) => {
   if (!Array.isArray(shops) || shops.length === 0) {
     return [];
   }
 
   const shopIds = shops.map((shop) => shop?.id).filter(Boolean);
-  const { reviewCountByShop, avgRatingByShop } = await getRatingSummaryByShop(shopIds);
+  
+  // Parallelize inventory summary and reviews rating summary to eliminate N+1 queries
+  const [inventoryResult, ratingResult] = await Promise.all([
+    getInventorySummaryByShop(shopIds),
+    getRatingSummaryByShop(shopIds)
+  ]);
+
+  const { itemCountByShop, stockTotalByShop } = inventoryResult;
+  const { reviewCountByShop, avgRatingByShop } = ratingResult;
 
   return shops.map((shop) => {
     const shopId = shop?.id;
-
-    return {
-      ...shop,
+    const extras = {
+      item_count: shop?.item_count ?? itemCountByShop.get(shopId) ?? null,
+      total_stock_quantity: shop?.total_stock_quantity ?? stockTotalByShop.get(shopId) ?? null,
       average_rating: shop?.average_rating ?? avgRatingByShop.get(shopId) ?? null,
       review_count: shop?.review_count ?? reviewCountByShop.get(shopId) ?? 0,
     };
-  });
-};
 
-const enrichShopsForCards = async (shops = []) => {
-  const withInventory = await enrichShopsWithInventory(shops || []);
-  return enrichShopsWithRatings(withInventory);
+    return formatShopRecord(shop, extras);
+  });
 };
 
 class ShopService {
@@ -300,7 +288,7 @@ class ShopService {
 
       const { data, error } = await supabase
         .from('shops')
-        .select('*')
+        .select(`${SHOP_SELECT_COLUMNS}, seller_id, address, latitude, longitude, category_count, item_count, total_stock_quantity`)
         .eq('id', shopId)
         .maybeSingle();
 
@@ -362,6 +350,17 @@ class ShopService {
    */
   async getNearbyShops(latitude, longitude, radiusKm = 10, businessType = null) {
     try {
+      // Round coordinates to 3 decimal places (~110 meters) for caching
+      const latKey = parseFloat(latitude).toFixed(3);
+      const lngKey = parseFloat(longitude).toFixed(3);
+      const cacheKey = `nearby:${latKey}:${lngKey}:${radiusKm}:${businessType || 'all'}`;
+
+      const cached = cacheManager.get('shop', cacheKey);
+      if (cached) {
+        logger.debug('Returning cached nearby shops', { latKey, lngKey });
+        return cached;
+      }
+
       // Using Haversine formula for distance calculation
       // Note: For production, consider using PostGIS extensions
       let query = supabase.rpc('get_nearby_shops', {
@@ -379,10 +378,15 @@ class ShopService {
       if (error) {
         // Fallback to basic query if RPC doesn't exist
         logger.warn('RPC get_nearby_shops not found, using basic query', { error });
-        return this.getShopsBasic(businessType);
+        const basicShops = await this.getShopsBasic(businessType);
+        cacheManager.set('shop', cacheKey, basicShops, 300); // Cache for 5 minutes
+        return basicShops;
       }
 
-      return data;
+      const enriched = await enrichShopsForCards(data || []);
+      cacheManager.set('shop', cacheKey, enriched, 300); // Cache for 5 minutes
+
+      return enriched;
     } catch (error) {
       logger.error('Error in getNearbyShops', { error: error.message });
       throw error;
@@ -399,10 +403,10 @@ class ShopService {
       const limit = Math.min(pageSize, MAX_PAGE_SIZE);
       const offset = (page - 1) * limit;
 
-      // Fetch shops for the business type
+      // Fetch shops for the business type with specific columns
       const { data: shops, error, count } = await supabase
         .from('shops')
-        .select('*', { count: 'exact' })
+        .select(`${SHOP_SELECT_COLUMNS}, subcategory`, { count: 'exact' })
         .eq('business_type', businessType)
         .range(offset, offset + limit - 1)
         .order('name', { ascending: true });
@@ -496,10 +500,10 @@ class ShopService {
    */
   async getShopsForHome(limit = 6) {
     try {
-      // Fetch grocery shops
+      // Fetch grocery shops with specific columns
       const { data: groceryShops, error: groceryError } = await supabase
         .from('shops')
-        .select('*')
+        .select(SHOP_SELECT_COLUMNS)
         .eq('business_type', 'grocery')
         .eq('is_active', true)
         .limit(limit)
@@ -509,10 +513,10 @@ class ShopService {
         logger.error('Failed to fetch grocery shops for home', { error: groceryError });
       }
 
-      // Fetch restaurant shops
+      // Fetch restaurant shops with specific columns
       const { data: restaurantShops, error: restaurantError } = await supabase
         .from('shops')
-        .select('*')
+        .select(SHOP_SELECT_COLUMNS)
         .eq('business_type', 'restaurant')
         .eq('is_active', true)
         .limit(limit)
