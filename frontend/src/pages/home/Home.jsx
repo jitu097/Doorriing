@@ -7,7 +7,7 @@ import ItemCardSkeleton, { ItemCardSkeletonGrid } from '../../components/common/
 import OrderNotification from '../../components/common/OrderNotification';
 import ShopCard from '../shopcard/shopcard';
 import { itemService } from '../../services/item.service';
-import { getHomeShops } from '../../services/shop.service';
+import { getCachedHomeShops, getHomeShops } from '../../services/shop.service';
 import { useAppAvailability } from '../../context/AppAvailabilityContext';
 import './Home.css';
 import { computeFinalPrice } from '../../utils/pricing';
@@ -157,14 +157,28 @@ const normalizeItems = (items = []) => {
 const Home = () => {
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('search') || '';
+  const cachedHomeShops = getCachedHomeShops();
   const [groceryItems, setGroceryItems] = useState([]);
   const [restaurantItems, setRestaurantItems] = useState([]);
-  const [groceryShops, setGroceryShops] = useState([]);
-  const [restaurantShops, setRestaurantShops] = useState([]);
+  const [groceryShops, setGroceryShops] = useState(() => cachedHomeShops?.grocery || []);
+  const [restaurantShops, setRestaurantShops] = useState(() => cachedHomeShops?.restaurant || []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeSection, setActiveSection] = useState(SECTION_CONFIG.grocery.key);
   const [visibleCount, setVisibleCount] = useState(20);
+
+  const mergeShopPayload = (currentValue, nextValue) => {
+    if (Array.isArray(nextValue) && nextValue.length > 0) {
+      return nextValue;
+    }
+
+    return Array.isArray(currentValue) ? currentValue : [];
+  };
+
+  const applyShopUpdate = (shopsData = {}) => {
+    setGroceryShops((currentValue) => mergeShopPayload(currentValue, shopsData.grocery));
+    setRestaurantShops((currentValue) => mergeShopPayload(currentValue, shopsData.restaurant));
+  };
 
   // Reset pagination when section or search changes
   useEffect(() => {
@@ -214,12 +228,9 @@ const Home = () => {
 
         if (shopsDataResult.status === 'fulfilled') {
           const shopsData = shopsDataResult.value;
-          setGroceryShops(shopsData.grocery || []);
-          setRestaurantShops(shopsData.restaurant || []);
+          applyShopUpdate(shopsData);
         } else {
           console.error('Error fetching shops:', shopsDataResult.reason);
-          setGroceryShops([]);
-          setRestaurantShops([]);
         }
       } catch (err) {
         console.error('Unexpected error fetching home data:', err);
@@ -242,8 +253,7 @@ const Home = () => {
 
     const handleShopsRefreshed = (e) => {
       const shopsData = e.detail || {};
-      setGroceryShops(shopsData.grocery || []);
-      setRestaurantShops(shopsData.restaurant || []);
+      applyShopUpdate(shopsData);
     };
 
     window.addEventListener('home-items-refreshed', handleItemsRefreshed);
@@ -418,7 +428,7 @@ const Home = () => {
         )}
         
         {/* Display Shops Sections */}
-        {!searchQuery && !loading && (
+        {!searchQuery && (
           <>
             {renderShopsSection(groceryShops, 'grocery')}
             {renderShopsSection(restaurantShops, 'restaurant')}

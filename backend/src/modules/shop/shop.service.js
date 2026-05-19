@@ -21,7 +21,7 @@ const SHOP_IMAGE_KEYS = [
 const STOCK_SUMMARY_LIMIT = 200;
 const RATING_SUMMARY_LIMIT = 200;
 
-const SHOP_SELECT_COLUMNS = 'id, name, description, business_type, city, is_active, is_open, created_at, image_url, image, logo_url, banner_url, thumbnail_url, cover_image, profile_image, shop_image, shop_image_url, shop_logo, photo_url, display_image';
+const SHOP_SELECT_COLUMNS = 'id, name, description, business_type, city, is_active, is_open, created_at, shop_image_url';
 
 const normalizeImage = (shop = {}) => {
   for (const key of SHOP_IMAGE_KEYS) {
