@@ -7,47 +7,34 @@ const HOME_SHOPS_CACHE = {
   TTL: 5 * 60 * 1000, // 5 minutes
 };
 
-export const getHomeShops = async (limit) => {
+export const getHomeShops = async (limit, forceRefresh = false) => {
 	const now = Date.now();
-	
-	// Check cache first
-	if (
-		HOME_SHOPS_CACHE.data &&
-		HOME_SHOPS_CACHE.timestamp &&
-		(now - HOME_SHOPS_CACHE.timestamp) < HOME_SHOPS_CACHE.TTL
-	) {
-		console.log('[shopService] Returning cached home shops');
+	const hasCache = HOME_SHOPS_CACHE.data && HOME_SHOPS_CACHE.timestamp && (now - HOME_SHOPS_CACHE.timestamp) < HOME_SHOPS_CACHE.TTL;
+
+	const fetchPromise = api.get('/shops/home', {
+		params: { limit },
+	}).then(response => {
+		const result = response.data || { grocery: [], restaurant: [] };
+		HOME_SHOPS_CACHE.data = result;
+		HOME_SHOPS_CACHE.timestamp = Date.now();
+		
+		if (typeof window !== 'undefined' && hasCache) {
+			window.dispatchEvent(new CustomEvent('home-shops-refreshed', { detail: result }));
+		}
+		return result;
+	}).catch(error => {
+		console.error('[shopService] Error fetching home shops:', error);
+		if (!hasCache) throw error;
+		return HOME_SHOPS_CACHE.data;
+	});
+
+	if (hasCache && !forceRefresh) {
+		console.log('[shopService] Returning cached home shops instantly (SWR)');
 		return HOME_SHOPS_CACHE.data;
 	}
 
 	console.log('[shopService] Fetching home shops (cache miss)...');
-	const startTime = performance.now();
-	
-	try {
-		const response = await api.get('/shops/home', {
-			params: {
-				limit,
-			},
-		});
-
-		const result = response.data || { grocery: [], restaurant: [] };
-		const fetchTime = performance.now() - startTime;
-		console.log(`[shopService] Home shops fetched in ${fetchTime.toFixed(2)}ms`);
-
-		// Cache the result
-		HOME_SHOPS_CACHE.data = result;
-		HOME_SHOPS_CACHE.timestamp = now;
-
-		return result;
-	} catch (error) {
-		console.error('[shopService] Error fetching home shops:', error);
-		// Return cached data if available, even if stale
-		if (HOME_SHOPS_CACHE.data) {
-			console.log('[shopService] Returning stale cache due to error');
-			return HOME_SHOPS_CACHE.data;
-		}
-		throw error;
-	}
+	return fetchPromise;
 };
 
 export const getShopsByBusinessType = async (businessType, params = {}) => {

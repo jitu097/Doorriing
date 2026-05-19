@@ -53,7 +53,7 @@ export default function LoadingScreen() {
         <span style={{display: 'block', color: '#ff4d4f', fontWeight: 'bold', letterSpacing: '2px', fontSize: '1.3em'}}>DOORRIING</span>
       </div>
       <div className="map-container">
-        <img src="/map.png" className="map-bg" alt="Map" loading="lazy" />
+        <img src="/map.png" className="map-bg" alt="Map" loading="eager" decoding="async" />
         {shops.map((shop, i) => (
           <motion.img
             key={shop.className}
@@ -64,7 +64,8 @@ export default function LoadingScreen() {
             initial="hidden"
             animate="visible"
             alt={shop.label}
-            loading="lazy"
+            loading="eager"
+            decoding="async"
             style={{ willChange: 'transform, opacity' }}
           />
         ))}

@@ -232,6 +232,29 @@ const Home = () => {
     fetchHomeData();
   }, []);
 
+  // Silent refresh listener for Stale-While-Revalidate (SWR) updates
+  useEffect(() => {
+    const handleItemsRefreshed = (e) => {
+      const itemPayload = e.detail || {};
+      setGroceryItems(normalizeItems(itemPayload.grocery_items));
+      setRestaurantItems(normalizeItems(itemPayload.restaurant_items));
+    };
+
+    const handleShopsRefreshed = (e) => {
+      const shopsData = e.detail || {};
+      setGroceryShops(shopsData.grocery || []);
+      setRestaurantShops(shopsData.restaurant || []);
+    };
+
+    window.addEventListener('home-items-refreshed', handleItemsRefreshed);
+    window.addEventListener('home-shops-refreshed', handleShopsRefreshed);
+
+    return () => {
+      window.removeEventListener('home-items-refreshed', handleItemsRefreshed);
+      window.removeEventListener('home-shops-refreshed', handleShopsRefreshed);
+    };
+  }, []);
+
   const renderItemsSection = (title, items, emptyMessage) => {
     // Safety: ensure items is always an array
     const safeItems = Array.isArray(items) ? items : [];

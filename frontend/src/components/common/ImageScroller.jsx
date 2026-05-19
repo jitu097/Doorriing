@@ -58,7 +58,7 @@ const ImageScroller = () => {
       >
         {images.map((img, idx) => (
           <div className="scroller-img-container" key={idx}>
-            <img src={img} alt={`slide-${idx+1}`} className="scroller-img" loading="lazy" />
+            <img src={img} alt={`slide-${idx+1}`} className="scroller-img" loading={idx === 0 ? "eager" : "lazy"} decoding="async" />
           </div>
         ))}
       </div>

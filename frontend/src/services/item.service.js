@@ -62,49 +62,38 @@ export const itemService = {
      * With client-side caching for performance
      * @param {number} [limit]
      */
-    getHomeItems: async (limit) => {
+    getHomeItems: async (limit, forceRefresh = false) => {
         const now = Date.now();
-        
-        // Check if cache is still valid
-        if (
-            HOME_ITEMS_CACHE.data && 
-            HOME_ITEMS_CACHE.timestamp &&
-            (now - HOME_ITEMS_CACHE.timestamp) < HOME_ITEMS_CACHE.TTL
-        ) {
-            console.log('[itemService] Returning cached home items');
-            return HOME_ITEMS_CACHE.data;
-        }
+        const hasCache = HOME_ITEMS_CACHE.data && HOME_ITEMS_CACHE.timestamp && (now - HOME_ITEMS_CACHE.timestamp) < HOME_ITEMS_CACHE.TTL;
 
         const config = {};
         if (typeof limit === 'number' && limit > 0) {
             config.params = { limit };
         }
 
-        console.log('[itemService] Fetching home items (cache miss)...');
-        const startTime = performance.now();
-        
-        try {
-            const response = await api.get('/home/items', config);
+        const fetchPromise = api.get('/home/items', config).then(response => {
             const result = response.data || { grocery_items: [], restaurant_items: [] };
-            
-            const fetchTime = performance.now() - startTime;
-            console.log(`[itemService] Home items fetched in ${fetchTime.toFixed(2)}ms`);
-            console.log(`[itemService] Grocery: ${result.grocery_items?.length || 0} items, Restaurant: ${result.restaurant_items?.length || 0} items`);
-            
-            // Cache the result
             HOME_ITEMS_CACHE.data = result;
-            HOME_ITEMS_CACHE.timestamp = now;
+            HOME_ITEMS_CACHE.timestamp = Date.now();
             
-            return result;
-        } catch (error) {
-            console.error('[itemService] Error fetching home items:', error);
-            // Return cached data if available, even if stale
-            if (HOME_ITEMS_CACHE.data) {
-                console.log('[itemService] Returning stale cache due to error');
-                return HOME_ITEMS_CACHE.data;
+            // Dispatch event for silent UI refresh
+            if (typeof window !== 'undefined' && hasCache) {
+                window.dispatchEvent(new CustomEvent('home-items-refreshed', { detail: result }));
             }
-            throw error;
+            return result;
+        }).catch(error => {
+            console.error('[itemService] Error fetching home items:', error);
+            if (!hasCache) throw error;
+            return HOME_ITEMS_CACHE.data;
+        });
+
+        if (hasCache && !forceRefresh) {
+            console.log('[itemService] Returning cached home items instantly (SWR)');
+            return HOME_ITEMS_CACHE.data;
         }
+
+        console.log('[itemService] Fetching home items (cache miss)...');
+        return fetchPromise;
     }
 };
 

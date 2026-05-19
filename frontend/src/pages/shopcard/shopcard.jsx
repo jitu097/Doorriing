@@ -9,11 +9,19 @@ import {
   getShopStatusMeta,
 } from '../../utils/shopPresentation';
 
+const optimizeCloudinaryUrl = (url, width = 300) => {
+  if (!url || typeof url !== 'string') return url;
+  if (!url.includes('res.cloudinary.com')) return url;
+  if (url.includes('upload/c_') || url.includes('upload/f_') || url.includes('upload/q_')) return url;
+  return url.replace('/upload/', `/upload/c_limit,w_${width},f_webp,q_auto/`);
+};
+
 const ShopCard = ({ shop, routePrefix = 'grocery' }) => {
   const navigate = useNavigate();
   const safeShop = shop || {};
   const title = safeShop.name || 'Shop';
   const image = resolveShopImage(safeShop);
+  const optimizedImage = React.useMemo(() => optimizeCloudinaryUrl(image, 300), [image]);
   const city = safeShop.city;
   const categoryCount = getShopCategoryCount(safeShop);
   const ratingSummary = getShopRatingSummary(safeShop);
@@ -55,8 +63,8 @@ const ShopCard = ({ shop, routePrefix = 'grocery' }) => {
       aria-disabled={isClosed}
     >
       <div className="shop-card-image">
-        {image ? (
-          <img src={image} alt={title} loading="lazy" />
+        {optimizedImage ? (
+          <img src={optimizedImage} alt={title} loading="lazy" decoding="async" />
         ) : (
           <div className="shop-card-placeholder">{initials}</div>
         )}
