@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ImageScroller from '../../components/common/ImageScroller';
 import ItemCard from '../../components/common/ItemCard';
@@ -164,6 +164,23 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeSection, setActiveSection] = useState(SECTION_CONFIG.grocery.key);
+  const [visibleCount, setVisibleCount] = useState(20);
+
+  // Reset pagination when section or search changes
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [activeSection, searchQuery]);
+
+  // Load more on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 600) {
+        setVisibleCount(prev => prev + 20);
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // ── Global App Availability ───────────────────────────────────────────────
   // Polled every 30s by AppAvailabilityProvider at the app root.
@@ -178,31 +195,35 @@ const Home = () => {
         setLoading(true);
         setError('');
 
-        // Fetch items
-        const itemResponse = await itemService.getHomeItems();
-        const itemPayload = itemResponse || {};
+        // Fetch items and shops in parallel
+        const [itemResponseResult, shopsDataResult] = await Promise.allSettled([
+          itemService.getHomeItems(),
+          getHomeShops(8)
+        ]);
 
-        const normalizedGrocery = normalizeItems(itemPayload.grocery_items);
-        const normalizedRestaurant = normalizeItems(itemPayload.restaurant_items);
+        if (itemResponseResult.status === 'fulfilled') {
+          const itemPayload = itemResponseResult.value || {};
+          setGroceryItems(normalizeItems(itemPayload.grocery_items));
+          setRestaurantItems(normalizeItems(itemPayload.restaurant_items));
+        } else {
+          console.error('Error fetching home items:', itemResponseResult.reason);
+          setError(itemResponseResult.reason?.message || 'Failed to load items');
+          setGroceryItems([]);
+          setRestaurantItems([]);
+        }
 
-        setGroceryItems(normalizedGrocery);
-        setRestaurantItems(normalizedRestaurant);
-
-        // Fetch shops
-        try {
-          const shopsData = await getHomeShops(8); // Fetch up to 8 shops
+        if (shopsDataResult.status === 'fulfilled') {
+          const shopsData = shopsDataResult.value;
           setGroceryShops(shopsData.grocery || []);
           setRestaurantShops(shopsData.restaurant || []);
-        } catch (shopError) {
-          console.error('Error fetching shops:', shopError);
+        } else {
+          console.error('Error fetching shops:', shopsDataResult.reason);
           setGroceryShops([]);
           setRestaurantShops([]);
         }
       } catch (err) {
-        console.error('Error fetching home items:', err);
-        setError(err.message || 'Failed to load items');
-        setGroceryItems([]);
-        setRestaurantItems([]);
+        console.error('Unexpected error fetching home data:', err);
+        setError(err.message || 'Failed to load home data');
       } finally {
         setLoading(false);
       }
@@ -227,7 +248,7 @@ const Home = () => {
           <p className="error-message">{error}</p>
         ) : itemCount > 0 ? (
           <div className="items-grid">
-            {safeItems.map(item => {
+            {safeItems.slice(0, visibleCount).map(item => {
               const stockLabel = typeof item.stock_quantity === 'number'
                 ? (item.stock_quantity > 0 ? `${item.stock_quantity} in stock` : 'Out of stock')
                 : undefined;
@@ -315,29 +336,29 @@ const Home = () => {
     );
   };
 
-  const activeItems = activeSection === SECTION_CONFIG.grocery.key ? groceryItems : restaurantItems;
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
-  const matchesSearch = (item) => {
-    const itemName = (item?.name || '').toLowerCase();
-    const shopName = (item?.shopName || item?.shops?.name || '').toLowerCase();
-    const description = (item?.description || '').toLowerCase();
-
-    return (
-      itemName.includes(normalizedSearchQuery) ||
-      shopName.includes(normalizedSearchQuery) ||
-      description.includes(normalizedSearchQuery)
-    );
-  };
-
-  // During search, consider all home items (both sections) so shop-name queries are always discoverable.
-  const searchableItems = normalizedSearchQuery
-    ? [...groceryItems, ...restaurantItems]
-    : activeItems;
-
-  const filteredItems = normalizedSearchQuery
-    ? searchableItems.filter(matchesSearch)
-    : searchableItems;
+  const filteredItems = useMemo(() => {
+    const activeItems = activeSection === SECTION_CONFIG.grocery.key ? groceryItems : restaurantItems;
+    
+    if (!normalizedSearchQuery) {
+      return activeItems;
+    }
+    
+    const searchableItems = [...groceryItems, ...restaurantItems];
+    
+    return searchableItems.filter(item => {
+      const itemName = (item?.name || '').toLowerCase();
+      const shopName = (item?.shopName || item?.shops?.name || '').toLowerCase();
+      const description = (item?.description || '').toLowerCase();
+      
+      return (
+        itemName.includes(normalizedSearchQuery) ||
+        shopName.includes(normalizedSearchQuery) ||
+        description.includes(normalizedSearchQuery)
+      );
+    });
+  }, [activeSection, groceryItems, restaurantItems, normalizedSearchQuery]);
 
   const title = normalizedSearchQuery ? 'Search Results' : SECTION_CONFIG[activeSection].title;
   const emptyMessage = normalizedSearchQuery

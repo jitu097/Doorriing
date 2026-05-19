@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAppAvailability } from '../../context/AppAvailabilityContext';
 import './ItemCard.css';
+
+const optimizeCloudinaryUrl = (url, width = 400) => {
+  if (!url || typeof url !== 'string') return url;
+  if (!url.includes('res.cloudinary.com')) return url;
+  if (url.includes('upload/c_') || url.includes('upload/f_') || url.includes('upload/q_')) return url;
+  return url.replace('/upload/', `/upload/c_limit,w_${width},f_webp,q_auto/`);
+};
 
 const formatPrice = (price) => {
   if (price === undefined || price === null || price === '') {
@@ -96,6 +103,8 @@ const ItemCard = ({
     ? normalizedFoodType !== 'nonveg'
     : (typeof isVeg === 'boolean' ? isVeg : true);
   const foodIndicatorSymbol = isRestaurantCard ? (derivedIsVeg ? '🟢' : '🔴') : null;
+
+  const optimizedImage = useMemo(() => optimizeCloudinaryUrl(image, 400), [image]);
 
   const baseOriginalPrice = originalPrice ?? fullPortionPrice ?? price;
 
@@ -550,9 +559,9 @@ const ItemCard = ({
           🔒 {availabilityToast}
         </div>
       )}
-      {image && (
+      {optimizedImage && (
         <div className="item-card-image">
-          <img src={image} alt={name} loading="lazy" />
+          <img src={optimizedImage} alt={name} loading="lazy" decoding="async" />
           {showFoodIndicator && (
             <span
               className="food-type-indicator"

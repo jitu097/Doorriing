@@ -13,13 +13,19 @@ export const NotificationProvider = ({ children }) => {
     [notifications]
   );
 
-  const fetchNotifications = useCallback(async () => {
-    setLoading(true);
+  const fetchNotifications = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setError('');
 
     try {
       const result = await getNotifications();
-      setNotifications(result.notifications || []);
+      const newNotifications = result.notifications || [];
+      setNotifications(prev => {
+        if (JSON.stringify(prev) === JSON.stringify(newNotifications)) {
+          return prev;
+        }
+        return newNotifications;
+      });
     } catch (err) {
       // Log detailed error for debugging
       console.error('Notification fetch error:', {
@@ -42,7 +48,7 @@ export const NotificationProvider = ({ children }) => {
       // Don't crash the app - gracefully set empty notifications
       setNotifications([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -85,7 +91,7 @@ export const NotificationProvider = ({ children }) => {
       // Poll every 30 seconds (reduced from 15 to be less aggressive)
       interval = window.setInterval(async () => {
         try {
-          await fetchNotifications();
+          await fetchNotifications(true);
         } catch (err) {
           failureCount++;
           console.warn(`Notification fetch failed (${failureCount}/${maxConsecutiveFailures})`, err.message);
@@ -104,7 +110,7 @@ export const NotificationProvider = ({ children }) => {
     return () => window.clearInterval(interval);
   }, [fetchNotifications]);
 
-  const value = {
+  const value = useMemo(() => ({
     notifications,
     unreadCount,
     loading,
@@ -113,7 +119,7 @@ export const NotificationProvider = ({ children }) => {
     markAsRead: markNotificationAsRead,
     markAllAsRead: markAllNotificationsAsRead,
     recentNotifications: notifications.slice(0, 5),
-  };
+  }), [notifications, unreadCount, loading, error, fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead]);
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
 };

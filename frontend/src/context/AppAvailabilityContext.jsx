@@ -91,13 +91,29 @@ export const AppAvailabilityProvider = ({ children }) => {
 
         // Only update state if this effect instance is still alive
         if (mountedRef.current) {
-          setState({
-            isOpen:    d.isCurrentlyOpen ?? true,
-            isLoading: false,
-            reason:    d.closedReason   ?? null,
-            blockedBy: d.blockedBy      ?? null,
-            settings:  d,
-            error:     null,
+          setState((prev) => {
+            const nextIsOpen = d.isCurrentlyOpen ?? true;
+            const nextReason = d.closedReason ?? null;
+            const nextBlockedBy = d.blockedBy ?? null;
+            
+            if (
+              prev.isOpen === nextIsOpen &&
+              prev.reason === nextReason &&
+              prev.blockedBy === nextBlockedBy &&
+              !prev.isLoading && 
+              prev.error === null
+            ) {
+              return prev; // Same state, prevent re-render
+            }
+            
+            return {
+              isOpen: nextIsOpen,
+              isLoading: false,
+              reason: nextReason,
+              blockedBy: nextBlockedBy,
+              settings: d,
+              error: null,
+            };
           });
           console.log('[AppAvailability] ✅ isOpen:', d.isCurrentlyOpen ?? true);
         }

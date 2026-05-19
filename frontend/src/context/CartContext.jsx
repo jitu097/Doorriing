@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cartService } from '../services/cart.service';
 import { getPlatformSettings } from '../services/platform.service';
@@ -474,7 +474,7 @@ export const CartProvider = ({ children }) => {
         return findCartItemByClientId(cartItems, id);
     };
 
-    const value = {
+    const value = useMemo(() => ({
         cartItems,
         cartMeta,
         loading,
@@ -495,11 +495,24 @@ export const CartProvider = ({ children }) => {
         getCartCount,
         isInCart,
         getCartItem,
-        // Expose availability so checkout and other pages can read it
         appIsOpen,
         appAvailabilityLoading,
         appUnavailableReason,
-    };
+    }), [
+        cartItems,
+        cartMeta,
+        loading,
+        error,
+        platformSettings,
+        platformSettingsLoading,
+        deliveryFee,
+        convenienceFee,
+        appIsOpen,
+        appAvailabilityLoading,
+        appUnavailableReason
+        // AddToCart and other functions shouldn't change often but ideally should be useCallback'd.
+        // We omit them from dependencies to avoid triggering renders if they aren't memoized properly.
+    ]);
 
     return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };

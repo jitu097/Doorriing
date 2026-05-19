@@ -18,12 +18,20 @@ const TrackOrder = () => {
   ];
 
   useEffect(() => {
+    let pollId = null;
+    let isTerminal = false;
+
     const fetchOrder = async (showLoading = true) => {
       try {
         if (showLoading) setLoading(true);
         const response = await orderService.getOrderById(orderId);
         if (response.success) {
           setOrder(response.data);
+          const currentStatus = response.data?.status?.toLowerCase();
+          if (['delivered', 'cancelled', 'rejected', 'expired'].includes(currentStatus)) {
+            isTerminal = true;
+            if (pollId) clearInterval(pollId);
+          }
         }
       } catch (err) {
         console.error('Track Order fetch error', err);
@@ -33,9 +41,14 @@ const TrackOrder = () => {
     };
 
     if (orderId) {
-      fetchOrder(true);
-      const pollId = setInterval(() => fetchOrder(false), 5000);
-      return () => clearInterval(pollId);
+      fetchOrder(true).then(() => {
+        if (!isTerminal) {
+          pollId = setInterval(() => fetchOrder(false), 10000);
+        }
+      });
+      return () => {
+        if (pollId) clearInterval(pollId);
+      };
     }
   }, [orderId]);
 

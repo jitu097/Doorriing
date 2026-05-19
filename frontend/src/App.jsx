@@ -35,12 +35,14 @@ function App() {
       setLoading(false);
       return;
     }
-    // Stage 6: Reduced loading screen duration from 6s to 4s (40% faster)
-    // Animation completes faster with optimized timing
-    const timer = setTimeout(() => {
+    
+    // Wait for auth state to hydrate instead of hardcoded delay
+    auth.authStateReady().then(() => {
+      // Small artificial delay to allow animations/styles to paint smoothly, but much shorter than 4s
+      setTimeout(() => setLoading(false), 500); 
+    }).catch(() => {
       setLoading(false);
-    }, 4000);
-    return () => clearTimeout(timer);
+    });
   }, []);
 
   // Toggle body scroll based on loading state
