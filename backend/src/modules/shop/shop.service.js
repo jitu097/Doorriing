@@ -348,7 +348,7 @@ class ShopService {
   /**
    * Get nearby shops based on coordinates
    */
-  async getNearbyShops(latitude, longitude, radiusKm = 10, businessType = null) {
+  async getNearbyShops(latitude, longitude, radiusKm = 10, businessType = null, options = {}) {
     try {
       // Round coordinates to 3 decimal places (~110 meters) for caching
       const latKey = parseFloat(latitude).toFixed(3);
@@ -379,12 +379,14 @@ class ShopService {
         // Fallback to basic query if RPC doesn't exist
         logger.warn('RPC get_nearby_shops not found, using basic query', { error });
         const basicShops = await this.getShopsBasic(businessType);
-        cacheManager.set('shop', cacheKey, basicShops, 300); // Cache for 5 minutes
+        const fallbackTtl = Number.isFinite(Number(options.ttlSeconds)) ? Number(options.ttlSeconds) : 300;
+        cacheManager.set('shop', cacheKey, basicShops, fallbackTtl); // Cache for fallback
         return basicShops;
       }
 
       const enriched = await enrichShopsForCards(data || []);
-      cacheManager.set('shop', cacheKey, enriched, 300); // Cache for 5 minutes
+      const ttl = Number.isFinite(Number(options.ttlSeconds)) ? Number(options.ttlSeconds) : 300;
+      cacheManager.set('shop', cacheKey, enriched, ttl);
 
       return enriched;
     } catch (error) {

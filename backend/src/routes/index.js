@@ -12,6 +12,7 @@ import notificationRoutes from '../modules/notification/notification.routes.js';
 import addressRoutes from '../modules/address/address.routes.js';
 import bookingRoutes from '../modules/booking/booking.routes.js';
 import homeRoutes from '../modules/home/home.routes.js';
+import dashboardRoutes from '../modules/dashboard/dashboard.routes.js';
 import platformRoutes from '../modules/platform/platform.routes.js';
 import monitoringRoutes from './monitoring.routes.js';
 
@@ -45,6 +46,7 @@ router.use('/notification', notificationRoutes);
 router.use('/user/addresses', addressRoutes);
 router.use('/bookings', bookingRoutes);
 router.use('/home', homeRoutes);
+router.use('/dashboard', dashboardRoutes);
 router.use('/platform-settings', platformRoutes);
 router.use('/platform', platformRoutes); // alias used by AppAvailabilityContext
 
