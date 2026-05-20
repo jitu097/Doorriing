@@ -288,7 +288,7 @@ class ShopService {
 
       const { data, error } = await supabase
         .from('shops')
-        .select(`${SHOP_SELECT_COLUMNS}, seller_id, address, latitude, longitude, category_count, item_count, total_stock_quantity`)
+        .select(`${SHOP_SELECT_COLUMNS}, seller_id, address`)
         .eq('id', shopId)
         .maybeSingle();
 
@@ -547,7 +547,7 @@ class ShopService {
   async getShopsBasic(businessType = null) {
     let query = supabase
       .from('shops')
-      .select('id, name, description, business_type, address, city, latitude, longitude, is_active')
+      .select('id, name, description, business_type, address, city, is_active')
       .eq('is_active', true)
       .limit(20);
 
