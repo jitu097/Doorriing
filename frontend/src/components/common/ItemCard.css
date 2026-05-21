@@ -859,26 +859,30 @@
 }
 
 .restaurant-add-main {
-  width: 100%;
-  width: 60px;
+  width: auto;
+  min-width: 96px;
   border: none;
   border-radius: 14px;
-  padding: 6px 8px;
+  padding: 8px 14px;
   font-size: 0.95rem;
   font-weight: 700!important;
   margin-left: auto;
-  margin-top: -40px !important;
+  margin-top: 0;
   align-self: center;
   color: #ffffff;
   background: linear-gradient(135deg, #E95322 0%, #d64a1f 100%);
   box-shadow: 0 12px 25px rgba(233, 83, 34, 0.28);
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .restaurant-add-main:disabled {
-  background: #f0f0f0;
-  color: #9d9d9d;
+  background: #d1d5db;
+  color: #6b7280;
   box-shadow: none;
   cursor: not-allowed;
 }
@@ -897,6 +901,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Place restaurant Add button under the card body (right aligned) */
+.restaurant-add-under-body {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+  padding: 0 12px 12px 12px;
+  min-height: 40px;
+}
+
+@media (max-width: 600px) {
+  .restaurant-add-under-body {
+    padding: 0 10px 10px 10px;
+    margin-top: 6px;
+    justify-content: flex-end;
+  }
 }
 
 /* When add is moved under image for restaurant cards, hide the footer add to avoid duplicates */

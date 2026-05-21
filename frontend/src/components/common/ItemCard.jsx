@@ -575,18 +575,7 @@ const ItemCard = ({
               />
             </span>
           )}
-          {isRestaurantCard && !isInCart && !showVariants && (
-            <div className="restaurant-add-under-image">
-              <button
-                className={`restaurant-add-main${orderingDisabled ? ' item-card-add-btn-disabled' : ''}`}
-                type="button"
-                disabled={orderingDisabled}
-                onClick={handleAddToCart}
-              >
-                {appClosed ? 'Unavailable' : !isAvailable ? 'UNAVAILABLE' : 'Add'}
-              </button>
-            </div>
-          )}
+          {/* restaurant add button moved below card body for consistent placement */}
         </div>
       )}
         <div className="item-card-body">
@@ -623,6 +612,21 @@ const ItemCard = ({
           )}
 
           {renderFooter()}
+
+          {/* Render restaurant Add button under the card body (right aligned) */}
+          {isRestaurantCard && !isInCart && !showVariants && (
+            <div className="restaurant-add-under-body">
+              <button
+                className={`restaurant-add-main${orderingDisabled ? ' item-card-add-btn-disabled' : ''}`}
+                type="button"
+                disabled={orderingDisabled}
+                onClick={handleAddToCart}
+                aria-label={orderingDisabled ? 'Currently unavailable' : 'Add to cart'}
+              >
+                {appClosed ? 'Unavailable' : !isAvailable ? 'UNAVAILABLE' : 'Add'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
   );

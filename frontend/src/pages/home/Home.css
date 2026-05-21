@@ -12,10 +12,11 @@
   align-items: center;
   gap: 14px;
   box-shadow: 0 4px 16px rgba(192, 57, 43, 0.35);
-  position: relative;
+  position: sticky;
+  top: 8px;
   overflow: hidden;
   animation: banner-slide-down 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  z-index: 100;
+  z-index: 110;
 }
 
 @keyframes banner-slide-down {
@@ -79,6 +80,7 @@
   .home-unavailability-banner {
     padding: 12px 14px;
     gap: 10px;
+    top: 20px;
   }
   .home-unavailability-icon {
     font-size: 1.4rem;
@@ -143,7 +145,7 @@
     margin-left: 0;
     margin-top: 0.2rem;
   }
-}
+
 @media (max-width: 600px) {
   .home-page {
     display: flex;
