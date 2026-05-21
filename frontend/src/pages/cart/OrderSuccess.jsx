@@ -1,18 +1,40 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { orderService } from '../../services/order.service.js';
 import './OrderSuccess.css';
 
 const OrderSuccess = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const orderId = searchParams.get('orderId') || 'N/A';
+    const [eta, setEta] = useState('10-15 minutes');
 
-    // Redirect if no orderId
+    // Redirect if no orderId and fetch order to compute ETA
     useEffect(() => {
         if (!searchParams.get('orderId')) {
             navigate('/home');
+            return;
         }
-    }, [searchParams, navigate]);
+
+        let mounted = true;
+        (async () => {
+            try {
+                const resp = await orderService.getOrderById(orderId);
+                const order = resp?.data || {};
+                const shop = order.shops || order.shop || {};
+                const shopName = (shop.name || order.shop_name || '').toString().toLowerCase();
+                const candidates = [shop.type, shop.business_type, shop.category, order.shop_type].filter(Boolean).map(s => String(s).toLowerCase());
+                const isGrocery = candidates.some(s => s.includes('grocery') || s.includes('mart') || s.includes('super')) || shopName.includes('grocery') || shopName.includes('mart') || shopName.includes('store');
+                const isRestaurant = candidates.some(s => s.includes('rest') || s.includes('restaurant') || s.includes('food')) || shopName.includes('biryani') || shopName.includes('restaurant') || shopName.includes('dhaba') || shopName.includes('cafe');
+                const etaValue = isRestaurant ? '45 – 60 minutes' : isGrocery ? '20 – 30 minutes' : '20-40 minutes';
+                if (mounted) setEta(etaValue);
+            } catch (err) {
+                // keep default
+            }
+        })();
+
+        return () => { mounted = false; };
+    }, [searchParams, navigate, orderId]);
 
     return (
         <div className="order-success-page">
@@ -41,7 +63,7 @@ const OrderSuccess = () => {
                     </div>
                     <div className="info-row">
                         <span className="info-label">Estimated Delivery:</span>
-                        <span className="info-value">10-15 minutes</span>
+                        <span className="info-value">{eta}</span>
                     </div>
                 </div>
 

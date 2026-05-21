@@ -24,14 +24,14 @@ const AnimatedCheck = () => (
         <div className="oc-check-ring" />
         <svg viewBox="0 0 80 80" className="oc-check-svg" role="img" aria-label="Success">
             <circle
-                cx="40" cy="40" r="36"
+                cx="40" cy="40" r="32"
                 fill="none" stroke="currentColor" strokeWidth="3"
                 className="oc-circle"
             />
             <path
                 fill="none" stroke="currentColor" strokeWidth="4"
                 strokeLinecap="round" strokeLinejoin="round"
-                d="M22 40 L35 53 L58 28"
+                d="M26 40 L36 50 L52 30"
                 className="oc-tick"
             />
         </svg>
@@ -165,7 +165,7 @@ const OrderConfirmation = () => {
     /* ── derived display values ── */
     const payInfo = getPaymentLabel(order.payment_method);
     const itemsList = order.order_items || [];
-    const shopName = order.shops?.name || '';
+    const shopDisplayName = order.shops?.name || '';
 
     const totalAmount = parseFloat(order.total_amount || 0).toFixed(0);
     const subtotal = parseFloat(order.items_total || 0).toFixed(0);
@@ -181,6 +181,30 @@ const OrderConfirmation = () => {
         ? 'Your payment was processed and the order is confirmed.'
         : 'Your order has been placed and is waiting for seller confirmation.';
 
+    // Determine estimated delivery range based on shop type or shop name heuristics
+    const shop = order.shops || order.shop || {};
+    const shopName = (shop.name || order.shop_name || '').toString();
+    const candidates = [
+        shop.type,
+        shop.business_type,
+        shop.businessType,
+        shop.category,
+        shop.category_name,
+        order.shop_type,
+        order.shop_category,
+        shop.kind,
+    ].filter(Boolean).map(s => String(s).toLowerCase());
+
+    const loweredName = shopName.toLowerCase();
+
+    const isGrocery = candidates.some(s => s.includes('grocery') || s.includes('mart') || s.includes('super'))
+        || loweredName.includes('grocery') || loweredName.includes('mart') || loweredName.includes('store');
+
+    const isRestaurant = candidates.some(s => s.includes('rest') || s.includes('restaurant') || s.includes('food'))
+        || loweredName.includes('biryani') || loweredName.includes('restaurant') || loweredName.includes('dhaba') || loweredName.includes('cafe') || loweredName.includes('hotel');
+
+    const etaValue = isRestaurant ? '45 – 60 minutes' : isGrocery ? '20 – 30 minutes' : '20 – 40 minutes';
+
     return (
         <div className="oc-page">
 
@@ -188,7 +212,6 @@ const OrderConfirmation = () => {
             <div className={`oc-hero ${isOnlinePayment ? 'oc-hero--paid' : 'oc-hero--cod'}`}>
                 <AnimatedCheck />
 
-                <span className="oc-badge">{heroBadgeText}</span>
                 <h1 className="oc-hero-title">{heroTitle}</h1>
                 <p className="oc-hero-sub">{heroSubtitle}</p>
 
@@ -211,10 +234,10 @@ const OrderConfirmation = () => {
                 </div>
 
                 {/* Shop info (if available) */}
-                {shopName && (
+                {shopDisplayName && (
                     <div className="oc-card oc-card--shop">
                         <span className="oc-card-icon">🏪</span>
-                        <span className="oc-card-text">{shopName}</span>
+                        <span className="oc-card-text">{shopDisplayName}</span>
                     </div>
                 )}
 
@@ -283,32 +306,35 @@ const OrderConfirmation = () => {
                     <span className="oc-eta-icon">⏱️</span>
                     <div>
                         <div className="oc-eta-label">Estimated Delivery</div>
-                        <div className="oc-eta-value">20 – 40 minutes</div>
+                        <div className="oc-eta-value">{etaValue}</div>
                     </div>
                 </div>
 
                 {/* CTA buttons */}
                 <div className="oc-actions">
-                    <button
-                        id="btn-track-order"
-                        className="oc-btn oc-btn--primary"
-                        onClick={() => navigate(`/orders/${order.id}`)}
-                    >
-                        Track Order
-                    </button>
-                    <button
-                        id="btn-view-orders"
-                        className="oc-btn oc-btn--secondary"
-                        onClick={() => navigate('/orders')}
-                    >
-                        View All Orders
-                    </button>
+                    <div className="oc-actions-row">
+                        <button
+                            id="btn-track-order"
+                            className="oc-btn oc-btn--primary"
+                            onClick={() => navigate(`/orders/${order.id}`)}
+                        >
+                            Track Order
+                        </button>
+                        <button
+                            id="btn-view-orders"
+                            className="oc-btn oc-btn--secondary"
+                            onClick={() => navigate('/orders')}
+                        >
+                            View All Orders
+                        </button>
+                    </div>
+
                     <button
                         id="btn-back-home"
                         className="oc-btn oc-btn--ghost"
                         onClick={() => navigate('/home')}
                     >
-                        Back to Home
+                       ← Back to Home
                     </button>
                 </div>
 

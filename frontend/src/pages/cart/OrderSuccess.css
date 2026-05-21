@@ -113,7 +113,11 @@
 .success-actions {
     display: flex;
     gap: 12px;
-    flex-direction: column;
+    flex-direction: row;
+}
+
+.success-actions .btn {
+    flex: 1 1 0;
 }
 
 .btn {
