@@ -3,7 +3,6 @@ import { BUSINESS_TYPE } from '../../utils/constants.js';
 import { logger } from '../../utils/logger.js';
 import { cacheManager } from '../../utils/cache.js';
 
-const MAX_HOME_ITEMS_LIMIT = 20;
 const CACHE_TTL_SECONDS = 300; // 5 minutes
 
 // Reduced columns for faster queries - only essential fields
@@ -44,7 +43,22 @@ class HomeService {
       return null;
     }
 
-    return Math.min(parsed, MAX_HOME_ITEMS_LIMIT);
+    return parsed;
+  }
+
+  #shuffleItems(items = []) {
+    if (!Array.isArray(items) || items.length < 2) {
+      return Array.isArray(items) ? items : [];
+    }
+
+    const shuffled = [...items];
+
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+      const randomIndex = Math.floor(Math.random() * (index + 1));
+      [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+    }
+
+    return shuffled;
   }
 
   async #fetchItemsByBusinessType(businessType, limit) {
@@ -145,8 +159,8 @@ class HomeService {
 
       // Enrich with ratings in parallel
       const [groceryItemsWithRatings, restaurantItemsWithRatings] = await Promise.all([
-        this.#enrichItemsWithRatings(groceryItems),
-        this.#enrichItemsWithRatings(restaurantItems),
+        this.#enrichItemsWithRatings(this.#shuffleItems(groceryItems)),
+        this.#enrichItemsWithRatings(this.#shuffleItems(restaurantItems)),
       ]);
 
       const result = {

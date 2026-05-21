@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import ImageScroller from '../../components/common/ImageScroller';
+// Image scroller temporarily disabled for dashboard. Commented out to hide it from UI.
+// import ImageScroller from '../../components/common/ImageScroller';
 import ItemCard from '../../components/common/ItemCard';
 import ItemCardSkeleton, { ItemCardSkeletonGrid } from '../../components/common/ItemCardSkeleton';
 import OrderNotification from '../../components/common/OrderNotification';
@@ -164,8 +165,7 @@ const Home = () => {
   const [restaurantShops, setRestaurantShops] = useState(() => cachedHomeShops?.restaurant || []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeSection, setActiveSection] = useState(SECTION_CONFIG.grocery.key);
-  const [visibleCount, setVisibleCount] = useState(20);
+  const [activeSection, setActiveSection] = useState(SECTION_CONFIG.restaurant.key);
 
   const mergeShopPayload = (currentValue, nextValue) => {
     if (Array.isArray(nextValue) && nextValue.length > 0) {
@@ -179,22 +179,6 @@ const Home = () => {
     setGroceryShops((currentValue) => mergeShopPayload(currentValue, shopsData.grocery));
     setRestaurantShops((currentValue) => mergeShopPayload(currentValue, shopsData.restaurant));
   };
-
-  // Reset pagination when section or search changes
-  useEffect(() => {
-    setVisibleCount(20);
-  }, [activeSection, searchQuery]);
-
-  // Load more on scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 600) {
-        setVisibleCount(prev => prev + 20);
-      }
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // ── Global App Availability ───────────────────────────────────────────────
   // Polled every 30s by AppAvailabilityProvider at the app root.
@@ -281,7 +265,7 @@ const Home = () => {
           <p className="error-message">{error}</p>
         ) : itemCount > 0 ? (
           <div className="items-grid">
-            {safeItems.slice(0, visibleCount).map(item => {
+            {safeItems.map(item => {
               const stockLabel = typeof item.stock_quantity === 'number'
                 ? (item.stock_quantity > 0 ? `${item.stock_quantity} in stock` : 'Out of stock')
                 : undefined;
@@ -420,7 +404,8 @@ const Home = () => {
         </div>
       )}
       {/* ─────────────────────────────────────────────────────────────── */}
-      <ImageScroller />
+      {/* ImageScroller disabled: remove the comment below to re-enable */}
+      {/* <ImageScroller /> */}
       <OrderNotification />
       <div className="home-content">
         {!searchQuery && (

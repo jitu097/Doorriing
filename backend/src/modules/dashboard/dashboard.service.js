@@ -84,7 +84,7 @@ class DashboardService {
         const featuredPromise = (async () => {
           try {
             const homeModule = await import('../home/home.service.js');
-            const items = await homeModule.default.getHomeItems(limit);
+            const items = await homeModule.default.getHomeItems();
             return items || { grocery_items: [], restaurant_items: [] };
           } catch (err) {
             logger.warn('Home items fetch failed', { err: err.message });
@@ -116,8 +116,8 @@ class DashboardService {
           categories: (categories || []).map((c) => ({ id: c.id, name: c.name, image_url: c.image_url })),
           nearby_shops: (nearbyShops || []).slice(0, 12),
           featured_items: {
-            grocery: (featured.grocery_items || []).slice(0, 8),
-            restaurant: (featured.restaurant_items || []).slice(0, 8),
+            grocery: featured.grocery_items || [],
+            restaurant: featured.restaurant_items || [],
           },
           banners: [],
           recommendations: [],
