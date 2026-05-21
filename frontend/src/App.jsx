@@ -18,6 +18,13 @@ function App() {
   const [loading, setLoading] = useState(isMobile());
 
   useEffect(() => {
+    // Skip Firebase redirect check when running inside Android WebView shell
+    const isAndroidWrapper = typeof window !== 'undefined' && !!(window.AndroidAuth || window.Android);
+    if (isAndroidWrapper) {
+      console.log('[App] Skip Firebase redirect check in native environment');
+      return;
+    }
+
     const handleRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
@@ -62,7 +69,7 @@ function App() {
 
     // Wait for auth state to hydrate; ensure auth wont block long on first open
     auth.authStateReady().then(() => {
-      setTimeout(() => setLoading(false), 300);
+      setLoading(false);
     }).catch(() => {
       setLoading(false);
     });
@@ -80,16 +87,20 @@ function App() {
       document.body.style.overflow = '';
     };
   }, [loading]);
-  // Start lightweight background revalidation and predictive prefetch after first paint
+  // Start lightweight background revalidation and predictive prefetch after first paint.
+  // STEP 5: Deferred with setTimeout(0) to yield the JS thread to React's commit phase
+  // first, ensuring the first paint is not delayed by non-critical background work.
   useEffect(() => {
-    prefetchManager.startBackgroundRevalidate();
-    // collect banner images from restored persistent cache if any
-    try {
-      const restored = persistentCache.restoreKeys();
-      const banners = restored['dashboard:banners']?.data || [];
-      const images = Array.isArray(banners) ? banners.map(b => b.image).filter(Boolean) : [];
-      prefetchManager.startPredictivePrefetch({ images });
-    } catch (e) {}
+    const deferredTasks = setTimeout(() => {
+      prefetchManager.startBackgroundRevalidate();
+      // collect banner images from restored persistent cache if any
+      try {
+        const restored = persistentCache.restoreKeys();
+        const banners = restored['dashboard:banners']?.data || [];
+        const images = Array.isArray(banners) ? banners.map(b => b.image).filter(Boolean) : [];
+        prefetchManager.startPredictivePrefetch({ images });
+      } catch (e) {}
+    }, 0);
 
     // Persist selected caches on visibility change to save dashboard state for reopen
     const onHide = () => {
@@ -115,6 +126,7 @@ function App() {
     window.addEventListener('beforeunload', onHide);
 
     return () => {
+      clearTimeout(deferredTasks);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('beforeunload', onHide);
     };

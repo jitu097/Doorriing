@@ -1,12 +1,24 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { getNotifications, markAllAsRead, markAsRead } from '../services/notification.service';
+import { cancelAfterFrame, isPageVisible, runAfterFrame } from '../utils/scheduler';
 
 const NotificationContext = createContext(null);
+
+const getNotificationSignature = (items = []) => (
+  items.map((item) => `${item.id}:${item.is_read ? 1 : 0}:${item.updated_at || item.created_at || ''}`).join('|')
+);
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const notificationsRef = useRef(notifications);
+  const inFlightRef = useRef(null);
+  const scheduledFetchRef = useRef(null);
+
+  useEffect(() => {
+    notificationsRef.current = notifications;
+  }, [notifications]);
 
   const unreadCount = useMemo(
     () => notifications.filter((item) => !item.is_read).length,
@@ -14,18 +26,28 @@ export const NotificationProvider = ({ children }) => {
   );
 
   const fetchNotifications = useCallback(async (silent = false) => {
+    if (inFlightRef.current) {
+      return inFlightRef.current;
+    }
+
     if (!silent) setLoading(true);
     setError('');
 
-    try {
+    const request = (async () => {
       const result = await getNotifications();
       const newNotifications = result.notifications || [];
       setNotifications(prev => {
-        if (JSON.stringify(prev) === JSON.stringify(newNotifications)) {
+        if (getNotificationSignature(prev) === getNotificationSignature(newNotifications)) {
           return prev;
         }
         return newNotifications;
       });
+    })();
+
+    inFlightRef.current = request;
+
+    try {
+      await request;
     } catch (err) {
       // Log detailed error for debugging
       console.error('Notification fetch error:', {
@@ -48,9 +70,20 @@ export const NotificationProvider = ({ children }) => {
       // Don't crash the app - gracefully set empty notifications
       setNotifications([]);
     } finally {
+      inFlightRef.current = null;
       if (!silent) setLoading(false);
     }
   }, []);
+
+  const scheduleSilentFetch = useCallback(() => {
+    if (!isPageVisible()) return;
+    if (scheduledFetchRef.current) return;
+
+    scheduledFetchRef.current = runAfterFrame(() => {
+      scheduledFetchRef.current = null;
+      fetchNotifications(true);
+    });
+  }, [fetchNotifications]);
 
   const markNotificationAsRead = useCallback(async (id) => {
     setNotifications((prev) =>
@@ -69,7 +102,7 @@ export const NotificationProvider = ({ children }) => {
 
   const markAllNotificationsAsRead = useCallback(async () => {
     setNotifications((prev) => prev.map((item) => ({ ...item, is_read: true })));
-    const previousNotifications = notifications;
+    const previousNotifications = notificationsRef.current;
 
     try {
       await markAllAsRead();
@@ -77,38 +110,77 @@ export const NotificationProvider = ({ children }) => {
       setNotifications(previousNotifications);
       throw err;
     }
-  }, [notifications]);
+  }, []);
 
   useEffect(() => {
-    let interval;
+    let interval = null;
     let failureCount = 0;
     const maxConsecutiveFailures = 3;
 
-    const initFetch = async () => {
-      await fetchNotifications();
-      failureCount = 0; // Reset on success
-      
-      // Poll every 30 seconds (reduced from 15 to be less aggressive)
-      interval = window.setInterval(async () => {
-        try {
-          await fetchNotifications(true);
-        } catch (err) {
-          failureCount++;
-          console.warn(`Notification fetch failed (${failureCount}/${maxConsecutiveFailures})`, err.message);
-          
-          // Stop polling if we've failed too many times
-          if (failureCount >= maxConsecutiveFailures) {
-            clearInterval(interval);
-            setError('Notification service temporarily unavailable');
-          }
+    const performPoll = async () => {
+      try {
+        await fetchNotifications(true);
+        failureCount = 0; // Reset on success
+      } catch (err) {
+        failureCount++;
+        console.warn(`Notification fetch failed (${failureCount}/${maxConsecutiveFailures})`, err.message);
+        
+        // Stop polling if we've failed too many times
+        if (failureCount >= maxConsecutiveFailures) {
+          stopPolling();
+          setError('Notification service temporarily unavailable');
         }
-      }, 30000);
+      }
+    };
+
+    const startPolling = () => {
+      if (interval) return;
+      interval = window.setInterval(performPoll, 30000);
+    };
+
+    const stopPolling = () => {
+      if (interval) {
+        window.clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const initFetch = async () => {
+      try {
+        await fetchNotifications();
+        failureCount = 0;
+        if (document.visibilityState === 'visible') {
+          startPolling();
+        }
+      } catch (err) {
+        console.error('Initial notification fetch failed:', err);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[NotificationContext] Tab visible, immediate check and resume poll');
+        scheduleSilentFetch();
+        startPolling();
+      } else {
+        console.log('[NotificationContext] Tab hidden, stop poll');
+        stopPolling();
+      }
     };
 
     initFetch();
 
-    return () => window.clearInterval(interval);
-  }, [fetchNotifications]);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      stopPolling();
+      if (scheduledFetchRef.current) {
+        cancelAfterFrame(scheduledFetchRef.current);
+        scheduledFetchRef.current = null;
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [fetchNotifications, scheduleSilentFetch]);
 
   const value = useMemo(() => ({
     notifications,

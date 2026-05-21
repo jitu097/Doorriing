@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import Modal from '../common/Modal';
 import AddressForm from '../common/AddressForm';
 import { useAddress } from '../../context/AddressContext';
@@ -8,7 +8,7 @@ import { useAuth } from '../../hooks/useAuth';
 import './Navbar.css';
 
 const Navbar = ({ onCartClick }) => {
-  const searchPlaceholders = ['Search products...', 'Search by shop...', 'Find your favorite food...'];
+  const searchPlaceholders = useMemo(() => ['Search products...', 'Search by shop...', 'Find your favorite food...'], []);
   const navigate = useNavigate();
   const location = useLocation();
   const { getCartCount } = useCart();
@@ -56,30 +56,56 @@ const Navbar = ({ onCartClick }) => {
   }, [showAccount]);
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % searchPlaceholders.length);
-    }, 1800);
+    let intervalId = null;
 
-    return () => clearInterval(intervalId);
+    const startRotation = () => {
+      if (intervalId || document.visibilityState !== 'visible') return;
+      intervalId = setInterval(() => {
+        setPlaceholderIndex((prev) => (prev + 1) % searchPlaceholders.length);
+      }, 1800);
+    };
+
+    const stopRotation = () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        startRotation();
+      } else {
+        stopRotation();
+      }
+    };
+
+    startRotation();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      stopRotation();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [searchPlaceholders.length]);
 
   const cartCount = getCartCount();
 
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       await logout();
       navigate('/');
     } catch (error) {
       console.error('Error logging out:', error);
     }
-  };
+  }, [logout, navigate]);
 
-  const handleAccountClick = () => setShowAccount((v) => !v);
-  const handleLocationClick = () => navigate('/address');
-  const handleLocationClose = () => setShowLocation(false);
+  const handleAccountClick = useCallback(() => setShowAccount((v) => !v), []);
+  const handleLocationClick = useCallback(() => navigate('/address'), [navigate]);
+  const handleLocationClose = useCallback(() => setShowLocation(false), []);
 
-  const handleSearch = (e) => {
+  const handleSearch = useCallback((e) => {
     if (e.key === 'Enter' || e.type === 'click') {
       if (search.trim()) {
         setShowSearch(false);
@@ -98,7 +124,7 @@ const Navbar = ({ onCartClick }) => {
         navigate(`/home?search=${encodedSearch}`);
       }
     }
-  };
+  }, [location.pathname, navigate, search]);
 
   const handleNavAddressSubmit = async (e) => {
     e.preventDefault();
@@ -146,7 +172,7 @@ const Navbar = ({ onCartClick }) => {
             placeholder={searchPlaceholders[placeholderIndex]}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            onKeyPress={handleSearch}
+            onKeyDown={handleSearch}
           />
         </div>
 
@@ -171,7 +197,7 @@ const Navbar = ({ onCartClick }) => {
                   placeholder={searchPlaceholders[placeholderIndex]}
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  onKeyPress={handleSearch}
+                  onKeyDown={handleSearch}
                   autoFocus
                 />
                 <button

@@ -73,138 +73,57 @@ const formatShopRecord = (shop, extra = {}) => {
   };
 };
 
-const getInventorySummaryByShop = async (shopIds = []) => {
-  const sanitized = (shopIds || []).filter(Boolean);
-
-  if (sanitized.length === 0 || sanitized.length > STOCK_SUMMARY_LIMIT) {
-    if (sanitized.length > STOCK_SUMMARY_LIMIT) {
-      logger.warn('Skipping inventory summary aggregation due to large shop set', {
-        shopCount: sanitized.length,
-      });
-    }
-
-    return {
-      itemCountByShop: new Map(),
-      stockTotalByShop: new Map(),
-    };
-  }
-
-  const { data, error } = await supabase
-    .from('items')
-    .select('shop_id, stock_quantity')
-    .in('shop_id', sanitized)
-    .eq('is_active', true)
-    .eq('is_available', true);
-
-  if (error) {
-    logger.warn('Failed to fetch inventory summary for shops', { error: error.message });
-    return {
-      itemCountByShop: new Map(),
-      stockTotalByShop: new Map(),
-    };
-  }
-
-  const itemCountByShop = new Map();
-  const stockTotalByShop = new Map();
-
-  (data || []).forEach((item) => {
-    const shopId = item?.shop_id;
-    if (!shopId) {
-      return;
-    }
-
-    itemCountByShop.set(shopId, (itemCountByShop.get(shopId) || 0) + 1);
-
-    const numericQty = Number(item?.stock_quantity);
-    if (Number.isFinite(numericQty)) {
-      stockTotalByShop.set(shopId, (stockTotalByShop.get(shopId) || 0) + numericQty);
-    }
-  });
-
-  return { itemCountByShop, stockTotalByShop };
-};
-
-const getRatingSummaryByShop = async (shopIds = []) => {
-  const sanitized = (shopIds || []).filter(Boolean);
-
-  if (sanitized.length === 0 || sanitized.length > RATING_SUMMARY_LIMIT) {
-    if (sanitized.length > RATING_SUMMARY_LIMIT) {
-      logger.warn('Skipping rating summary aggregation due to large shop set', {
-        shopCount: sanitized.length,
-      });
-    }
-
-    return {
-      reviewCountByShop: new Map(),
-      avgRatingByShop: new Map(),
-    };
-  }
-
-  const { data, error } = await supabase
-    .from('reviews')
-    .select('shop_id, rating')
-    .in('shop_id', sanitized)
-    .not('rating', 'is', null);
-
-  if (error) {
-    logger.warn('Failed to fetch rating summary for shops', { error: error.message });
-    return {
-      reviewCountByShop: new Map(),
-      avgRatingByShop: new Map(),
-    };
-  }
-
-  const reviewCountByShop = new Map();
-  const ratingTotalByShop = new Map();
-
-  (data || []).forEach((review) => {
-    const shopId = review?.shop_id;
-    const numericRating = Number(review?.rating);
-
-    if (!shopId || !Number.isFinite(numericRating)) {
-      return;
-    }
-
-    reviewCountByShop.set(shopId, (reviewCountByShop.get(shopId) || 0) + 1);
-    ratingTotalByShop.set(shopId, (ratingTotalByShop.get(shopId) || 0) + numericRating);
-  });
-
-  const avgRatingByShop = new Map();
-
-  reviewCountByShop.forEach((count, shopId) => {
-    const total = ratingTotalByShop.get(shopId) || 0;
-    avgRatingByShop.set(shopId, count > 0 ? Number((total / count).toFixed(1)) : null);
-  });
-
-  return {
-    reviewCountByShop,
-    avgRatingByShop,
-  };
-};
-
 const enrichShopsForCards = async (shops = []) => {
   if (!Array.isArray(shops) || shops.length === 0) {
     return [];
   }
 
   const shopIds = shops.map((shop) => shop?.id).filter(Boolean);
-  
-  // Parallelize inventory summary and reviews rating summary to eliminate N+1 queries
-  const [inventoryResult, ratingResult] = await Promise.all([
-    getInventorySummaryByShop(shopIds),
-    getRatingSummaryByShop(shopIds)
+  if (shopIds.length === 0) {
+    return shops.map(shop => formatShopRecord(shop, {
+      item_count: shop?.item_count ?? null,
+      total_stock_quantity: shop?.total_stock_quantity ?? null,
+      average_rating: shop?.average_rating ?? null,
+      review_count: shop?.review_count ?? 0,
+    }));
+  }
+
+  // Parallelize database view queries to retrieve pre-aggregated summaries
+  const [inventoryRes, ratingRes] = await Promise.all([
+    supabase
+      .from('shop_inventory_summary')
+      .select('shop_id, item_count, total_stock_quantity')
+      .in('shop_id', shopIds),
+    supabase
+      .from('shop_reviews_summary')
+      .select('shop_id, average_rating, review_count')
+      .in('shop_id', shopIds)
   ]);
 
-  const { itemCountByShop, stockTotalByShop } = inventoryResult;
-  const { reviewCountByShop, avgRatingByShop } = ratingResult;
+  const inventoryMap = new Map();
+  if (inventoryRes.data) {
+    inventoryRes.data.forEach((row) => {
+      inventoryMap.set(row.shop_id, row);
+    });
+  }
+
+  const ratingMap = new Map();
+  if (ratingRes.data) {
+    ratingRes.data.forEach((row) => {
+      ratingMap.set(row.shop_id, row);
+    });
+  }
 
   return shops.map((shop) => {
     const shopId = shop?.id;
+    const inv = inventoryMap.get(shopId);
+    const rate = ratingMap.get(shopId);
+
     const extras = {
-      item_count: shop?.item_count ?? itemCountByShop.get(shopId) ?? null,
-      total_stock_quantity: shop?.total_stock_quantity ?? stockTotalByShop.get(shopId) ?? null,
-      average_rating: shop?.average_rating ?? avgRatingByShop.get(shopId) ?? null,
-      review_count: shop?.review_count ?? reviewCountByShop.get(shopId) ?? 0,
+      item_count: shop?.item_count ?? inv?.item_count ?? null,
+      total_stock_quantity: shop?.total_stock_quantity ?? inv?.total_stock_quantity ?? null,
+      average_rating: shop?.average_rating ?? (rate?.average_rating !== null ? Number(rate?.average_rating) : null),
+      review_count: shop?.review_count ?? rate?.review_count ?? 0,
     };
 
     return formatShopRecord(shop, extras);
@@ -302,10 +221,11 @@ class ShopService {
       }
       const [categoryCount, inventorySummary] = await Promise.all([
         includeCategories ? this.getActiveCategoryCount(shopId) : Promise.resolve(null),
-        includeInventory ? getInventorySummaryByShop([shopId]) : Promise.resolve({
-          itemCountByShop: new Map(),
-          stockTotalByShop: new Map(),
-        }),
+        includeInventory ? supabase
+          .from('shop_inventory_summary')
+          .select('item_count, total_stock_quantity')
+          .eq('shop_id', shopId)
+          .maybeSingle() : Promise.resolve({ data: null }),
       ]);
 
       const extras = {
@@ -313,8 +233,9 @@ class ShopService {
       };
 
       if (includeInventory) {
-        extras.item_count = data?.item_count ?? inventorySummary.itemCountByShop.get(shopId) ?? null;
-        extras.total_stock_quantity = data?.total_stock_quantity ?? inventorySummary.stockTotalByShop.get(shopId) ?? null;
+        const inv = inventorySummary?.data;
+        extras.item_count = data?.item_count ?? inv?.item_count ?? null;
+        extras.total_stock_quantity = data?.total_stock_quantity ?? inv?.total_stock_quantity ?? null;
       }
 
       const formattedShop = formatShopRecord(data, extras);
@@ -502,6 +423,13 @@ class ShopService {
    */
   async getShopsForHome(limit = 6) {
     try {
+      const cacheKey = `home:${limit}`;
+      const cached = cacheManager.get('shop', cacheKey);
+      if (cached) {
+        logger.debug('Returning cached home shops', { limit });
+        return cached;
+      }
+
       // Fetch grocery shops with specific columns
       const { data: groceryShops, error: groceryError } = await supabase
         .from('shops')
@@ -533,10 +461,15 @@ class ShopService {
         enrichShopsForCards(restaurantShops || []),
       ]);
 
-      return {
+      const result = {
         grocery: groceryFormatted,
         restaurant: restaurantFormatted,
       };
+
+      // Cache the result for 300 seconds (5 minutes)
+      cacheManager.set('shop', cacheKey, result, 300);
+
+      return result;
     } catch (error) {
       logger.error('Error in getShopsForHome', { error: error.message });
       throw error;

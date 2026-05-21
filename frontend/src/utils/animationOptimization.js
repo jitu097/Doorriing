@@ -174,19 +174,18 @@ export const observeAnimationTrigger = (element, callback) => {
  * Group DOM writes together to prevent layout thrashing
  */
 export const batchAnimations = async (animations) => {
-  // Read phase - gather information
-  const measurements = animations.map(anim => {
+  const measurements = await new Promise((resolve) => {
     requestAnimationFrame(() => {
-      const rect = anim.element?.getBoundingClientRect?.();
-      return { element: anim.element, ...rect };
+      resolve(animations.map((anim) => {
+        const rect = anim.element?.getBoundingClientRect?.();
+        return { element: anim.element, ...(rect || {}) };
+      }));
     });
   });
 
-  await new Promise(r => requestAnimationFrame(r));
-
   // Write phase - apply animations
-  measurements.forEach((measure, i) => {
-    requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    measurements.forEach((measure, i) => {
       animations[i].animate(measure);
     });
   });
@@ -207,7 +206,7 @@ export const getOptimizedAnimationConfig = () => {
   return {
     reduced: prefersReducedMotion(),
     lowPower: isLowPower,
-    slowConnection: connection === '4g' || connection === '3g',
+    slowConnection: connection === '3g' || connection === '2g' || connection === 'slow-2g',
     fps: isLowPower ? 30 : 60,
     duration: isLowPower ? 600 : 300,
     simplify: isLowPower || connection === '3g'
@@ -249,12 +248,16 @@ export const optimizeAnimationElements = () => {
   const animatedElements = document.querySelectorAll('[class*="animate"]');
   
   animatedElements.forEach(element => {
+    if (element.dataset.animationOptimized === 'true') {
+      return;
+    }
+    element.dataset.animationOptimized = 'true';
     enableGPUAcceleration(element);
     
     // Listen for animation end
     element.addEventListener('animationend', () => {
       disableGPUAcceleration(element);
-    });
+    }, { once: true });
   });
 };
 

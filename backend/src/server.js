@@ -9,8 +9,10 @@ import { WebSocketServer } from 'ws';
 
 const REQUESTED_PORT = Number(config.port) || 5000;
 const MAX_PORT_SEARCH = 20;
-const LOG_STREAM_ENABLED = process.env.LOG_STREAM_ENABLED === 'true';
+const LOG_STREAM_ENABLED = process.env.LOG_STREAM_ENABLED === 'true' && config.nodeEnv !== 'production';
 const LOG_STREAM_TOKEN = process.env.LOG_STREAM_TOKEN || '';
+const WS_MAX_BUFFERED_BYTES = 512 * 1024;
+const WS_HEARTBEAT_MS = 30_000;
 
 const formatConsoleArg = (arg) => {
   if (arg instanceof Error) {
@@ -32,6 +34,18 @@ const createLogBroadcaster = (wss) => {
   if (!wss) return null;
 
   const clients = new Set();
+  const heartbeat = setInterval(() => {
+    clients.forEach((socket) => {
+      if (socket.isAlive === false) {
+        clients.delete(socket);
+        socket.terminate();
+        return;
+      }
+      socket.isAlive = false;
+      socket.ping();
+    });
+  }, WS_HEARTBEAT_MS);
+  heartbeat.unref?.();
 
   wss.on('connection', (socket, req) => {
     if (LOG_STREAM_TOKEN) {
@@ -48,9 +62,18 @@ const createLogBroadcaster = (wss) => {
       }
     }
 
+    socket.isAlive = true;
     clients.add(socket);
+    socket.on('pong', () => {
+      socket.isAlive = true;
+    });
     socket.on('close', () => clients.delete(socket));
     socket.on('error', () => clients.delete(socket));
+  });
+
+  wss.on('close', () => {
+    clearInterval(heartbeat);
+    clients.clear();
   });
 
   return (payload) => {
@@ -66,7 +89,7 @@ const createLogBroadcaster = (wss) => {
     }
 
     clients.forEach((client) => {
-      if (client.readyState === 1) {
+      if (client.readyState === 1 && client.bufferedAmount < WS_MAX_BUFFERED_BYTES) {
         client.send(serialized);
       }
     });

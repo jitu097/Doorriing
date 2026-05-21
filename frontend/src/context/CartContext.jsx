@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cartService } from '../services/cart.service';
 import { getPlatformSettings } from '../services/platform.service';
@@ -17,8 +17,6 @@ const readCachedPlatformSettings = () => {
         return null;
     }
 };
-
-const CartContext = createContext();
 
 const normalizeIdValue = (value) => {
     if (value === undefined || value === null) return '';
@@ -61,6 +59,20 @@ const resolveApiItemId = (item, fallback = '') => {
     return candidates.find((candidate) => typeof candidate === 'string' && candidate.length > 0) || null;
 };
 
+const resolveItemVariant = (item) => {
+    const rawVariant = item?.portion || item?.variant || item?.portion_label || item?.selectedPortion || '';
+    const normalizedVariant = rawVariant.toString().trim().toLowerCase();
+
+    if (normalizedVariant === 'half') return 'Half';
+    if (normalizedVariant === 'full') return 'Full';
+
+    const idValue = normalizeIdValue(item?.id || item?.item_id || item?.clientItemId || item?.client_id);
+    if (idValue.endsWith('-half')) return 'Half';
+    if (idValue.endsWith('-full')) return 'Full';
+
+    return null;
+};
+
 const findCartItemByClientId = (items, targetId) => {
     const normalizedTarget = normalizeIdValue(targetId);
     if (!normalizedTarget) return null;
@@ -83,12 +95,106 @@ const calculateConvenienceFee = (settings) => {
     return Number.isFinite(fee) ? fee : 0;
 };
 
+export const CartContext = createContext();
+export const CartStateContext = createContext();
+export const CartActionsContext = createContext();
+export const CartSubscriptionContext = createContext();
+export const CartItemAccessorContext = createContext();
+
 export const useCart = () => {
     const context = useContext(CartContext);
     if (!context) {
         throw new Error('useCart must be used within CartProvider');
     }
     return context;
+};
+
+export const useCartState = () => {
+    const context = useContext(CartStateContext);
+    if (!context) {
+        throw new Error('useCartState must be used within CartProvider');
+    }
+    return context;
+};
+
+export const useCartActions = () => {
+    const context = useContext(CartActionsContext);
+    if (!context) {
+        throw new Error('useCartActions must be used within CartProvider');
+    }
+    return context;
+};
+
+export const useItemCartInfo = (clientItemId, hasVariants) => {
+    const subscribeToItem = useContext(CartSubscriptionContext);
+    const getCartItemRef = useContext(CartItemAccessorContext);
+
+    const [cartState, setCartState] = useState(() => {
+        const getCartItem = getCartItemRef;
+        if (hasVariants) {
+            return {
+                cartItem: getCartItem(clientItemId),
+                halfCartItem: getCartItem(`${clientItemId}-half`),
+                fullCartItem: getCartItem(`${clientItemId}-full`),
+            };
+        } else {
+            return {
+                cartItem: getCartItem(clientItemId),
+                halfCartItem: null,
+                fullCartItem: null,
+            };
+        }
+    });
+
+    useEffect(() => {
+        if (!subscribeToItem || !getCartItemRef) return;
+
+        const updateItem = () => {
+            const getCartItem = getCartItemRef;
+            if (hasVariants) {
+                const cartItem = getCartItem(clientItemId);
+                const halfCartItem = getCartItem(`${clientItemId}-half`);
+                const fullCartItem = getCartItem(`${clientItemId}-full`);
+
+                setCartState((prev) => {
+                    if (
+                        prev.cartItem?.quantity === cartItem?.quantity &&
+                        prev.halfCartItem?.quantity === halfCartItem?.quantity &&
+                        prev.fullCartItem?.quantity === fullCartItem?.quantity
+                    ) {
+                        return prev;
+                    }
+                    return { cartItem, halfCartItem, fullCartItem };
+                });
+            } else {
+                const cartItem = getCartItem(clientItemId);
+                setCartState((prev) => {
+                    if (prev.cartItem?.quantity === cartItem?.quantity) {
+                        return prev;
+                    }
+                    return { cartItem, halfCartItem: null, fullCartItem: null };
+                });
+            }
+        };
+
+        const unsubBase = subscribeToItem(clientItemId, updateItem);
+        let unsubHalf = null;
+        let unsubFull = null;
+        if (hasVariants) {
+            unsubHalf = subscribeToItem(`${clientItemId}-half`, updateItem);
+            unsubFull = subscribeToItem(`${clientItemId}-full`, updateItem);
+        }
+
+        updateItem();
+
+        return () => {
+            unsubBase();
+            if (unsubHalf) unsubHalf();
+            if (unsubFull) unsubFull();
+        };
+    }, [clientItemId, hasVariants, subscribeToItem, getCartItemRef]);
+
+    return cartState;
 };
 
 export const CartProvider = ({ children }) => {
@@ -103,11 +209,86 @@ export const CartProvider = ({ children }) => {
     const { user, loading: authLoading } = useAuth();
     const isAuthenticated = !!user;
 
-    // ── Global App Availability ───────────────────────────────────────────────
-    // Reads the polled availability state from AppAvailabilityContext.
-    // When isOpen is false, addToCart and increaseQty are blocked.
-    // isLoading is true only for the very first poll — after that we have a value.
     const { isOpen: appIsOpen, isLoading: appAvailabilityLoading, reason: appUnavailableReason } = useAppAvailability();
+
+    // ── Refs for stable callback actions ─────────────────────────────────────
+    const cartItemsRef = useRef(cartItems);
+    cartItemsRef.current = cartItems;
+
+    const cartMetaRef = useRef(cartMeta);
+    cartMetaRef.current = cartMeta;
+
+    const platformSettingsRef = useRef(platformSettings);
+    platformSettingsRef.current = platformSettings;
+
+    const platformSettingsLoadingRef = useRef(platformSettingsLoading);
+    platformSettingsLoadingRef.current = platformSettingsLoading;
+
+    const isAuthenticatedRef = useRef(isAuthenticated);
+    isAuthenticatedRef.current = isAuthenticated;
+
+    const authLoadingRef = useRef(authLoading);
+    authLoadingRef.current = authLoading;
+
+    const appIsOpenRef = useRef(appIsOpen);
+    appIsOpenRef.current = appIsOpen;
+
+    const appAvailabilityLoadingRef = useRef(appAvailabilityLoading);
+    appAvailabilityLoadingRef.current = appAvailabilityLoading;
+
+    const appUnavailableReasonRef = useRef(appUnavailableReason);
+    appUnavailableReasonRef.current = appUnavailableReason;
+
+    // ── Subscription Registry ────────────────────────────────────────────────
+    const listenersRef = useRef(new Map());
+
+    const subscribeToItem = useCallback((clientItemId, callback) => {
+        if (!listenersRef.current.has(clientItemId)) {
+            listenersRef.current.set(clientItemId, new Set());
+        }
+        listenersRef.current.get(clientItemId).add(callback);
+        return () => {
+            const set = listenersRef.current.get(clientItemId);
+            if (set) {
+                set.delete(callback);
+                if (set.size === 0) {
+                    listenersRef.current.delete(clientItemId);
+                }
+            }
+        };
+    }, []);
+
+    // ── Notify specific subscribers when cart items change ───────────────────
+    const prevCartItemsRef = useRef([]);
+    useEffect(() => {
+        const prevItems = prevCartItemsRef.current;
+        const currentItems = cartItems;
+
+        const changedIds = new Set();
+        const currentMap = new Map(currentItems.map(i => [deriveClientItemId(i), i.quantity]));
+        const prevMap = new Map(prevItems.map(i => [deriveClientItemId(i), i.quantity]));
+
+        for (const [id, qty] of currentMap.entries()) {
+            if (prevMap.get(id) !== qty) {
+                changedIds.add(id);
+            }
+        }
+
+        for (const id of prevMap.keys()) {
+            if (!currentMap.has(id)) {
+                changedIds.add(id);
+            }
+        }
+
+        changedIds.forEach(id => {
+            const callbacks = listenersRef.current.get(id);
+            if (callbacks) {
+                callbacks.forEach(cb => cb());
+            }
+        });
+
+        prevCartItemsRef.current = currentItems;
+    }, [cartItems]);
 
     const applyCartPayload = useCallback((cartPayload) => {
         const shopIdFromPayload = cartPayload?.shop_id ?? null;
@@ -158,7 +339,7 @@ export const CartProvider = ({ children }) => {
     }, []);
 
     const fetchCart = useCallback(async () => {
-        if (authLoading || !isAuthenticated) return;
+        if (authLoadingRef.current || !isAuthenticatedRef.current) return;
         try {
             setLoading(true);
             setError(null);
@@ -175,9 +356,8 @@ export const CartProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, [isAuthenticated, authLoading, applyCartPayload]);
+    }, [applyCartPayload]);
 
-    // Initial fetch when authenticated
     useEffect(() => {
         if (!authLoading) {
             if (isAuthenticated) {
@@ -210,7 +390,6 @@ export const CartProvider = ({ children }) => {
             } catch (err) {
                 console.error('Platform settings error:', err);
                 if (isMounted) {
-                    // Keep cached settings if available; avoid visual jumps.
                     if (!platformSettings) {
                         setPlatformSettings(null);
                     }
@@ -227,28 +406,20 @@ export const CartProvider = ({ children }) => {
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [platformSettings]);
 
-    // Add item to cart or increase quantity
-    const addToCart = async (item) => {
-        if (!isAuthenticated) {
-            // Redirect to login page when user tries to add to cart without authentication
+    const addToCart = useCallback(async (item) => {
+        if (!isAuthenticatedRef.current) {
             navigate('/login');
             return;
         }
 
-        // ── App Availability Guard ────────────────────────────────────────────
-        // Block add-to-cart when admin has turned off the global availability toggle
-        // or when we're outside the delivery time window.
-        // Exception: if availability is still loading (first poll), allow optimistically
-        // so the first-open UX isn't jarring. The DB trigger is the final safety net.
-        if (!appAvailabilityLoading && !appIsOpen) {
-            const reason = appUnavailableReason || 'We are currently unavailable for orders. Please try again later.';
+        if (!appAvailabilityLoadingRef.current && !appIsOpenRef.current) {
+            const reason = appUnavailableReasonRef.current || 'We are currently unavailable for orders. Please try again later.';
             const err = new Error(reason);
             err.code = 'APP_UNAVAILABLE';
             throw err;
         }
-        // ─────────────────────────────────────────────────────────────────────
 
         try {
             const payloadItemId = item.id ?? item.itemId ?? item.serverItemId;
@@ -258,28 +429,24 @@ export const CartProvider = ({ children }) => {
 
             const clientItemId = deriveClientItemId(item, payloadItemId);
 
-            // Check for shop conflicts locally first for quick UX
-            const hasItems = cartItems.length > 0;
+            const hasItems = cartItemsRef.current.length > 0;
             if (hasItems) {
-                const firstItem = cartItems[0];
+                const firstItem = cartItemsRef.current[0];
                 const isDifferentShopType = item.shopType && firstItem.shopType && item.shopType !== firstItem.shopType;
                 const isDifferentShop = item.shopId && firstItem.shopId && item.shopId !== firstItem.shopId;
 
                 if (isDifferentShopType || isDifferentShop) {
-                    // Automatically clear cart when adding items from a different shop
                     try {
                         await cartService.clearCart(firstItem.shopId);
-                        await fetchCart(); // Reset local state
+                        await fetchCart();
                     } catch (clearErr) {
                         console.error('Failed to clear cart for shop change:', clearErr);
-                        // Try to refresh local cart state and abort add if clearing fails
                         await fetchCart();
                         return;
                     }
                 }
             }
 
-            // Optimistically add item to local state so UI updates instantly
             setCartItems(prev => {
                 const exists = prev.find(i => deriveClientItemId(i) === clientItemId);
                 if (exists) {
@@ -297,7 +464,7 @@ export const CartProvider = ({ children }) => {
                     image_url: item.image_url ?? item.image ?? null,
                     quantity: 1,
                     shopId: item.shopId,
-                    cartItemId: `temp-${Date.now()}` // Temporary ID until fetched
+                    cartItemId: `temp-${Date.now()}`
                 }];
             });
             setCartMeta(prev => ({
@@ -305,11 +472,7 @@ export const CartProvider = ({ children }) => {
                 shopType: item.shopType || prev.shopType
             }));
 
-            // Only show loading if it's not an optimistic update (we want the UI to be fast, so we skip the global block)
-            // setLoading(true);
-
-            // API call; response already returns latest cart snapshot
-            const apiResponse = await cartService.addToCart(item.shopId, payloadItemId, 1);
+            const apiResponse = await cartService.addToCart(item.shopId, payloadItemId, 1, resolveItemVariant(item));
             if (apiResponse?.data) {
                 applyCartPayload(apiResponse.data);
             } else {
@@ -317,53 +480,45 @@ export const CartProvider = ({ children }) => {
             }
         } catch (err) {
             console.error('Error adding to cart:', err);
-            await fetchCart(); // Revert on failure
+            await fetchCart();
             alert(err.message || 'Failed to add item to cart');
-        } finally {
-            // setLoading(false);
         }
-    };
+    }, [navigate, fetchCart, applyCartPayload]);
 
-    // Remove item completely from cart
-    const removeFromCart = async (id) => {
+    const removeFromCart = useCallback(async (id) => {
         try {
-            const item = findCartItemByClientId(cartItems, id);
+            const item = findCartItemByClientId(cartItemsRef.current, id);
             if (!item) return;
 
-            // Optimistic update - UI updates instantly
             const targetClientId = deriveClientItemId(item);
-            const newItems = cartItems.filter((i) => deriveClientItemId(i) !== targetClientId);
+            const newItems = cartItemsRef.current.filter((i) => deriveClientItemId(i) !== targetClientId);
             setCartItems(newItems);
             if (newItems.length === 0) {
                 setCartMeta({ shopId: null, shopType: null });
             }
 
-            // If it's a real item in the DB, delete it
             if (item.cartItemId && !item.cartItemId.toString().startsWith('temp-')) {
                 await cartService.removeFromCart(item.cartItemId);
             }
         } catch (err) {
             console.error('Error removing from cart:', err);
-            await fetchCart(); // Revert on failure
+            await fetchCart();
         }
-    };
+    }, [fetchCart]);
 
-    // Increase quantity by 1
-    const increaseQty = async (id) => {
-        // Block quantity increase when app is unavailable
-        if (!appAvailabilityLoading && !appIsOpen) {
-            const reason = appUnavailableReason || 'We are currently unavailable for orders.';
+    const increaseQty = useCallback(async (id) => {
+        if (!appAvailabilityLoadingRef.current && !appIsOpenRef.current) {
+            const reason = appUnavailableReasonRef.current || 'We are currently unavailable for orders.';
             const err = new Error(reason);
             err.code = 'APP_UNAVAILABLE';
             throw err;
         }
         try {
-            const item = findCartItemByClientId(cartItems, id);
+            const item = findCartItemByClientId(cartItemsRef.current, id);
             if (!item) return;
 
             const newQty = item.quantity + 1;
 
-            // Optimistically update
             const targetClientId = deriveClientItemId(item);
             setCartItems((prev) => prev.map(i =>
                 deriveClientItemId(i) === targetClientId ? { ...i, quantity: newQty } : i
@@ -374,7 +529,7 @@ export const CartProvider = ({ children }) => {
             if (isTempId) {
                 const apiItemId = resolveApiItemId(item, targetClientId);
                 if (item.shopId && apiItemId) {
-                    await cartService.addToCart(item.shopId, apiItemId, 1);
+                    await cartService.addToCart(item.shopId, apiItemId, 1, resolveItemVariant(item));
                     await fetchCart();
                 } else {
                     await fetchCart();
@@ -385,14 +540,13 @@ export const CartProvider = ({ children }) => {
             await cartService.updateCartItem(item.cartItemId, newQty);
         } catch (err) {
             console.error('Error increasing quantity:', err);
-            await fetchCart(); // Revert on failure
+            await fetchCart();
         }
-    };
+    }, [fetchCart]);
 
-    // Decrease quantity by 1, remove if quantity becomes 0
-    const decreaseQty = async (id) => {
+    const decreaseQty = useCallback(async (id) => {
         try {
-            const item = findCartItemByClientId(cartItems, id);
+            const item = findCartItemByClientId(cartItemsRef.current, id);
             if (!item) return;
 
             if (item.quantity === 1) {
@@ -402,7 +556,6 @@ export const CartProvider = ({ children }) => {
 
             const newQty = item.quantity - 1;
 
-            // Optimistically update
             const targetClientId = deriveClientItemId(item);
             setCartItems((prev) => prev.map(i =>
                 deriveClientItemId(i) === targetClientId ? { ...i, quantity: newQty } : i
@@ -413,88 +566,75 @@ export const CartProvider = ({ children }) => {
             }
         } catch (err) {
             console.error('Error decreasing quantity:', err);
-            await fetchCart(); // Revert on failure
+            await fetchCart();
         }
-    };
+    }, [removeFromCart, fetchCart]);
 
-    // Clear entire cart
-    const clearCart = async () => {
+    const clearCart = useCallback(async () => {
         try {
-            if (!cartMeta.shopId) return;
+            if (!cartMetaRef.current.shopId) return;
             setLoading(true);
-            await cartService.clearCart(cartMeta.shopId);
+            await cartService.clearCart(cartMetaRef.current.shopId);
             setCartItems([]);
             setCartMeta({ shopId: null, shopType: null });
         } catch (err) {
             console.error('Error clearing cart:', err);
-            await fetchCart(); // Revert on failure
+            await fetchCart();
         } finally {
             setLoading(false);
         }
-    };
+    }, [fetchCart]);
 
-    // Get cart total price
-    const getCartTotal = () => {
-        return cartItems.reduce((total, item) => {
+    const getCartTotal = useCallback(() => {
+        return cartItemsRef.current.reduce((total, item) => {
             const price = parseFloat(item.price) || 0;
             return total + price * item.quantity;
         }, 0);
-    };
+    }, []);
 
-    const getDeliveryFee = (total = getCartTotal()) => {
-        if (platformSettingsLoading && !platformSettings) {
+    const getDeliveryFee = useCallback((total = getCartTotal()) => {
+        if (platformSettingsLoadingRef.current && !platformSettingsRef.current) {
             return null;
         }
-        return calculateDeliveryFee(total, platformSettings?.delivery_rules);
-    };
+        return calculateDeliveryFee(total, platformSettingsRef.current?.delivery_rules);
+    }, [getCartTotal]);
 
-    const getConvenienceFee = () => {
-        if (platformSettingsLoading && !platformSettings) {
+    const getConvenienceFee = useCallback(() => {
+        if (platformSettingsLoadingRef.current && !platformSettingsRef.current) {
             return null;
         }
-        return calculateConvenienceFee(platformSettings);
-    };
+        return calculateConvenienceFee(platformSettingsRef.current);
+    }, []);
 
     const subtotal = getCartTotal();
     const deliveryFee = getDeliveryFee(subtotal);
     const convenienceFee = getConvenienceFee();
 
-    // Get total item count (sum of all quantities)
-    const getCartCount = () => {
-        return cartItems.reduce((count, item) => count + item.quantity, 0);
-    };
+    const getCartCount = useCallback(() => {
+        return cartItemsRef.current.reduce((count, item) => count + item.quantity, 0);
+    }, []);
 
-    // Check if item is in cart
-    const isInCart = (id) => {
-        return Boolean(findCartItemByClientId(cartItems, id));
-    };
+    const isInCart = useCallback((id) => {
+        return Boolean(findCartItemByClientId(cartItemsRef.current, id));
+    }, []);
 
-    // Get item from cart by id
-    const getCartItem = (id) => {
-        return findCartItemByClientId(cartItems, id);
-    };
+    const getCartItem = useCallback((id) => {
+        return findCartItemByClientId(cartItemsRef.current, id);
+    }, []);
 
-    const value = useMemo(() => ({
+    const getCartItemRef = useCallback((id) => {
+        return findCartItemByClientId(cartItemsRef.current, id);
+    }, []);
+
+    const stateValue = useMemo(() => ({
         cartItems,
         cartMeta,
         loading,
         error,
         platformSettings,
         platformSettingsLoading,
-        calculateDeliveryFee,
-        addToCart,
-        removeFromCart,
-        increaseQty,
-        decreaseQty,
-        clearCart,
-        getCartTotal,
-        getDeliveryFee,
-        getConvenienceFee,
         deliveryFee,
         convenienceFee,
-        getCartCount,
-        isInCart,
-        getCartItem,
         appIsOpen,
         appAvailabilityLoading,
         appUnavailableReason,
@@ -509,10 +649,52 @@ export const CartProvider = ({ children }) => {
         convenienceFee,
         appIsOpen,
         appAvailabilityLoading,
-        appUnavailableReason
-        // AddToCart and other functions shouldn't change often but ideally should be useCallback'd.
-        // We omit them from dependencies to avoid triggering renders if they aren't memoized properly.
+        appUnavailableReason,
     ]);
 
-    return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+    const actionsValue = useMemo(() => ({
+        calculateDeliveryFee,
+        addToCart,
+        removeFromCart,
+        increaseQty,
+        decreaseQty,
+        clearCart,
+        getCartTotal,
+        getDeliveryFee,
+        getConvenienceFee,
+        getCartCount,
+        isInCart,
+        getCartItem,
+    }), [
+        addToCart,
+        removeFromCart,
+        increaseQty,
+        decreaseQty,
+        clearCart,
+        getCartTotal,
+        getDeliveryFee,
+        getConvenienceFee,
+        getCartCount,
+        isInCart,
+        getCartItem,
+    ]);
+
+    const unifiedValue = useMemo(() => ({
+        ...stateValue,
+        ...actionsValue,
+    }), [stateValue, actionsValue]);
+
+    return (
+        <CartStateContext.Provider value={stateValue}>
+            <CartActionsContext.Provider value={actionsValue}>
+                <CartSubscriptionContext.Provider value={subscribeToItem}>
+                    <CartItemAccessorContext.Provider value={getCartItemRef}>
+                        <CartContext.Provider value={unifiedValue}>
+                            {children}
+                        </CartContext.Provider>
+                    </CartItemAccessorContext.Provider>
+                </CartSubscriptionContext.Provider>
+            </CartActionsContext.Provider>
+        </CartStateContext.Provider>
+    );
 };

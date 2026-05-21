@@ -2,6 +2,14 @@ import cartService from './cart.service.js';
 import { sendSuccess, sendError } from '../../utils/response.js';
 import { logger } from '../../utils/logger.js';
 
+const normalizeVariant = (value) => {
+  if (!value) return null;
+  const normalized = String(value).trim().toLowerCase();
+  if (normalized === 'half') return 'Half';
+  if (normalized === 'full') return 'Full';
+  return null;
+};
+
 class CartController {
   /**
    * Get customer's cart
@@ -53,14 +61,14 @@ class CartController {
 
       // Parse variant from item_id if frontend sent format like uuid-half
       let baseItemId = item_id;
-      let variant = null;
+      let variant = normalizeVariant(req.body.variant);
       if (typeof item_id === 'string') {
         if (item_id.endsWith('-half')) {
           baseItemId = item_id.slice(0, -5);
-          variant = 'Half';
+          variant = variant || 'Half';
         } else if (item_id.endsWith('-full')) {
           baseItemId = item_id.slice(0, -5);
-          variant = 'Full';
+          variant = variant || 'Full';
         }
       }
 

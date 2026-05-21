@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api } from './apiV2';
 
 export const getCategoriesByShop = async (shopId) => {
   if (!shopId) {

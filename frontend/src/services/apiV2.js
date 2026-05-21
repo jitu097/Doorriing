@@ -107,11 +107,41 @@ const retryWithBackoff = async (
  * - Accept compression
  * - Firebase auth
  */
-const buildRequestHeaders = async (customHeaders = {}) => {
+const isPublicGetRoute = (path, method) => {
+	if (method !== 'GET') return false;
+	const cleanPath = path.split('?')[0].replace(/^\/|\/$/g, '');
+	const publicPrefixes = [
+		'shops/home',
+		'shops/browse',
+		'home/items',
+		'items/shop',
+		'items/category',
+		'items/subcategory',
+		'categories',
+		'banners'
+	];
+	if (publicPrefixes.some(prefix => cleanPath.startsWith(prefix))) {
+		return true;
+	}
+	if (/^items\/[^/]+$/.test(cleanPath) || /^shops\/[^/]+$/.test(cleanPath)) {
+		return true;
+	}
+	return false;
+};
+
+/**
+ * 5.5 - Build optimized request headers
+ * - Smart caching directives
+ * - Accept compression
+ * - Firebase auth
+ */
+const buildRequestHeaders = async (customHeaders = {}, path = '', method = 'GET') => {
 	// Auto attach firebase token securely
 	let authHeaders = {};
 	try {
-		await auth.authStateReady();
+		if (!isPublicGetRoute(path, method)) {
+			await auth.authStateReady();
+		}
 		const currentUser = auth?.currentUser;
 		if (currentUser) {
 			const token = await currentUser.getIdToken(false);
@@ -179,7 +209,7 @@ const apiRequest = async (
 	const fetchFn = async () => {
 		const requestInit = {
 			method,
-			headers: await buildRequestHeaders(headers),
+			headers: await buildRequestHeaders(headers, path, method),
 		};
 
 		if (body !== undefined && body !== null) {
@@ -236,7 +266,7 @@ const performBackgroundRefetch = async (path, { params, headers, cacheKey, cache
 		const url = buildUrl(path, params);
 		const requestInit = {
 			method: 'GET',
-			headers: await buildRequestHeaders(headers),
+			headers: await buildRequestHeaders(headers, path, 'GET'),
 		};
 
 		const response = await fetch(url, requestInit);

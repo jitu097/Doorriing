@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './shopcard.css';
+import { prefetchShop } from '../../utils/prefetchManager';
 import {
   resolveShopImage,
   getShopCategoryCount,
@@ -8,6 +9,8 @@ import {
   formatCount,
   getShopStatusMeta,
 } from '../../utils/shopPresentation';
+
+const STARS_ARRAY = [0, 1, 2, 3, 4];
 
 const optimizeCloudinaryUrl = (url, width = 300) => {
   if (!url || typeof url !== 'string') return url;
@@ -21,18 +24,68 @@ const ShopCard = ({ shop, routePrefix = 'grocery' }) => {
   const safeShop = shop || {};
   const title = safeShop.name || 'Shop';
   const image = resolveShopImage(safeShop);
-  const optimizedImage = React.useMemo(() => optimizeCloudinaryUrl(image, 300), [image]);
+  const optimizedImage = useMemo(() => optimizeCloudinaryUrl(image, 300), [image]);
   const city = safeShop.city;
-  const categoryCount = getShopCategoryCount(safeShop);
-  const ratingSummary = getShopRatingSummary(safeShop);
-  const roundedStars = ratingSummary.hasRating ? Math.round(ratingSummary.average) : 0;
-  const statusMeta = getShopStatusMeta(safeShop);
-  const isClosed = statusMeta.isClosed;
   const initials = title ? title.charAt(0).toUpperCase() : '?';
-  const description = safeShop.description || (categoryCount ? `${categoryCount} categories available` : null);
-  const showMeta = categoryCount !== null || ratingSummary.hasRating;
 
-  const handleClick = () => {
+  // ── Memoized presentation utility calls ──────────────────────────────────
+  const shopMeta = useMemo(() => {
+    const categoryCount = getShopCategoryCount(safeShop);
+    const ratingSummary = getShopRatingSummary(safeShop);
+    const roundedStars = ratingSummary.hasRating ? Math.round(ratingSummary.average) : 0;
+    const statusMeta = getShopStatusMeta(safeShop);
+    const description = safeShop.description || (categoryCount ? `${categoryCount} categories available` : null);
+    const showMeta = categoryCount !== null || ratingSummary.hasRating;
+
+    return {
+      categoryCount,
+      ratingSummary,
+      roundedStars,
+      statusMeta,
+      description,
+      showMeta,
+    };
+  }, [safeShop]);
+
+  const {
+    categoryCount,
+    ratingSummary,
+    roundedStars,
+    statusMeta,
+    description,
+    showMeta,
+  } = shopMeta;
+
+  const isClosed = statusMeta.isClosed;
+
+  const prefetchTimeoutRef = useRef(null);
+
+  const triggerPrefetch = useCallback(() => {
+    if (isClosed || !safeShop.id) return;
+    if (prefetchTimeoutRef.current) {
+      clearTimeout(prefetchTimeoutRef.current);
+    }
+    prefetchTimeoutRef.current = setTimeout(() => {
+      prefetchShop(safeShop.id);
+    }, 100);
+  }, [isClosed, safeShop.id]);
+
+  const cancelPrefetch = useCallback(() => {
+    if (prefetchTimeoutRef.current) {
+      clearTimeout(prefetchTimeoutRef.current);
+      prefetchTimeoutRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (prefetchTimeoutRef.current) {
+        clearTimeout(prefetchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleClick = useCallback(() => {
     if (isClosed) {
       return;
     }
@@ -40,9 +93,9 @@ const ShopCard = ({ shop, routePrefix = 'grocery' }) => {
     if (safeShop.id) {
       navigate(`/${routePrefix}/shop/${safeShop.id}`);
     }
-  };
+  }, [isClosed, safeShop.id, routePrefix, navigate]);
 
-  const handleKeyDown = (event) => {
+  const handleKeyDown = useCallback((event) => {
     if (isClosed) {
       return;
     }
@@ -51,20 +104,23 @@ const ShopCard = ({ shop, routePrefix = 'grocery' }) => {
       event.preventDefault();
       handleClick();
     }
-  };
+  }, [isClosed, handleClick]);
 
   return (
     <div
       className={`shop-card${isClosed ? ' card-disabled' : ''}`}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
+      onMouseEnter={triggerPrefetch}
+      onMouseLeave={cancelPrefetch}
+      onTouchStart={triggerPrefetch}
       role="button"
       tabIndex={isClosed ? -1 : 0}
       aria-disabled={isClosed}
     >
-      <div className="shop-card-image">
+      <div className="shop-card-image" style={{ aspectRatio: '16/10', height: 'auto', overflow: 'hidden' }}>
         {optimizedImage ? (
-          <img src={optimizedImage} alt={title} loading="lazy" decoding="async" />
+          <img src={optimizedImage} alt={title} loading="lazy" decoding="async" fetchPriority="low" draggable="false" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <div className="shop-card-placeholder">{initials}</div>
         )}
@@ -82,7 +138,7 @@ const ShopCard = ({ shop, routePrefix = 'grocery' }) => {
             {ratingSummary.hasRating && (
               <span className="card-meta-pill card-meta-pill-rating" aria-label={`Rated ${ratingSummary.average} out of 5 from ${ratingSummary.count} reviews`}>
                 <span className="rating-stars" aria-hidden="true">
-                  {Array.from({ length: 5 }).map((_, index) => (
+                  {STARS_ARRAY.map((index) => (
                     <span
                       key={index}
                       className={`rating-star-icon ${index < roundedStars ? 'filled' : 'empty'}`}
@@ -107,5 +163,4 @@ const ShopCard = ({ shop, routePrefix = 'grocery' }) => {
   );
 };
 
-// Wrap with React.memo to prevent unnecessary re-renders
 export default React.memo(ShopCard);

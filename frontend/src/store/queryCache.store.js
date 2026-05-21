@@ -6,6 +6,7 @@ import { create } from 'zustand';
  * - Cache stores API responses with timestamps
  * - TTL automatically invalidates stale data
  * - Tracks cache hits/misses for analytics
+ * - STEP 5: Automatic periodic eviction prevents unbounded memory growth
  */
 export const useQueryCache = create((set, get) => ({
   // Cache store: { cacheKey: { data, timestamp, ttl } }
@@ -153,6 +154,66 @@ export const useQueryCache = create((set, get) => ({
   resetStats: () => {
     set({ stats: { hits: 0, misses: 0, sets: 0 } });
   },
+
+  /**
+   * STEP 5 — Long-session memory optimization
+   * Evict all cache entries that have exceeded their TTL.
+   * Called automatically by the eviction sweep interval.
+   */
+  evictExpired: () => {
+    const now = Date.now();
+    const currentCache = get().cache;
+    let changed = false;
+
+    // Build a new Map only if there are entries to remove
+    const newCache = new Map(currentCache);
+    for (const [key, entry] of newCache) {
+      if (now - entry.timestamp > entry.ttl) {
+        newCache.delete(key);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      set({ cache: newCache });
+      console.debug('[queryCache] Eviction sweep removed expired entries');
+    }
+  },
 }));
+
+// ── STEP 5: Automatic visibility-aware eviction sweep ────────────────────────
+// Runs every 5 minutes, but ONLY while the page is visible to avoid waking
+// up the CPU while the app is backgrounded (battery/thermal optimization).
+const EVICTION_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+let _evictionIntervalId = null;
+
+function _startEvictionSweep() {
+  if (_evictionIntervalId) return;
+  _evictionIntervalId = setInterval(() => {
+    useQueryCache.getState().evictExpired();
+  }, EVICTION_INTERVAL_MS);
+}
+
+function _stopEvictionSweep() {
+  if (_evictionIntervalId) {
+    clearInterval(_evictionIntervalId);
+    _evictionIntervalId = null;
+  }
+}
+
+// Only start the sweep if the document is available (not in SSR)
+if (typeof document !== 'undefined') {
+  if (document.visibilityState === 'visible') {
+    _startEvictionSweep();
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      _startEvictionSweep();
+    } else {
+      _stopEvictionSweep();
+    }
+  });
+}
 
 export default useQueryCache;

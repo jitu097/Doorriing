@@ -8,6 +8,14 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
   position: relative;
+  touch-action: manipulation;
+}
+
+@supports (content-visibility: auto) {
+  .shop-card {
+    content-visibility: auto;
+    contain-intrinsic-size: 260px 320px;
+  }
 }
 
 .shop-card:hover {
@@ -38,6 +46,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transform: translateZ(0);
 }
 
 .shop-card .card-status {

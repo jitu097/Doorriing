@@ -18,8 +18,8 @@ export const cartService = {
      * @param {string} itemId 
      * @param {number} quantity 
      */
-    addToCart: async (shopId, itemId, quantity = 1) => {
-        return api.post('/cart/items', { shop_id: shopId, item_id: itemId, quantity });
+    addToCart: async (shopId, itemId, quantity = 1, variant = null) => {
+        return api.post('/cart/items', { shop_id: shopId, item_id: itemId, quantity, variant });
     },
 
     /**

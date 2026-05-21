@@ -1,7 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { useCart } from '../../context/CartContext';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useCartActions, useItemCartInfo } from '../../context/CartContext';
 import { useAppAvailability } from '../../context/AppAvailabilityContext';
 import './ItemCard.css';
+
+const STARS_ARRAY = [0, 1, 2, 3, 4];
 
 const optimizeCloudinaryUrl = (url, width = 400) => {
   if (!url || typeof url !== 'string') return url;
@@ -20,19 +22,15 @@ const formatPrice = (price) => {
     return price;
   }
 
-  // Show as integer if no decimals, else show up to 2 decimals (removes .00)
   return numericPrice % 1 === 0 ? numericPrice.toString() : numericPrice.toFixed(2).replace(/\.00$/, '');
 };
 
-// Returns `computed` only when it's a real, positive price.
-// If computed is 0 or negative and original is clearly non-zero we skip it —
-// a ₹0 final price almost always means a stale/wrong discount in the DB.
 const resolvePrice = (computed, original) => {
   const c = Number(computed);
   const o = Number(original);
-  if (!Number.isNaN(c) && c > 0) return c;      // valid positive price
-  if (!Number.isNaN(o) && o > 0) return o;      // fall back to original
-  if (!Number.isNaN(c) && computed != null) return c; // 0 is ok when original is also 0
+  if (!Number.isNaN(c) && c > 0) return c;
+  if (!Number.isNaN(o) && o > 0) return o;
+  if (!Number.isNaN(c) && computed != null) return c;
   return null;
 };
 
@@ -85,98 +83,210 @@ const ItemCard = ({
   averageRating,
   reviewCount,
 }) => {
-  const { addToCart, getCartItem, increaseQty, decreaseQty } = useCart();
+  const { addToCart, increaseQty, decreaseQty } = useCartActions();
   const { isOpen: appIsOpen, isLoading: appAvailabilityLoading } = useAppAvailability();
   const [showVariants, setShowVariants] = useState(false);
   const [availabilityToast, setAvailabilityToast] = useState(null);
   const isRestaurantCard = shopType === 'restaurant';
 
-  // App is closed = not open AND not still loading (fail-open during first poll)
   const appClosed = !appAvailabilityLoading && !appIsOpen;
-  // Combined disabled: item not in stock OR app is closed
   const orderingDisabled = !isAvailable || appClosed;
 
-  const normalizedFoodType = isRestaurantCard
-    ? (foodType || '').toLowerCase().replace(/\s+/g, '').replace(/-/g, '')
-    : null;
-  const derivedIsVeg = normalizedFoodType
-    ? normalizedFoodType !== 'nonveg'
-    : (typeof isVeg === 'boolean' ? isVeg : true);
-  const foodIndicatorSymbol = isRestaurantCard ? (derivedIsVeg ? '🟢' : '🔴') : null;
+  // ── Memoized calculations for pricing, food types, and IDs ───────────────
+  const memoizedDetails = useMemo(() => {
+    const normalizedFoodType = isRestaurantCard
+      ? (foodType || '').toLowerCase().replace(/\s+/g, '').replace(/-/g, '')
+      : null;
+    const derivedIsVeg = normalizedFoodType
+      ? normalizedFoodType !== 'nonveg'
+      : (typeof isVeg === 'boolean' ? isVeg : true);
+    const foodIndicatorSymbol = isRestaurantCard ? (derivedIsVeg ? '🟢' : '🔴') : null;
+
+    const baseOriginalPrice = originalPrice ?? fullPortionPrice ?? price;
+    const rawFinalPrice = price ?? fullPortionFinalPrice ?? fullPortionPrice ?? baseOriginalPrice;
+    const baseFinalPrice = resolvePrice(rawFinalPrice, baseOriginalPrice);
+
+    const halfOriginalPriceValue = halfPortionPrice ?? null;
+    const halfFinalPriceValue = halfPortionFinalPrice != null
+      ? resolvePrice(halfPortionFinalPrice, halfPortionPrice)
+      : (halfPortionPrice != null ? Number(halfPortionPrice) : null);
+
+    const fullOriginalPriceValue = fullPortionPrice ?? baseOriginalPrice;
+    const rawFullFinal = fullPortionFinalPrice ?? fullPortionPrice ?? baseFinalPrice;
+    const fullFinalPriceValue = resolvePrice(rawFullFinal, fullOriginalPriceValue);
+
+    const hasHalfVariant = halfFinalPriceValue !== null && halfFinalPriceValue !== undefined;
+    const priceValue = hasHalfVariant ? fullFinalPriceValue : baseFinalPrice;
+    const formattedPrice = formatPrice(priceValue);
+    const formattedOriginalPrice = formatPrice(hasHalfVariant ? fullOriginalPriceValue : baseOriginalPrice);
+    const formattedHalfVariantPrice = hasHalfVariant ? formatPrice(halfFinalPriceValue) : null;
+    const formattedHalfVariantOriginalPrice = hasHalfVariant ? formatPrice(halfOriginalPriceValue) : null;
+    const formattedFullVariantPrice = formatPrice(fullFinalPriceValue);
+    const formattedFullVariantOriginalPrice = formatPrice(fullOriginalPriceValue);
+    const showVariantPricing = Boolean(hasHalfVariant && formattedHalfVariantPrice);
+
+    const variantOptions = showVariantPricing
+      ? [
+        {
+          key: 'full',
+          label: 'Full',
+          formattedPrice: formattedFullVariantPrice,
+          formattedOriginalPrice: formattedFullVariantOriginalPrice,
+          priceValue: fullFinalPriceValue,
+          originalValue: fullOriginalPriceValue,
+          hasDiscount: hasDiscount(fullOriginalPriceValue, fullFinalPriceValue),
+        },
+        {
+          key: 'half',
+          label: 'Half',
+          formattedPrice: formattedHalfVariantPrice,
+          formattedOriginalPrice: formattedHalfVariantOriginalPrice,
+          priceValue: halfFinalPriceValue,
+          originalValue: halfOriginalPriceValue,
+          hasDiscount: hasDiscount(halfOriginalPriceValue, halfFinalPriceValue),
+        },
+      ]
+      : null;
+
+    const fallbackId = getFallbackId(id, name, priceValue ?? price);
+    const serverItemId = id ?? fallbackId;
+    const clientItemId = serverItemId;
+
+    const secondaryText = subtitle || description;
+    const showFoodIndicator = Boolean(foodIndicatorSymbol);
+    const legacyVegIndicator = !isRestaurantCard && typeof isVeg === 'boolean';
+
+    return {
+      derivedIsVeg,
+      foodIndicatorSymbol,
+      hasHalfVariant,
+      priceValue,
+      formattedPrice,
+      formattedOriginalPrice,
+      formattedHalfVariantPrice,
+      showVariantPricing,
+      variantOptions,
+      serverItemId,
+      clientItemId,
+      secondaryText,
+      showFoodIndicator,
+      legacyVegIndicator,
+    };
+  }, [
+    isRestaurantCard,
+    foodType,
+    isVeg,
+    originalPrice,
+    fullPortionPrice,
+    price,
+    halfPortionPrice,
+    halfPortionFinalPrice,
+    fullPortionFinalPrice,
+    id,
+    name,
+    subtitle,
+    description,
+  ]);
+
+  const {
+    derivedIsVeg,
+    foodIndicatorSymbol,
+    hasHalfVariant,
+    priceValue,
+    formattedPrice,
+    formattedOriginalPrice,
+    formattedHalfVariantPrice,
+    showVariantPricing,
+    variantOptions,
+    serverItemId,
+    clientItemId,
+    secondaryText,
+    showFoodIndicator,
+    legacyVegIndicator,
+  } = memoizedDetails;
+
+  // ── Memoized Rating and Stock metadata ───────────────────────────────────
+  const ratingAndStockMeta = useMemo(() => {
+    const hasStockLabel = typeof stockQuantityLabel === 'string' && stockQuantityLabel.trim().length > 0;
+    const stockDisplayLabel = hasStockLabel ? stockQuantityLabel.trim() : null;
+    const stockLabelClass = hasStockLabel && typeof stockQuantityValue === 'number' && stockQuantityValue <= 5
+      ? 'item-card-quantity low'
+      : 'item-card-quantity';
+    const numericAverageRating = Number(averageRating);
+    const numericReviewCount = Number(reviewCount);
+    const hasRating = Number.isFinite(numericAverageRating) && numericAverageRating > 0 && Number.isFinite(numericReviewCount) && numericReviewCount > 0;
+    const roundedRatingStars = hasRating ? Math.round(numericAverageRating) : 0;
+
+    return {
+      hasStockLabel,
+      stockDisplayLabel,
+      stockLabelClass,
+      numericAverageRating,
+      numericReviewCount,
+      hasRating,
+      roundedRatingStars,
+    };
+  }, [stockQuantityLabel, stockQuantityValue, averageRating, reviewCount]);
+
+  const {
+    hasStockLabel,
+    stockDisplayLabel,
+    stockLabelClass,
+    numericAverageRating,
+    numericReviewCount,
+    hasRating,
+    roundedRatingStars,
+  } = ratingAndStockMeta;
+
+  // ── isolated Cart Subscriptions ─────────────────────────────────────────
+  const { cartItem, halfCartItem, fullCartItem } = useItemCartInfo(clientItemId, hasHalfVariant);
+  
+  // For variant items (half/full), isInCart must be true when ANY variant is in the cart.
+  const isInCart = hasHalfVariant
+    ? Boolean(halfCartItem || fullCartItem)
+    : Boolean(cartItem);
 
   const optimizedImage = useMemo(() => optimizeCloudinaryUrl(image, 400), [image]);
 
-  const baseOriginalPrice = originalPrice ?? fullPortionPrice ?? price;
+  // Keep variant panel expanded when items exist in cart, and collapse when both go to 0.
+  // Also auto-expand on mount if cart was restored with variant items.
+  useEffect(() => {
+    if (!hasHalfVariant) return;
+    const halfQty = halfCartItem?.quantity || 0;
+    const fullQty = fullCartItem?.quantity || 0;
+    const anyInCart = halfQty > 0 || fullQty > 0;
 
-  // Use resolvePrice so a stale full_final_price=0 or computed-to-0 discount
-  // never overrides a valid original price.
-  const rawFinalPrice = price ?? fullPortionFinalPrice ?? fullPortionPrice ?? baseOriginalPrice;
-  const baseFinalPrice = resolvePrice(rawFinalPrice, baseOriginalPrice);
+    if (anyInCart && !showVariants) {
+      setShowVariants(true);
+    } else if (!anyInCart && showVariants) {
+      setShowVariants(false);
+    }
+  }, [hasHalfVariant, halfCartItem, fullCartItem, showVariants]);
 
-  const halfOriginalPriceValue = halfPortionPrice ?? null;
-  const halfFinalPriceValue = halfPortionFinalPrice != null
-    ? resolvePrice(halfPortionFinalPrice, halfPortionPrice)
-    : (halfPortionPrice != null ? Number(halfPortionPrice) : null);
+  // ── Safe Toast timer handling ──────────────────────────────────────────
+  const toastTimeoutRef = useRef(null);
 
-  const fullOriginalPriceValue = fullPortionPrice ?? baseOriginalPrice;
-  const rawFullFinal = fullPortionFinalPrice ?? fullPortionPrice ?? baseFinalPrice;
-  const fullFinalPriceValue = resolvePrice(rawFullFinal, fullOriginalPriceValue);
-
-  const hasHalfVariant = halfFinalPriceValue !== null && halfFinalPriceValue !== undefined;
-  const priceValue = hasHalfVariant ? fullFinalPriceValue : baseFinalPrice;
-  const formattedPrice = formatPrice(priceValue);
-  const formattedOriginalPrice = formatPrice(hasHalfVariant ? fullOriginalPriceValue : baseOriginalPrice);
-  const formattedHalfVariantPrice = hasHalfVariant ? formatPrice(halfFinalPriceValue) : null;
-  const formattedHalfVariantOriginalPrice = hasHalfVariant ? formatPrice(halfOriginalPriceValue) : null;
-  const formattedFullVariantPrice = formatPrice(fullFinalPriceValue);
-  const formattedFullVariantOriginalPrice = formatPrice(fullOriginalPriceValue);
-  const showVariantPricing = Boolean(hasHalfVariant && formattedHalfVariantPrice);
-  const variantOptions = showVariantPricing
-    ? [
-      {
-        key: 'full',
-        label: 'Full',
-        formattedPrice: formattedFullVariantPrice,
-        formattedOriginalPrice: formattedFullVariantOriginalPrice,
-        priceValue: fullFinalPriceValue,
-        originalValue: fullOriginalPriceValue,
-        hasDiscount: hasDiscount(fullOriginalPriceValue, fullFinalPriceValue),
-      },
-      {
-        key: 'half',
-        label: 'Half',
-        formattedPrice: formattedHalfVariantPrice,
-        formattedOriginalPrice: formattedHalfVariantOriginalPrice,
-        priceValue: halfFinalPriceValue,
-        originalValue: halfOriginalPriceValue,
-        hasDiscount: hasDiscount(halfOriginalPriceValue, halfFinalPriceValue),
-      },
-    ]
-    : null;
-  const fallbackId = getFallbackId(id, name, priceValue ?? price);
-  const serverItemId = id ?? fallbackId;
-  const clientItemId = serverItemId;
-  const cartItem = getCartItem(clientItemId);
-  const isInCart = Boolean(cartItem);
-  const secondaryText = subtitle || description;
-  const showFoodIndicator = Boolean(foodIndicatorSymbol);
-  const legacyVegIndicator = !isRestaurantCard && typeof isVeg === 'boolean';
-  const hasStockLabel = typeof stockQuantityLabel === 'string' && stockQuantityLabel.trim().length > 0;
-  const stockDisplayLabel = hasStockLabel ? stockQuantityLabel.trim() : null;
-  const stockLabelClass = hasStockLabel && typeof stockQuantityValue === 'number' && stockQuantityValue <= 5
-    ? 'item-card-quantity low'
-    : 'item-card-quantity';
-  const numericAverageRating = Number(averageRating);
-  const numericReviewCount = Number(reviewCount);
-  const hasRating = Number.isFinite(numericAverageRating) && numericAverageRating > 0 && Number.isFinite(numericReviewCount) && numericReviewCount > 0;
-  const roundedRatingStars = hasRating ? Math.round(numericAverageRating) : 0;
-
-  const showUnavailableToast = (message) => {
+  const showUnavailableToast = useCallback((message) => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
     setAvailabilityToast(message);
-    setTimeout(() => setAvailabilityToast(null), 3500);
-  };
+    toastTimeoutRef.current = setTimeout(() => {
+      setAvailabilityToast(null);
+      toastTimeoutRef.current = null;
+    }, 3500);
+  }, []);
 
-  const handleAddToCart = async () => {
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // ── Event Handlers ───────────────────────────────────────────────────────
+  const handleAddToCart = useCallback(async () => {
     if (orderingDisabled) {
       if (appClosed) {
         showUnavailableToast('Currently unavailable for orders. Please try again later.');
@@ -184,13 +294,11 @@ const ItemCard = ({
       return;
     }
 
-    // If item has variants and they're not shown yet, show them instead of adding
     if (showVariantPricing && !showVariants) {
       setShowVariants(true);
       return;
     }
 
-    // If no variants, add directly to cart
     try {
       await addToCart({
         id: serverItemId,
@@ -214,9 +322,30 @@ const ItemCard = ({
         showUnavailableToast(err.message || 'Failed to add item. Please try again.');
       }
     }
-  };
+  }, [
+    orderingDisabled,
+    appClosed,
+    showVariantPricing,
+    showVariants,
+    addToCart,
+    serverItemId,
+    clientItemId,
+    name,
+    priceValue,
+    price,
+    image,
+    secondaryText,
+    originalPrice,
+    derivedIsVeg,
+    description,
+    shopId,
+    shopType,
+    baseQuantity,
+    unit,
+    showUnavailableToast,
+  ]);
 
-  const handleVariantAdd = async (variant) => {
+  const handleVariantAdd = useCallback(async (variant) => {
     if (orderingDisabled) {
       if (appClosed) {
         showUnavailableToast('Currently unavailable for orders. Please try again later.');
@@ -226,10 +355,9 @@ const ItemCard = ({
 
     const variantSuffix = variant.key.toLowerCase();
     const variantClientId = `${clientItemId}-${variantSuffix}`;
-    const variantServerId = `${serverItemId}-${variantSuffix}`;
     try {
       await addToCart({
-        id: variantServerId,
+        id: serverItemId,
         clientItemId: variantClientId,
         name: `${name} (${variant.label})`,
         price: variant.priceValue,
@@ -251,39 +379,43 @@ const ItemCard = ({
         showUnavailableToast(err.message || 'Failed to add item. Please try again.');
       }
     }
-  };
+  }, [
+    orderingDisabled,
+    appClosed,
+    clientItemId,
+    serverItemId,
+    addToCart,
+    name,
+    image,
+    secondaryText,
+    derivedIsVeg,
+    description,
+    shopId,
+    shopType,
+    baseQuantity,
+    unit,
+    showUnavailableToast,
+  ]);
 
-  const handleVariantUpdate = (variant, changeAmount) => {
+  const handleVariantUpdate = useCallback((variant, changeAmount) => {
     const variantSuffix = variant.key.toLowerCase();
     const variantId = `${clientItemId}-${variantSuffix}`;
     if (changeAmount > 0) {
       increaseQty(variantId);
     } else {
       decreaseQty(variantId);
-
-      // Check if both Half and Full quantities are 0, if so collapse back to initial view
-      const halfVariantId = `${clientItemId}-half`;
-      const fullVariantId = `${clientItemId}-full`;
-      const halfQty = getCartItem(halfVariantId)?.quantity || 0;
-      const fullQty = getCartItem(fullVariantId)?.quantity || 0;
-
-      // If both quantities are 0 after decrement, hide the portion controls
-      if (halfQty === 0 && fullQty === 0) {
-        setShowVariants(false);
-      }
     }
-  };
+  }, [clientItemId, increaseQty, decreaseQty]);
 
   const shouldShowOriginal = hasDiscount(
-    hasHalfVariant ? fullOriginalPriceValue : baseOriginalPrice,
+    hasHalfVariant ? fullPortionPrice ?? price : originalPrice ?? price,
     priceValue
   );
 
   const renderDefaultPortionControls = () => (
     <div className="portion-controls-container">
       {variantOptions?.map((variant) => {
-        const variantId = `${clientItemId}-${variant.key.toLowerCase()}`;
-        const variantCartItem = getCartItem(variantId);
+        const variantCartItem = variant.key === 'half' ? halfCartItem : fullCartItem;
         const variantQty = variantCartItem ? variantCartItem.quantity : 0;
 
         return (
@@ -330,7 +462,7 @@ const ItemCard = ({
         {showVariantPricing && showVariants && variantOptions ? (
           <div className="item-card-price-variants">
             <span className="price-variant-text">Half: ₹{formattedHalfVariantPrice}</span>
-            <span className="price-variant-text">Full: ₹{formattedFullVariantPrice}</span>
+            <span className="price-variant-text">Full: ₹{formattedPrice}</span>
           </div>
         ) : (
           <div className="item-card-price-inline">
@@ -390,8 +522,7 @@ const ItemCard = ({
     return (
       <div className="restaurant-variant-panel">
         {variantOptions.map((variant) => {
-          const variantId = `${clientItemId}-${variant.key.toLowerCase()}`;
-          const variantCartItem = getCartItem(variantId);
+          const variantCartItem = variant.key === 'half' ? halfCartItem : fullCartItem;
           const variantQty = variantCartItem ? variantCartItem.quantity : 0;
 
           return (
@@ -450,8 +581,8 @@ const ItemCard = ({
         {hasVariantChips && variantOptions && showVariants ? (
           <div className="restaurant-price-chip-row">
             {variantOptions.map((variant) => {
-              const variantId = `${clientItemId}-${variant.key}`;
-              const variantQty = getCartItem(variantId)?.quantity || 0;
+              const variantCartItem = variant.key === 'half' ? halfCartItem : fullCartItem;
+              const variantQty = variantCartItem ? variantCartItem.quantity : 0;
 
               return (
                 <span key={variant.key} className={`restaurant-price-chip ${variant.key}`}>
@@ -467,14 +598,14 @@ const ItemCard = ({
                   {variantQty > 0 ? (
                     <div className="restaurant-qty-controls variant-qty-compact">
                       <button
-                        onClick={() => decreaseQty(variantId)}
+                        onClick={() => decreaseQty(variant.key === 'half' ? `${clientItemId}-half` : `${clientItemId}-full`)}
                         aria-label="Decrease quantity"
                       >
                         −
                       </button>
                       <span>{variantQty}</span>
                       <button
-                        onClick={() => increaseQty(variantId)}
+                        onClick={() => increaseQty(variant.key === 'half' ? `${clientItemId}-half` : `${clientItemId}-full`)}
                         aria-label="Increase quantity"
                       >
                         +
@@ -509,7 +640,6 @@ const ItemCard = ({
                 </div>
               ))
             ) : (
-              /* Simple product — no half/full variants, show single price */
               <div className="restaurant-simple-price">
                 {shouldShowOriginal && formattedOriginalPrice && (
                   <span className="restaurant-variant-original">₹{formattedOriginalPrice}</span>
@@ -523,7 +653,7 @@ const ItemCard = ({
         )}
 
         {hasVariantChips && showVariants ? null : (
-          isInCart ? (
+          isInCart && !hasVariantChips && cartItem ? (
             <div className="restaurant-qty-controls restaurant-main-qty">
               <button onClick={() => decreaseQty(clientItemId)} aria-label="Decrease quantity">
                 −
@@ -553,15 +683,14 @@ const ItemCard = ({
 
   return (
     <div className={`item-card${!isAvailable ? ' item-card-disabled' : ''}${appClosed ? ' item-card-app-closed' : ''}${isRestaurantCard ? ' restaurant-card' : ''}`}>
-      {/* Availability Toast — shown briefly when user tries to add during unavailability */}
       {availabilityToast && (
         <div className="item-card-availability-toast" role="alert" aria-live="assertive">
           🔒 {availabilityToast}
         </div>
       )}
       {optimizedImage && (
-        <div className="item-card-image">
-          <img src={optimizedImage} alt={name} loading="lazy" decoding="async" />
+        <div className="item-card-image" style={{ aspectRatio: '4/3', height: 'auto', overflow: 'hidden' }}>
+          <img src={optimizedImage} alt={name} loading="lazy" decoding="async" fetchPriority="low" draggable="false" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           {showFoodIndicator && (
             <span
               className="food-type-indicator"
@@ -571,29 +700,32 @@ const ItemCard = ({
               <img
                 src={derivedIsVeg ? '/vegy.webp' : '/nonveg.webp'}
                 alt={derivedIsVeg ? 'Vegetarian' : 'Non-Vegetarian'}
+                loading="lazy"
+                decoding="async"
+                fetchPriority="low"
+                draggable="false"
                 style={{ width: 20, height: 20, verticalAlign: 'middle' }}
               />
             </span>
           )}
-          {/* restaurant add button moved below card body for consistent placement */}
         </div>
       )}
-        <div className="item-card-body">
-          <div className="item-card-title-row">
-            {legacyVegIndicator ? (
-              <span className={`item-card-veg-badge ${isVeg ? 'veg' : 'non-veg'}`}>
-                <span className="veg-dot" />
-              </span>
-            ) : null}
-            <h3 className="item-card-name">{name}</h3>
-          </div>
+      <div className="item-card-body">
+        <div className="item-card-title-row">
+          {legacyVegIndicator ? (
+            <span className={`item-card-veg-badge ${isVeg ? 'veg' : 'non-veg'}`}>
+              <span className="veg-dot" />
+            </span>
+          ) : null}
+          <h3 className="item-card-name">{name}</h3>
+        </div>
 
-          {secondaryText && <p className="item-card-subtitle">{secondaryText}</p>}
+        {secondaryText && <p className="item-card-subtitle">{secondaryText}</p>}
 
         {hasRating && (
           <div className="item-card-rating" aria-label={`Rated ${numericAverageRating.toFixed(1)} out of 5 from ${numericReviewCount} reviews`}>
             <span className="item-card-rating-stars" aria-hidden="true">
-              {Array.from({ length: 5 }).map((_, index) => (
+              {STARS_ARRAY.map((index) => (
                 <span
                   key={index}
                   className={`item-card-rating-star ${index < roundedRatingStars ? 'filled' : 'empty'}`}
@@ -604,31 +736,30 @@ const ItemCard = ({
             </span>
             <span className="item-card-rating-value">{numericAverageRating.toFixed(1)}</span>
             <span className="item-card-rating-count">({numericReviewCount})</span>
-            </div>
-          )}
+          </div>
+        )}
 
-          {(baseQuantity || unit) && (
-            <p className="item-card-measure">{baseQuantity ? baseQuantity : ''}{unit ? ` ${unit}` : ''}</p>
-          )}
+        {(baseQuantity || unit) && (
+          <p className="item-card-measure">{baseQuantity ? baseQuantity : ''}{unit ? ` ${unit}` : ''}</p>
+        )}
 
-          {renderFooter()}
+        {renderFooter()}
 
-          {/* Render restaurant Add button under the card body (right aligned) */}
-          {isRestaurantCard && !isInCart && !showVariants && (
-            <div className="restaurant-add-under-body">
-              <button
-                className={`restaurant-add-main${orderingDisabled ? ' item-card-add-btn-disabled' : ''}`}
-                type="button"
-                disabled={orderingDisabled}
-                onClick={handleAddToCart}
-                aria-label={orderingDisabled ? 'Currently unavailable' : 'Add to cart'}
-              >
-                {appClosed ? 'Unavailable' : !isAvailable ? 'UNAVAILABLE' : 'Add'}
-              </button>
-            </div>
-          )}
-        </div>
+        {isRestaurantCard && !isInCart && !showVariants && (
+          <div className="restaurant-add-under-body">
+            <button
+              className={`restaurant-add-main${orderingDisabled ? ' item-card-add-btn-disabled' : ''}`}
+              type="button"
+              disabled={orderingDisabled}
+              onClick={handleAddToCart}
+              aria-label={orderingDisabled ? 'Currently unavailable' : 'Add to cart'}
+            >
+              {appClosed ? 'Unavailable' : !isAvailable ? 'UNAVAILABLE' : 'Add'}
+            </button>
+          </div>
+        )}
       </div>
+    </div>
   );
 };
 

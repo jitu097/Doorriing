@@ -58,6 +58,8 @@ const resolveEffectiveItemPrice = (item, variant = null) => {
   );
 };
 
+const isUniqueConstraintError = (error) => error?.code === '23505';
+
 class CartService {
   /**
    * Get or create active cart for customer and shop
@@ -109,7 +111,7 @@ class CartService {
               updated_at: new Date().toISOString()
             })
             .eq('id', existingCart.id)
-            .select()
+            .select('id, customer_id, shop_id, updated_at')
             .single();
 
           if (updateError) {
@@ -135,7 +137,7 @@ class CartService {
           customer_id: customerId,
           shop_id: shopId,
         })
-        .select()
+        .select('id, customer_id, shop_id, updated_at')
         .single();
 
       if (createError) {
@@ -403,15 +405,48 @@ class CartService {
           .insert(insertPayload);
 
         if (insertError) {
-          logger.error('[CART-SERVICE] Failed to insert cart item', { 
-            error: insertError,
-            code: insertError.code,
-            details: insertError.details,
-            hint: insertError.hint,
-            message: insertError.message,
-            insertPayload
-          });
-          throw new Error(`Failed to add item to cart: ${insertError.message}`);
+          if (isUniqueConstraintError(insertError)) {
+            const fallbackItem = (existingItems || [])[0];
+
+            if (fallbackItem) {
+              const newQuantity = fallbackItem.quantity + quantity;
+              const { error: fallbackUpdateError } = await supabase
+                .from('cart_items')
+                .update({
+                  quantity: newQuantity,
+                  variant: variant || fallbackItem.variant || null,
+                })
+                .eq('id', fallbackItem.id);
+
+              if (fallbackUpdateError) {
+                logger.error('[CART-SERVICE] Failed duplicate fallback update', {
+                  error: fallbackUpdateError,
+                  fallbackItem,
+                  variant,
+                });
+                throw new Error('Failed to update cart item');
+              }
+
+              logger.warn('[CART-SERVICE] Reused existing cart row after unique constraint conflict', {
+                cartItemId: fallbackItem.id,
+                oldVariant: fallbackItem.variant,
+                newVariant: variant,
+                newQuantity,
+              });
+            } else {
+              throw new Error('Cart database constraint is blocking item variants. Please run backend/fix-variant-constraint.sql in Supabase.');
+            }
+          } else {
+            logger.error('[CART-SERVICE] Failed to insert cart item', {
+              error: insertError,
+              code: insertError.code,
+              details: insertError.details,
+              hint: insertError.hint,
+              message: insertError.message,
+              insertPayload
+            });
+            throw new Error(`Failed to add item to cart: ${insertError.message}`);
+          }
         }
       }
 

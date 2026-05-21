@@ -17,6 +17,7 @@
   overflow: hidden;
   animation: banner-slide-down 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   z-index: 110;
+  will-change: transform, opacity;
 }
 
 /* Strong override to ensure carousel spacing is applied across builds
@@ -36,11 +37,11 @@
 
 @keyframes banner-slide-down {
   from {
-    transform: translateY(-100%);
+    transform: translate3d(0, -100%, 0);
     opacity: 0;
   }
   to {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
     opacity: 1;
   }
 }
@@ -57,11 +58,12 @@
     transparent 100%
   );
   animation: banner-shimmer 2.5s ease-in-out infinite;
+  will-change: transform;
 }
 
 @keyframes banner-shimmer {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0%   { transform: translate3d(-100%, 0, 0); }
+  100% { transform: translate3d(100%, 0, 0); }
 }
 
 .home-unavailability-icon {
@@ -246,6 +248,11 @@
   background: transparent;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  touch-action: manipulation;
+}
+
+.home-toggle-btn:active {
+  transform: scale(0.98);
 }
 
 .home-toggle-btn:hover {
@@ -281,6 +288,14 @@
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1rem;
   margin-top: 2rem;
+}
+
+@supports (content-visibility: auto) {
+  .home-items-section,
+  .home-shops-section {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 520px;
+  }
 }
 
 .loading-message {
@@ -427,11 +442,11 @@
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translate3d(0, 10px, 0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
@@ -486,8 +501,9 @@
   height: 1.5em;
   object-fit: contain;
   opacity: 0;
-  transform: translateY(6px) scale(0.85);
+  transform: translate3d(0, 6px, 0) scale3d(0.85, 0.85, 1);
   animation: shops-icon-jump 4s infinite;
+  will-change: transform, opacity;
 }
 
 .shops-title-icon:nth-child(2) {
@@ -506,19 +522,19 @@
   0%,
   100% {
     opacity: 0;
-    transform: translateY(6px) scale(0.85);
+    transform: translate3d(0, 6px, 0) scale3d(0.85, 0.85, 1);
   }
   8% {
     opacity: 1;
-    transform: translateY(-5px) scale(1.05);
+    transform: translate3d(0, -5px, 0) scale3d(1.05, 1.05, 1);
   }
   16% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
   }
   24% {
     opacity: 0;
-    transform: translateY(-8px) scale(0.92);
+    transform: translate3d(0, -8px, 0) scale3d(0.92, 0.92, 1);
   }
 }
 
@@ -599,6 +615,14 @@
   gap: 1.5rem;
   animation: scroll-left 8s linear infinite;
   padding: 0 1.5rem;
+  will-change: transform;
+}
+
+/* Disable auto-scroll animation when React detects prefers-reduced-motion.
+   The class is applied programmatically in Home.jsx via reducedMotionRef. */
+.shops-carousel-track.shops-carousel-no-anim {
+  animation: none;
+  will-change: auto;
 }
 
 .shops-carousel-track:hover {
@@ -607,10 +631,37 @@
 
 @keyframes scroll-left {
   0% {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/* CSS-level reduced-motion pausing — acts as a safety net even when the
+   React-side detection hasn’t run yet (e.g. SSR or before hydration). */
+@media (prefers-reduced-motion: reduce) {
+  .shops-carousel-track {
+    animation: none;
+    will-change: auto;
+  }
+
+  /* Pause banner shimmer pulse — frees GPU/CPU on low-power devices */
+  .home-unavailability-banner::before {
+    animation: none;
+  }
+
+  /* Pause the rotating shop-type icons in the section title */
+  .shops-title-icon {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Suppress homepage section fade-in (already rendered by the time
+     this kicks in, so removing it is purely a CPU win) */
+  .home-shops-section {
+    animation: none;
   }
 }
 

@@ -22,6 +22,7 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
+import { cancelAfterFrame, isPageVisible, runAfterFrame } from '../utils/scheduler';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 // Resolves at build time from VITE_API_BASE_URL env var.
@@ -38,6 +39,7 @@ console.log('[AppAvailability] Polling URL:', AVAILABILITY_API_URL);
 
 /** Re-poll every 30 seconds so the UI reflects admin toggle changes quickly */
 const POLL_INTERVAL_MS = 30_000;
+const MIN_VISIBLE_REFRESH_MS = 5_000;
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 const AppAvailabilityContext = createContext({
@@ -64,14 +66,28 @@ export const AppAvailabilityProvider = ({ children }) => {
   // We re-set it to true at the start of each effect run so React StrictMode's
   // double-invoke cycle doesn't leave it permanently false.
   const mountedRef = useRef(false);
+  const lastFetchAtRef = useRef(0);
+  const inFlightRef = useRef(false);
+  const requestIdRef = useRef(0);
+  const visibleRefreshRef = useRef(null);
 
   useEffect(() => {
     // Mark as mounted FIRST — critical for StrictMode correctness.
     mountedRef.current = true;
 
     let intervalId = null;
+    let currentAbort = new AbortController();
 
-    const fetchAvailability = async (signal) => {
+    const fetchAvailability = async (signal, { force = false } = {}) => {
+      if (!force && (!isPageVisible() || inFlightRef.current)) {
+        return;
+      }
+
+      inFlightRef.current = true;
+      lastFetchAtRef.current = Date.now();
+      const requestId = requestIdRef.current + 1;
+      requestIdRef.current = requestId;
+
       try {
         console.log('[AppAvailability] Fetching:', AVAILABILITY_API_URL);
         const res = await fetch(AVAILABILITY_API_URL, {
@@ -131,25 +147,74 @@ export const AppAvailabilityProvider = ({ children }) => {
             isOpen: prev.isOpen ?? true,
           }));
         }
+      } finally {
+        if (requestIdRef.current === requestId) {
+          inFlightRef.current = false;
+        }
       }
     };
 
-    // Each poll cycle gets its own AbortController so cleanup cancels only
-    // the currently in-flight request — not the next one.
-    let currentAbort = new AbortController();
-    fetchAvailability(currentAbort.signal);
+    const startPolling = () => {
+      if (intervalId) return;
+      intervalId = setInterval(() => {
+        currentAbort.abort();
+        currentAbort = new AbortController();
+        fetchAvailability(currentAbort.signal);
+      }, POLL_INTERVAL_MS);
+    };
 
-    intervalId = setInterval(() => {
-      currentAbort.abort();           // Cancel the previous in-flight request
-      currentAbort = new AbortController();
-      fetchAvailability(currentAbort.signal);
-    }, POLL_INTERVAL_MS);
+    const stopPolling = () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[AppAvailability] Tab visible, immediate check and resume poll');
+        const elapsed = Date.now() - lastFetchAtRef.current;
+        if (elapsed > MIN_VISIBLE_REFRESH_MS) {
+          currentAbort.abort();
+          currentAbort = new AbortController();
+          if (visibleRefreshRef.current) {
+            cancelAfterFrame(visibleRefreshRef.current);
+          }
+          visibleRefreshRef.current = runAfterFrame(() => {
+            visibleRefreshRef.current = null;
+            fetchAvailability(currentAbort.signal, { force: true });
+          });
+        }
+        startPolling();
+      } else {
+        console.log('[AppAvailability] Tab hidden, stop poll');
+        stopPolling();
+        if (visibleRefreshRef.current) {
+          cancelAfterFrame(visibleRefreshRef.current);
+          visibleRefreshRef.current = null;
+        }
+        currentAbort.abort();
+      }
+    };
+
+    // Initial load
+    fetchAvailability(currentAbort.signal, { force: true });
+    if (document.visibilityState === 'visible') {
+      startPolling();
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       // Cleanup: mark unmounted and cancel any in-flight request
       mountedRef.current = false;
-      clearInterval(intervalId);
+      stopPolling();
       currentAbort.abort();
+      if (visibleRefreshRef.current) {
+        cancelAfterFrame(visibleRefreshRef.current);
+        visibleRefreshRef.current = null;
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []); // Empty deps — runs once per actual mount lifecycle
 

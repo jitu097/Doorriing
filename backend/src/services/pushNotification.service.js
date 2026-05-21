@@ -97,20 +97,27 @@ class PushNotificationService {
       
       let sent = 0;
       let failed = 0;
+      const invalidTokens = [];
 
-      response.responses.forEach(async (res, index) => {
+      response.responses.forEach((res, index) => {
         const token = fcmTokens[index];
         if (res.success) {
           sent++;
           if (isSeller) console.log(`✅ [FCM_SUCCESS] Sent to token ending in ...${token.slice(-6)}`);
         } else {
           failed++;
-          console.error(`❌ [FCM_FAILURE] Error: ${res.error.code} for token ...${token.slice(-6)}`);
-          if (res.error.code === 'messaging/registration-token-not-registered') {
-             await this.removeToken(token).catch(() => {});
+          console.error(`❌ [FCM_FAILURE] Error: ${res.error?.code || 'unknown'} for token ...${token.slice(-6)}`);
+          if (res.error?.code && INVALID_TOKEN_ERRORS.has(res.error.code)) {
+            invalidTokens.push(token);
           }
         }
       });
+
+      if (invalidTokens.length > 0) {
+        await this.removeTokens(invalidTokens).catch((err) => {
+          logger.error('Failed to clean up invalid FCM tokens', { error: err.message });
+        });
+      }
 
       return { sent, failed, stored: true };
     } catch (error) {
@@ -169,8 +176,18 @@ class PushNotificationService {
   }
 
   async removeToken(fcmToken) {
-    await supabase.from('notification_tokens').delete().eq('fcm_token', fcmToken);
-    await supabase.from('seller_notification_tokens').delete().eq('fcm_token', fcmToken);
+    await this.removeTokens([fcmToken]);
+  }
+
+  async removeTokens(fcmTokens = []) {
+    if (!Array.isArray(fcmTokens) || fcmTokens.length === 0) return;
+    
+    // Perform parallel deletes in both customer and seller token tables
+    await Promise.all([
+      supabase.from('notification_tokens').delete().in('fcm_token', fcmTokens),
+      supabase.from('seller_notification_tokens').delete().in('fcm_token', fcmTokens),
+    ]);
+    logger.info(`Batch removed ${fcmTokens.length} invalid FCM tokens`);
   }
 
   async sendOrderStatusNotification({ customer_id, shop_id = null, status, reference_id }) {

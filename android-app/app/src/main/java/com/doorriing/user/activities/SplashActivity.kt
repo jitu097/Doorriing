@@ -15,14 +15,12 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
 
-        // Delay for splash screen
-        Handler(Looper.getMainLooper()).postDelayed({
-            val intent = Intent(this, MainActivity::class.java).apply {
-                putExtras(this@SplashActivity.intent)
-                data = this@SplashActivity.intent.data
-            }
-            startActivity(intent)
-            finish()
-        }, 2000)
+        // Launch MainActivity immediately without artificial delay
+        val intent = Intent(this, MainActivity::class.java).apply {
+            putExtras(this@SplashActivity.intent)
+            data = this@SplashActivity.intent.data
+        }
+        startActivity(intent)
+        finish()
     }
 }

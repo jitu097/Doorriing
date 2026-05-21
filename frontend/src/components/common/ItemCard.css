@@ -73,19 +73,42 @@
   background: #ffffff;
   border-radius: 12px;
   overflow: hidden;
-  
-  transition: all 0.3s ease;
+  /* STEP 6: Replace 'transition: all' with specific properties.
+     'all' forces the browser to interpolate EVERY CSS property on each frame
+     (color, padding, font-size, etc.) even when only shadow/transform change.
+     Specific transitions are evaluated only for the named properties — much
+     cheaper on low-end Android GPUs. */
+  transition: box-shadow 0.25s ease, transform 0.2s ease;
   display: flex;
   flex-direction: column;
   height: 100%;
   border: 1px solid #f0f0f0;
   max-width: 650px;
   width: 100%;
+  touch-action: manipulation;
+}
+
+@supports (content-visibility: auto) {
+  .item-card {
+    content-visibility: auto;
+    contain-intrinsic-size: 280px 420px;
+  }
 }
 
 .item-card:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   transform: translateY(-2px);
+}
+
+/* STEP 6: Suppress hover lift on touch devices — hover is never cleanly fired
+   on mobile (it fires on first tap, not on touch-hold), which causes the card
+   to shift position unpredictably. Removing it eliminates a class of layout
+   jank on Android without affecting the desktop experience. */
+@media (hover: none) {
+  .item-card:hover {
+    box-shadow: none;
+    transform: none;
+  }
 }
 
 .item-card-disabled {
@@ -164,6 +187,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transform: translateZ(0);
 }
 
 .item-card-body {

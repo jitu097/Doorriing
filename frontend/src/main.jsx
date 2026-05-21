@@ -54,7 +54,12 @@ try {
   </div>`
 }
 
-startLogStream()
+// STEP 5: Deferred startup tasks - run after app is rendered and page is
+// visually ready. Prevents these side effects from adding to startup JS cost.
+window.addEventListener('load', () => {
+  // Start developer log stream (debug tool, not user-facing)
+  startLogStream();
+});
 
 if ('serviceWorker' in navigator) {
   const swEnabled = import.meta.env.PROD && import.meta.env.VITE_SW_DISABLED !== 'true'
@@ -72,3 +77,4 @@ if ('serviceWorker' in navigator) {
     })
   }
 }
+

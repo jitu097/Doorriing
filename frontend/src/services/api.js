@@ -38,13 +38,37 @@ const formatError = async (response) => {
 	}
 };
 
+const isPublicGetRoute = (path, method) => {
+	if (method !== 'GET') return false;
+	const cleanPath = path.split('?')[0].replace(/^\/|\/$/g, '');
+	const publicPrefixes = [
+		'shops/home',
+		'shops/browse',
+		'home/items',
+		'items/shop',
+		'items/category',
+		'items/subcategory',
+		'categories',
+		'banners'
+	];
+	if (publicPrefixes.some(prefix => cleanPath.startsWith(prefix))) {
+		return true;
+	}
+	if (/^items\/[^/]+$/.test(cleanPath) || /^shops\/[^/]+$/.test(cleanPath)) {
+		return true;
+	}
+	return false;
+};
+
 const apiRequest = async (path, { method = 'GET', params, body, headers = {} } = {}) => {
 	const url = buildUrl(path, params);
 
 	// Auto attach firebase token securely
 	let authHeaders = {};
 	try {
-		await auth.authStateReady(); // Wait for Firebase to initialize
+		if (!isPublicGetRoute(path, method)) {
+			await auth.authStateReady(); // Wait for Firebase to initialize
+		}
 		const currentUser = auth?.currentUser;
 		if (currentUser) {
 			const token = await currentUser.getIdToken(false);

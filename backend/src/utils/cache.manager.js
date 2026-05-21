@@ -7,7 +7,6 @@ import { logger } from '../utils/logger.js';
 class CacheManager {
   constructor() {
     this.cache = new Map();
-    this.timers = new Map();
     this.stats = {
       hits: 0,
       misses: 0,
@@ -15,6 +14,14 @@ class CacheManager {
       evictions: 0,
     };
     this.maxSize = 100; // Max number of cache entries
+
+    // Setup a single background cleanup interval running every 60 seconds
+    this.sweepInterval = setInterval(() => {
+      this.sweep();
+    }, 60000);
+    if (this.sweepInterval && typeof this.sweepInterval.unref === 'function') {
+      this.sweepInterval.unref();
+    }
   }
 
   /**
@@ -41,23 +48,9 @@ class CacheManager {
       this.stats.evictions++;
     }
 
-    // Clear existing timer
-    if (this.timers.has(key)) {
-      clearTimeout(this.timers.get(key));
-    }
-
-    // Set cache value
-    this.cache.set(key, value);
+    const expiresAt = Date.now() + (ttlSeconds * 1000);
+    this.cache.set(key, { value, expiresAt });
     this.stats.writes++;
-
-    // Set auto-expiration timer
-    const timer = setTimeout(() => {
-      this.cache.delete(key);
-      this.timers.delete(key);
-      logger.debug('Cache entry expired', { key, ttl: ttlSeconds });
-    }, ttlSeconds * 1000);
-
-    this.timers.set(key, timer);
 
     logger.debug('Cache write', {
       key,
@@ -71,16 +64,24 @@ class CacheManager {
    */
   get(namespace, identifier) {
     const key = this.generateKey(namespace, identifier);
+    const entry = this.cache.get(key);
 
-    if (this.cache.has(key)) {
-      this.stats.hits++;
-      logger.debug('Cache hit', { key });
-      return this.cache.get(key);
+    if (entry === undefined) {
+      this.stats.misses++;
+      logger.debug('Cache miss', { key });
+      return null;
     }
 
-    this.stats.misses++;
-    logger.debug('Cache miss', { key });
-    return null;
+    if (Date.now() > entry.expiresAt) {
+      this.cache.delete(key);
+      this.stats.misses++;
+      logger.debug('Cache expired on get', { key });
+      return null;
+    }
+
+    this.stats.hits++;
+    logger.debug('Cache hit', { key });
+    return entry.value;
   }
 
   /**
@@ -88,17 +89,25 @@ class CacheManager {
    */
   has(namespace, identifier) {
     const key = this.generateKey(namespace, identifier);
-    return this.cache.has(key);
+    const entry = this.cache.get(key);
+
+    if (entry === undefined) {
+      return false;
+    }
+
+    if (Date.now() > entry.expiresAt) {
+      this.cache.delete(key);
+      logger.debug('Cache expired on has', { key });
+      return false;
+    }
+
+    return true;
   }
 
   /**
    * Delete specific cache entry
    */
   delete(key) {
-    if (this.timers.has(key)) {
-      clearTimeout(this.timers.get(key));
-      this.timers.delete(key);
-    }
     this.cache.delete(key);
   }
 
@@ -122,12 +131,25 @@ class CacheManager {
    */
   clear() {
     const size = this.cache.size;
-    for (const timer of this.timers.values()) {
-      clearTimeout(timer);
-    }
     this.cache.clear();
-    this.timers.clear();
     logger.info('Entire cache cleared', { entriesCleared: size });
+  }
+
+  /**
+   * Sweep expired keys
+   */
+  sweep() {
+    const now = Date.now();
+    let sweptCount = 0;
+    for (const [key, entry] of this.cache.entries()) {
+      if (now > entry.expiresAt) {
+        this.cache.delete(key);
+        sweptCount++;
+      }
+    }
+    if (sweptCount > 0) {
+      logger.debug(`Cache sweep cleaned up ${sweptCount} expired entries`);
+    }
   }
 
   /**
@@ -163,8 +185,10 @@ class CacheManager {
    */
   estimateMemoryUsage() {
     let size = 0;
-    for (const value of this.cache.values()) {
-      size += JSON.stringify(value).length;
+    for (const entry of this.cache.values()) {
+      if (entry && entry.value) {
+        size += JSON.stringify(entry.value).length;
+      }
     }
     return `${(size / 1024).toFixed(2)} KB`;
   }

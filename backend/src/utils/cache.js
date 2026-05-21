@@ -7,7 +7,14 @@ import { logger } from './logger.js';
 class CacheManager {
   constructor() {
     this.store = new Map();
-    this.timers = new Map();
+    // Setup a single background cleanup interval running every 60 seconds
+    this.sweepInterval = setInterval(() => {
+      this.sweep();
+    }, 60000);
+    // unref allows Node process to exit even if interval is active
+    if (this.sweepInterval && typeof this.sweepInterval.unref === 'function') {
+      this.sweepInterval.unref();
+    }
   }
 
   /**
@@ -17,21 +24,8 @@ class CacheManager {
    * @param {number} ttlSeconds - Time to live in seconds (default 5 min)
    */
   set(key, value, ttlSeconds = 300) {
-    // Clear existing timer if any
-    if (this.timers.has(key)) {
-      clearTimeout(this.timers.get(key));
-    }
-
-    this.store.set(key, value);
-
-    // Set expiration timer
-    const timer = setTimeout(() => {
-      this.store.delete(key);
-      this.timers.delete(key);
-      logger.debug(`Cache expired: ${key}`);
-    }, ttlSeconds * 1000);
-
-    this.timers.set(key, timer);
+    const expiresAt = Date.now() + (ttlSeconds * 1000);
+    this.store.set(key, { value, expiresAt });
     logger.debug(`Cache set: ${key} (TTL: ${ttlSeconds}s)`);
   }
 
@@ -41,20 +35,39 @@ class CacheManager {
    * @returns {*} Cached value or undefined
    */
   get(key) {
-    const value = this.store.get(key);
-    if (value !== undefined) {
-      logger.debug(`Cache hit: ${key}`);
+    const entry = this.store.get(key);
+    if (entry === undefined) {
+      return undefined;
     }
-    return value;
+
+    if (Date.now() > entry.expiresAt) {
+      this.store.delete(key);
+      logger.debug(`Cache expired on get: ${key}`);
+      return undefined;
+    }
+
+    logger.debug(`Cache hit: ${key}`);
+    return entry.value;
   }
 
   /**
-   * Check if key exists in cache
+   * Check if key exists in cache and is not expired
    * @param {string} key - Cache key
    * @returns {boolean}
    */
   has(key) {
-    return this.store.has(key);
+    const entry = this.store.get(key);
+    if (entry === undefined) {
+      return false;
+    }
+
+    if (Date.now() > entry.expiresAt) {
+      this.store.delete(key);
+      logger.debug(`Cache expired on has: ${key}`);
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -62,10 +75,6 @@ class CacheManager {
    * @param {string} key - Cache key
    */
   delete(key) {
-    if (this.timers.has(key)) {
-      clearTimeout(this.timers.get(key));
-      this.timers.delete(key);
-    }
     this.store.delete(key);
     logger.debug(`Cache deleted: ${key}`);
   }
@@ -74,10 +83,25 @@ class CacheManager {
    * Clear all cache
    */
   clear() {
-    this.timers.forEach(timer => clearTimeout(timer));
     this.store.clear();
-    this.timers.clear();
     logger.debug('Cache cleared');
+  }
+
+  /**
+   * Sweep expired keys from the store
+   */
+  sweep() {
+    const now = Date.now();
+    let sweptCount = 0;
+    for (const [key, entry] of this.store.entries()) {
+      if (now > entry.expiresAt) {
+        this.store.delete(key);
+        sweptCount++;
+      }
+    }
+    if (sweptCount > 0) {
+      logger.debug(`Cache sweep cleaned up ${sweptCount} expired entries`);
+    }
   }
 
   /**

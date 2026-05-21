@@ -97,13 +97,11 @@ class HomeService {
       return items;
     }
 
-    // For now, add placeholder ratings - can be optimized with aggregation in future
-    // This avoids the N+1 query problem by using a single query
+    // Query pre-aggregated view
     const { data: ratingData, error } = await supabase
-      .from('item_reviews')
-      .select('item_id, rating')
-      .in('item_id', itemIds)
-      .not('rating', 'is', null);
+      .from('item_reviews_summary')
+      .select('item_id, average_rating, review_count')
+      .in('item_id', itemIds);
 
     if (error) {
       logger.warn('Failed to fetch home item rating summary', { error: error.message });
@@ -115,24 +113,22 @@ class HomeService {
       }));
     }
 
-    // Calculate ratings in one pass
+    // Map ratings in O(N)
     const ratingMap = new Map();
-    (ratingData || []).forEach((review) => {
-      if (!review?.item_id) return;
-      if (!ratingMap.has(review.item_id)) {
-        ratingMap.set(review.item_id, { count: 0, sum: 0 });
-      }
-      const stats = ratingMap.get(review.item_id);
-      stats.count++;
-      stats.sum += Number(review.rating || 0);
+    (ratingData || []).forEach((row) => {
+      if (!row?.item_id) return;
+      ratingMap.set(row.item_id, {
+        average_rating: row.average_rating !== null ? Number(row.average_rating) : null,
+        review_count: row.review_count ?? 0,
+      });
     });
 
     return items.map((item) => {
       const stats = ratingMap.get(item?.id);
       return {
         ...item,
-        average_rating: stats ? Number((stats.sum / stats.count).toFixed(1)) : null,
-        review_count: stats?.count ?? 0,
+        average_rating: stats?.average_rating ?? null,
+        review_count: stats?.review_count ?? 0,
       };
     });
   }

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './ImageScroller.css';
 
 const images = [
@@ -13,33 +13,66 @@ const ImageScroller = () => {
   const [current, setCurrent] = useState(0);
   const scrollerRef = useRef(null);
   const touchStartX = useRef(null);
+  const currentRef = useRef(current);
+
+  useEffect(() => {
+    currentRef.current = current;
+  }, [current]);
 
   // Auto-scroll functionality
-  React.useEffect(() => {
-    const autoScrollInterval = setInterval(() => {
-      setCurrent((prev) => {
-        // Go to next image, or loop back to first
-        return prev === images.length - 1 ? 0 : prev + 1;
-      });
-    }, 3000); // Change slide every 3 seconds
+  useEffect(() => {
+    let autoScrollInterval = null;
 
-    return () => clearInterval(autoScrollInterval);
+    const startAutoScroll = () => {
+      if (autoScrollInterval || document.visibilityState !== 'visible') return;
+      autoScrollInterval = setInterval(() => {
+        setCurrent((prev) => {
+          // Go to next image, or loop back to first
+          return prev === images.length - 1 ? 0 : prev + 1;
+        });
+      }, 3000); // Change slide every 3 seconds
+    };
+
+    const stopAutoScroll = () => {
+      if (autoScrollInterval) {
+        clearInterval(autoScrollInterval);
+        autoScrollInterval = null;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        startAutoScroll();
+      } else {
+        stopAutoScroll();
+      }
+    };
+
+    startAutoScroll();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      stopAutoScroll();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   // Handle swipe for mobile
-  const handleTouchStart = (e) => {
+  const handleTouchStart = useCallback((e) => {
     touchStartX.current = e.touches[0].clientX;
-  };
-  const handleTouchEnd = (e) => {
+  }, []);
+
+  const handleTouchEnd = useCallback((e) => {
     if (touchStartX.current === null) return;
     const diff = e.changedTouches[0].clientX - touchStartX.current;
-    if (diff > 40 && current > 0) setCurrent(current - 1);
-    else if (diff < -40 && current < images.length - 1) setCurrent(current + 1);
+    const currentIndex = currentRef.current;
+    if (diff > 40 && currentIndex > 0) setCurrent(currentIndex - 1);
+    else if (diff < -40 && currentIndex < images.length - 1) setCurrent(currentIndex + 1);
     touchStartX.current = null;
-  };
+  }, []);
 
   // Scroll to current image
-  React.useEffect(() => {
+  useEffect(() => {
     if (scrollerRef.current) {
       scrollerRef.current.scrollTo({
         left: scrollerRef.current.offsetWidth * current,
@@ -58,7 +91,7 @@ const ImageScroller = () => {
       >
         {images.map((img, idx) => (
           <div className="scroller-img-container" key={idx}>
-            <img src={img} alt={`slide-${idx+1}`} className="scroller-img" loading={idx === 0 ? "eager" : "lazy"} decoding="async" />
+            <img src={img} alt={`slide-${idx+1}`} className="scroller-img" loading={idx === 0 ? "eager" : "lazy"} decoding="async" fetchPriority={idx === 0 ? 'high' : 'low'} draggable="false" />
           </div>
         ))}
       </div>

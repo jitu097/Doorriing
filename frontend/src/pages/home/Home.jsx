@@ -1,17 +1,23 @@
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, Suspense, lazy } from 'react';
 import { useSearchParams } from 'react-router-dom';
 // Image scroller temporarily disabled for dashboard. Commented out to hide it from UI.
 // import ImageScroller from '../../components/common/ImageScroller';
 import ItemCard from '../../components/common/ItemCard';
 import ItemCardSkeleton, { ItemCardSkeletonGrid } from '../../components/common/ItemCardSkeleton';
-import OrderNotification from '../../components/common/OrderNotification';
+// OrderNotification is only shown when there's an active recent order.
+// Lazy-loading it avoids including its dependency (orderService) in the critical path bundle.
+const OrderNotification = lazy(() => import('../../components/common/OrderNotification'));
 import ShopCard from '../shopcard/shopcard';
 import { itemService } from '../../services/item.service';
 import { getCachedHomeShops, getHomeShops } from '../../services/shop.service';
 import { useAppAvailability } from '../../context/AppAvailabilityContext';
 import './Home.css';
 import { computeFinalPrice } from '../../utils/pricing';
+
+// Null fallback for the lazy OrderNotification — avoids flicker since the
+// component only renders when an order is already active.
+const NoFallback = () => null;
 
 const SECTION_CONFIG = {
   grocery: {
@@ -158,14 +164,33 @@ const normalizeItems = (items = []) => {
 const Home = () => {
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('search') || '';
+
+  // Detect reduced-motion once at mount — stored in a ref to avoid re-renders.
+  // Used by ShopsSection to disable the infinite carousel animation on low-power devices.
+  const reducedMotionRef = useRef(
+    typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false
+  );
+
+  // Try to restore cached dashboard data for instant render
   const cachedHomeShops = getCachedHomeShops();
-  const [groceryItems, setGroceryItems] = useState([]);
-  const [restaurantItems, setRestaurantItems] = useState([]);
+  const cachedHomeItems = itemService.getCachedHomeItems?.() || null;
+  const hasCache = !!(
+    (cachedHomeShops && (cachedHomeShops.grocery?.length > 0 || cachedHomeShops.restaurant?.length > 0)) &&
+    (cachedHomeItems && (cachedHomeItems.grocery_items?.length > 0 || cachedHomeItems.restaurant_items?.length > 0))
+  );
+
+  const [groceryItems, setGroceryItems] = useState(() => normalizeItems(cachedHomeItems?.grocery_items || []));
+  const [restaurantItems, setRestaurantItems] = useState(() => normalizeItems(cachedHomeItems?.restaurant_items || []));
   const [groceryShops, setGroceryShops] = useState(() => cachedHomeShops?.grocery || []);
   const [restaurantShops, setRestaurantShops] = useState(() => cachedHomeShops?.restaurant || []);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!hasCache);
   const [error, setError] = useState('');
   const [activeSection, setActiveSection] = useState(SECTION_CONFIG.restaurant.key);
+  const [pageVisible, setPageVisible] = useState(() => (
+    typeof document === 'undefined' || document.visibilityState === 'visible'
+  ));
 
   const mergeShopPayload = (currentValue, nextValue) => {
     if (Array.isArray(nextValue) && nextValue.length > 0) {
@@ -190,31 +215,36 @@ const Home = () => {
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        setLoading(true);
+        if (!hasCache) {
+          setLoading(true);
+        }
         setError('');
 
-        // Fetch items and shops in parallel
-        const [itemResponseResult, shopsDataResult] = await Promise.allSettled([
-          itemService.getHomeItems(),
-          getHomeShops(8)
-        ]);
-
-        if (itemResponseResult.status === 'fulfilled') {
-          const itemPayload = itemResponseResult.value || {};
-          setGroceryItems(normalizeItems(itemPayload.grocery_items));
-          setRestaurantItems(normalizeItems(itemPayload.restaurant_items));
-        } else {
-          console.error('Error fetching home items:', itemResponseResult.reason);
-          setError(itemResponseResult.reason?.message || 'Failed to load items');
-          setGroceryItems([]);
-          setRestaurantItems([]);
+        // 1. Fetch shops first (above-the-fold content)
+        try {
+          const shopsData = await getHomeShops(8);
+          applyShopUpdate(shopsData);
+        } catch (shopsErr) {
+          console.error('Error fetching shops:', shopsErr);
         }
 
-        if (shopsDataResult.status === 'fulfilled') {
-          const shopsData = shopsDataResult.value;
-          applyShopUpdate(shopsData);
-        } else {
-          console.error('Error fetching shops:', shopsDataResult.reason);
+        // Reveal layout with shops as soon as they are ready
+        if (!hasCache) {
+          setLoading(false);
+        }
+
+        // 2. Fetch items (below-the-fold content, staggered by 50ms to prioritize network/rendering threads)
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        try {
+          const itemPayload = await itemService.getHomeItems();
+          setGroceryItems(normalizeItems(itemPayload.grocery_items));
+          setRestaurantItems(normalizeItems(itemPayload.restaurant_items));
+        } catch (itemError) {
+          console.error('Error fetching home items:', itemError);
+          setError(itemError.message || 'Failed to load items');
+          setGroceryItems([]);
+          setRestaurantItems([]);
         }
       } catch (err) {
         console.error('Unexpected error fetching home data:', err);
@@ -225,6 +255,15 @@ const Home = () => {
     };
 
     fetchHomeData();
+  }, []);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setPageVisible(document.visibilityState === 'visible');
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
   // Silent refresh listener for Stale-While-Revalidate (SWR) updates
@@ -249,111 +288,118 @@ const Home = () => {
     };
   }, []);
 
-  const renderItemsSection = (title, items, emptyMessage) => {
-    // Safety: ensure items is always an array
-    const safeItems = Array.isArray(items) ? items : [];
-    const itemCount = safeItems.length;
-    
-    console.log(`[renderItemsSection] Rendering ${title} with ${itemCount} items`);
+// ── STANDALONE MEMOIZED COMPONENTS ──────────────────────────────────────────
 
-    return (
-      <div className="home-items-section">
-        {loading ? (
-          // Show skeleton loaders while loading
-          <ItemCardSkeletonGrid count={8} />
-        ) : error ? (
-          <p className="error-message">{error}</p>
-        ) : itemCount > 0 ? (
-          <div className="items-grid">
-            {safeItems.map(item => {
-              const stockLabel = typeof item.stock_quantity === 'number'
-                ? (item.stock_quantity > 0 ? `${item.stock_quantity} in stock` : 'Out of stock')
-                : undefined;
-              const normalizedFoodType = (item.foodType || '').toLowerCase();
-              const derivedIsVeg = normalizedFoodType
-                ? normalizedFoodType !== 'nonveg'
-                : (typeof item.is_veg === 'boolean' ? item.is_veg : true);
-              const shouldShowVegIndicator = (item.shopType || '').toLowerCase() === 'restaurant';
+const ShopsSection = React.memo(({ shops, businessType, reducedMotion }) => {
+  const safeShops = Array.isArray(shops) ? shops : [];
+  const shopsCount = safeShops.length;
 
-              return (
-                <ItemCard
-                  key={item.id}
-                  id={item.id}
-                  name={item.name}
-                  subtitle={item.shopName}
-                  description={item.description}
-                  price={item.price}
-                  originalPrice={item.originalPrice}
-                  image={item.image_url}
-                  isAvailable={item.is_available}
-                  stockQuantityLabel={stockLabel}
-                  stockQuantityValue={item.stock_quantity}
-                  averageRating={item.average_rating}
-                  reviewCount={item.review_count}
-                  shopId={item.shopId}
-                  shopType={item.shopType}
-                  halfPortionPrice={item.halfPortionPrice}
-                  halfPortionFinalPrice={item.halfPortionFinalPrice}
-                  fullPortionPrice={item.fullPortionPrice}
-                  fullPortionFinalPrice={item.fullPortionFinalPrice}
-                  foodType={item.foodType}
-                  isVeg={shouldShowVegIndicator ? derivedIsVeg : undefined}
-                  baseQuantity={item.baseQuantity}
-                  unit={item.unit}
-                />
-              );
-            })}
-          </div>
+  if (shopsCount === 0) {
+    return null;
+  }
+
+  // Duplicate shops for continuous scrolling effect
+  const scrollingShops = useMemo(() => [...safeShops, ...safeShops], [safeShops]);
+
+  return (
+    <div className="home-shops-section">
+      <h6 className={`shops-section-title ${businessType === 'grocery' ? 'shops-section-title-grocery' : ''}`}>
+        {businessType === 'grocery' ? (
+          <> Explore Shops</>
         ) : (
-          <p className="no-items-message">{emptyMessage}</p>
+          <> Top Restaurants</>
         )}
-      </div>
-    );
-  };
-
-  const renderShopsSection = (shops, businessType) => {
-    const safeShops = Array.isArray(shops) ? shops : [];
-    const shopsCount = safeShops.length;
-
-    if (shopsCount === 0) {
-      return null;
-    }
-
-    // Duplicate shops for continuous scrolling effect
-    const scrollingShops = [...safeShops, ...safeShops];
-
-    return (
-      <div className="home-shops-section">
-        <h6 className={`shops-section-title ${businessType === 'grocery' ? 'shops-section-title-grocery' : ''}`}>
-          {businessType === 'grocery' ? (
-            <>
-              {' Explore Shops'}
-              
-            </>
-          ) : (
-            ' Top Restaurants'
-          )}
-        </h6>
-        <div className="shops-carousel-container">
-          <div className="shops-carousel-track">
-            {scrollingShops.map((shop, index) => (
-              <div
-                key={`${shop.id}-${index}`}
-                className={`shops-carousel-item ${businessType === 'grocery' ? 'shops-carousel-item-grocery' : ''}`}
-              >
-                <ShopCard
-                  shop={shop}
-                  routePrefix={businessType}
-                />
-              </div>
-            ))}
-          </div>
+      </h6>
+      <div className="shops-carousel-container">
+        {/* Apply no-animation class when user prefers reduced motion */}
+        <div className={`shops-carousel-track${reducedMotion ? ' shops-carousel-no-anim' : ''}`}>
+          {scrollingShops.map((shop, index) => (
+            <div
+              key={`${shop.id}-${index}`}
+              className={`shops-carousel-item ${businessType === 'grocery' ? 'shops-carousel-item-grocery' : ''}`}
+            >
+              <ShopCard
+                shop={shop}
+                routePrefix={businessType}
+              />
+            </div>
+          ))}
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+});
+
+ShopsSection.displayName = 'ShopsSection';
+
+const ItemsSection = React.memo(({ title, items, emptyMessage, loading, error }) => {
+  const safeItems = Array.isArray(items) ? items : [];
+  const itemCount = safeItems.length;
+
+  return (
+    <div className="home-items-section">
+      {loading ? (
+        <ItemCardSkeletonGrid count={8} />
+      ) : error ? (
+        <p className="error-message">{error}</p>
+      ) : itemCount > 0 ? (
+        <div className="items-grid">
+          {safeItems.map(item => {
+            const stockLabel = typeof item.stock_quantity === 'number'
+              ? (item.stock_quantity > 0 ? `${item.stock_quantity} in stock` : 'Out of stock')
+              : undefined;
+            const normalizedFoodType = (item.foodType || '').toLowerCase();
+            const derivedIsVeg = normalizedFoodType
+              ? normalizedFoodType !== 'nonveg'
+              : (typeof item.is_veg === 'boolean' ? item.is_veg : true);
+            const shouldShowVegIndicator = (item.shopType || '').toLowerCase() === 'restaurant';
+
+            return (
+              <ItemCard
+                key={item.id}
+                id={item.id}
+                name={item.name}
+                subtitle={item.shopName}
+                description={item.description}
+                price={item.price}
+                originalPrice={item.originalPrice}
+                image={item.image_url}
+                isAvailable={item.is_available}
+                stockQuantityLabel={stockLabel}
+                stockQuantityValue={item.stock_quantity}
+                averageRating={item.average_rating}
+                reviewCount={item.review_count}
+                shopId={item.shopId}
+                shopType={item.shopType}
+                halfPortionPrice={item.halfPortionPrice}
+                halfPortionFinalPrice={item.halfPortionFinalPrice}
+                fullPortionPrice={item.fullPortionPrice}
+                fullPortionFinalPrice={item.fullPortionFinalPrice}
+                foodType={item.foodType}
+                isVeg={shouldShowVegIndicator ? derivedIsVeg : undefined}
+                baseQuantity={item.baseQuantity}
+                unit={item.unit}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <p className="no-items-message">{emptyMessage}</p>
+      )}
+    </div>
+  );
+});
+
+ItemsSection.displayName = 'ItemsSection';
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
+  const combinedSearchableItems = useMemo(() => {
+    return [...groceryItems, ...restaurantItems];
+  }, [groceryItems, restaurantItems]);
 
   const filteredItems = useMemo(() => {
     const activeItems = activeSection === SECTION_CONFIG.grocery.key ? groceryItems : restaurantItems;
@@ -362,9 +408,7 @@ const Home = () => {
       return activeItems;
     }
     
-    const searchableItems = [...groceryItems, ...restaurantItems];
-    
-    return searchableItems.filter(item => {
+    return combinedSearchableItems.filter(item => {
       const itemName = (item?.name || '').toLowerCase();
       const shopName = (item?.shopName || item?.shops?.name || '').toLowerCase();
       const description = (item?.description || '').toLowerCase();
@@ -375,12 +419,17 @@ const Home = () => {
         description.includes(normalizedSearchQuery)
       );
     });
-  }, [activeSection, groceryItems, restaurantItems, normalizedSearchQuery]);
+  }, [activeSection, groceryItems, restaurantItems, combinedSearchableItems, normalizedSearchQuery]);
 
   const title = normalizedSearchQuery ? 'Search Results' : SECTION_CONFIG[activeSection].title;
   const emptyMessage = normalizedSearchQuery
     ? 'No products or shops match your search.'
     : SECTION_CONFIG[activeSection].emptyMessage;
+
+  const handleSectionChange = useCallback((sectionKey) => {
+    if (sectionKey === activeSection) return;
+    setActiveSection(sectionKey);
+  }, [activeSection]);
 
   return (
     <div className="home-page">
@@ -406,7 +455,10 @@ const Home = () => {
       {/* ─────────────────────────────────────────────────────────────── */}
       {/* ImageScroller disabled: remove the comment below to re-enable */}
       {/* <ImageScroller /> */}
-      <OrderNotification />
+      {/* OrderNotification is lazy — only fetched when an active order exists */}
+      <Suspense fallback={<NoFallback />}>
+        <OrderNotification />
+      </Suspense>
       <div className="home-content">
         {!searchQuery && (
           <h1 className="home-main-title"></h1>
@@ -415,8 +467,8 @@ const Home = () => {
         {/* Display Shops Sections */}
         {!searchQuery && (
           <>
-            {renderShopsSection(groceryShops, 'grocery')}
-            {renderShopsSection(restaurantShops, 'restaurant')}
+            <ShopsSection shops={groceryShops} businessType="grocery" reducedMotion={reducedMotionRef.current || !pageVisible} />
+            <ShopsSection shops={restaurantShops} businessType="restaurant" reducedMotion={reducedMotionRef.current || !pageVisible} />
           </>
         )}
 
@@ -425,20 +477,26 @@ const Home = () => {
           <button
             type="button"
             className={`home-toggle-btn ${activeSection === SECTION_CONFIG.grocery.key ? 'is-active' : ''}`}
-            onClick={() => setActiveSection(SECTION_CONFIG.grocery.key)}
+            onClick={() => handleSectionChange(SECTION_CONFIG.grocery.key)}
           >
             Fresh Grocery Items
           </button>
           <button
             type="button"
             className={`home-toggle-btn ${activeSection === SECTION_CONFIG.restaurant.key ? 'is-active' : ''}`}
-            onClick={() => setActiveSection(SECTION_CONFIG.restaurant.key)}
+            onClick={() => handleSectionChange(SECTION_CONFIG.restaurant.key)}
           >
             Restaurant Specials
           </button>
         </div>
 
-        {renderItemsSection(title, filteredItems, emptyMessage)}
+        <ItemsSection
+          title={title}
+          items={filteredItems}
+          emptyMessage={emptyMessage}
+          loading={loading}
+          error={error}
+        />
       </div>
     </div>
   );
