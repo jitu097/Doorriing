@@ -1,4 +1,7 @@
 import { supabase } from '../../config/supabaseClient.js';
+import { utcToZonedTime } from 'date-fns-tz';
+
+const TARGET_TIMEZONE = 'Asia/Kolkata';
 
 const DEFAULT_MAX_RANGE = 999999;
 
@@ -23,14 +26,16 @@ const normalizeRulesFromScalarFields = (row) => {
 };
 
 /**
- * Given HH:MM strings for open and close, decide if the current UTC time
- * is within the delivery window. Handles overnight spans (e.g. 21:00–03:00).
+ * Given HH:MM strings for open and close, decide if the current time
+ * in the target timezone is within the delivery window.
+ * Handles overnight spans (e.g. 21:00–03:00).
  */
 const isWithinDeliveryWindow = (openTime, closeTime) => {
   if (!openTime || !closeTime) return true; // No window configured → always open
 
-  const now = new Date();
-  const nowMins = now.getUTCHours() * 60 + now.getUTCMinutes();
+  // Use the current time in the target timezone (e.g., 'Asia/Kolkata')
+  const now = utcToZonedTime(new Date(), TARGET_TIMEZONE);
+  const nowMins = now.getHours() * 60 + now.getMinutes();
 
   const [openH, openM] = openTime.split(':').map(Number);
   const [closeH, closeM] = closeTime.split(':').map(Number);
