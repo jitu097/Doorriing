@@ -20,19 +20,18 @@
   will-change: transform, opacity;
 }
 
-/* Strong override to ensure carousel spacing is applied across builds
-   Use high specificity and !important to override competing rules */
 .home-content .home-shops-section .shops-carousel-container {
-  margin-top: 0 !important;
-  margin-bottom: -3.35rem !important;
+  margin-top: 6px !important;
+  /* reduced bottom spacing so orange band shrinks */
+  margin-bottom: 8px !important;
 }
 
 .home-content .home-shops-section .shops-section-title {
-  margin-bottom: 0.35rem !important;
+  margin-bottom: 0rem !important;
 }
 
 .home-content .home-shops-section {
-  margin-top: 4.5rem !important;
+  margin-top: 3.1rem !important;
 }
 
 @keyframes banner-slide-down {
@@ -269,6 +268,11 @@
   transform: none;
 }
 
+/* Nudge the home section toggle slightly down for better spacing */
+.home-toggle-btn {
+  margin-top: 0.5rem; /* adjust as needed: increase to move further down */
+}
+
 .home-items-section {
   margin-top: 3rem;
 }
@@ -293,8 +297,8 @@
 @supports (content-visibility: auto) {
   .home-items-section,
   .home-shops-section {
-    content-visibility: auto;
-    contain-intrinsic-size: 1px 520px;
+    content-visibility: 60px;
+    contain-intrinsic-size: 1px 2520px;
   }
 }
 
@@ -577,7 +581,7 @@
 .shops-carousel-container {
   width: 100%;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
   background: linear-gradient(90deg, #fff 0%, #fff 85%, rgba(255,255,255,0) 100%);
   border-radius: 12px;
   padding: 1rem 0;
@@ -612,7 +616,9 @@
 
 .shops-carousel-track {
   display: flex;
+  align-items: flex-start;
   gap: 1.5rem;
+  height:130px;
   animation: scroll-left 8s linear infinite;
   padding: 0 1.5rem;
   will-change: transform;
@@ -676,20 +682,20 @@
 
 /* Keep all home shop cards same height and clamp long text */
 .home-page .shops-carousel-item .shop-card {
-  height: 210px;
+  height: auto;
   display: flex;
   flex-direction: column;
 }
 
 .home-page .shops-carousel-item-grocery .shop-card {
-  height: 190px;
+  height: auto;
 }
 
 .home-page .shops-carousel-item .shop-card-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .home-page .shops-carousel-item .shop-card-title,
@@ -828,12 +834,12 @@
 
   .home-page .shops-carousel-item .shop-card {
     max-width: 96px;
-    height: 145px;
+    height: auto;
   }
 
   .home-page .shops-carousel-item-grocery .shop-card {
     max-width: 82px;
-    height: 130px;
+    height: auto;
   }
 
   .home-page .shops-carousel-item .shop-card-image {
@@ -919,12 +925,12 @@
 
   .home-page .shops-carousel-item .shop-card {
     max-width: 86px;
-    height: 136px;
+    min-height: 136px;
   }
 
   .home-page .shops-carousel-item-grocery .shop-card {
     max-width: 74px;
-    height: 122px;
+    min-height: 122px;
   }
 
   .home-page .shops-carousel-item .shop-card-image {
@@ -963,5 +969,24 @@
 
   .home-page .shops-carousel-item-grocery .shop-card-title {
     font-size: 0.62rem;
+  }
+}
+
+/* Pull the second shops column (Top Restaurants) slightly upward so it
+   sits closer to the Explore Shops carousel. Tweak values if you want
+   it moved further. */
+.shops-sections-wrapper .shops-section-column:nth-child(2) {
+  margin-top: -20px !important; /* moved further up */
+}
+
+@media (max-width: 768px) {
+  .shops-sections-wrapper .shops-section-column:nth-child(2) {
+    margin-top: -14px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .shops-sections-wrapper .shops-section-column:nth-child(2) {
+    margin-top: -10px !important;
   }
 }
