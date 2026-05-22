@@ -765,16 +765,27 @@
   flex-shrink: 0;
   transition: all 0.2s ease;
   white-space: nowrap;
+  pointer-events: auto;
+  z-index: 10;
+  user-select: none;
+  outline: none;
+  min-width: 40px;
 }
 
 .variant-add-btn:hover:not(:disabled) {
   background-color: #E95322;
   color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.variant-add-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .variant-add-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .variant-qty-compact {

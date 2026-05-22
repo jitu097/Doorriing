@@ -1,5 +1,4 @@
 import { supabase } from '../../config/supabaseClient.js';
-import { utcToZonedTime } from 'date-fns-tz';
 
 const TARGET_TIMEZONE = 'Asia/Kolkata';
 

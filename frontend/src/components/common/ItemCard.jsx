@@ -346,6 +346,8 @@ const ItemCard = ({
   ]);
 
   const handleVariantAdd = useCallback(async (variant) => {
+    console.debug('[ItemCard] handleVariantAdd called', { variantKey: variant?.key, orderingDisabled });
+
     if (orderingDisabled) {
       if (appClosed) {
         showUnavailableToast('Currently unavailable for orders. Please try again later.');
@@ -585,7 +587,7 @@ const ItemCard = ({
               const variantQty = variantCartItem ? variantCartItem.quantity : 0;
 
               return (
-                <span key={variant.key} className={`restaurant-price-chip ${variant.key}`}>
+                <div key={variant.key} className={`restaurant-price-chip ${variant.key}`}>
                   <span className="restaurant-chip-label">{variant.label}</span>
                   <div className="restaurant-chip-price-stack">
                     {variant.hasDiscount && variant.formattedOriginalPrice && (
@@ -617,11 +619,12 @@ const ItemCard = ({
                       type="button"
                       disabled={orderingDisabled}
                       onClick={() => handleVariantAdd(variant)}
+                      onPointerDown={(e) => console.debug('[ItemCard] pointerdown on variant add', { variantKey: variant.key, pointerType: e.pointerType })}
                     >
                       {appClosed ? 'Unavailable' : !isAvailable ? 'UNAVAILABLE' : 'Add'}
                     </button>
                   )}
-                </span>
+                </div>
               );
             })}
           </div>
