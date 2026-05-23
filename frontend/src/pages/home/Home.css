@@ -21,17 +21,18 @@
 }
 
 .home-content .home-shops-section .shops-carousel-container {
-  margin-top: 6px !important;
-  /* reduced bottom spacing so orange band shrinks */
-  margin-bottom: 8px !important;
+  margin-top: 0 !important;
+  margin-bottom: 9px !important;
 }
 
 .home-content .home-shops-section .shops-section-title {
   margin-bottom: 0rem !important;
+  margin-top: 0 !important;
 }
 
 .home-content .home-shops-section {
-  margin-top: 3.6rem !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 @keyframes banner-slide-down {
@@ -190,6 +191,7 @@
   max-width: 1300px;
   width: 90%;
   margin: 0 auto;
+  margin-top: 0.75rem;
   padding: 1.5rem 2rem;
 }
 
@@ -197,6 +199,7 @@
   .home-content {
     width: 100%;
     max-width: 100%;
+    margin-top: 0.6rem;
     padding: 0.5rem 1rem 5rem 1rem;
     margin-bottom: 0;
   }
@@ -224,8 +227,8 @@
   gap: 1.5rem;
   justify-content: center;
   align-items: center;
-  margin-top: -2rem;
-  margin-bottom: -1rem;
+    margin-top: 1.2rem; /* nudged down slightly to match user's request */
+  margin-bottom: 0.5rem;
   background: #fff;
   padding: 0.75rem;
   border-radius: 999px;
@@ -297,8 +300,9 @@
 @supports (content-visibility: auto) {
   .home-items-section,
   .home-shops-section {
-    content-visibility: 60px;
-    contain-intrinsic-size: 1px 2520px;
+    /* Keep section height stable; avoids first-paint gap collapse/jump. */
+    content-visibility: visible;
+    contain-intrinsic-size: auto;
   }
 }
 
@@ -328,7 +332,7 @@
 
 @media (max-width: 600px) {
   .home-content {
-    margin-top: 0;
+    margin-top: 60px!important;
     padding: 1.5rem 1rem;
   }
 
@@ -345,7 +349,7 @@
     gap: 0.1rem;
     border-radius: 24px;
     padding: 0.5rem;
-   
+    margin-top: 0rem;
   }
 
   .shops-section-title {
@@ -439,8 +443,8 @@
 
 /* Shops Section Styles */
 .home-shops-section {
-  margin-bottom: 0.14rem;
-  animation: fadeIn 0.5s ease-in;
+  margin: 0;
+  animation: none;
 }
 
 @keyframes fadeIn {
@@ -458,8 +462,7 @@
   font-size: 1.8rem;
   font-weight: 700;
   color: #222;
-  margin-bottom: 0.5rem;
-  margin-top: 2rem;
+  margin: 0 0 0.15rem 0;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -581,51 +584,41 @@
 .shops-carousel-container {
   width: 100%;
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden;
   background: linear-gradient(90deg, #fff 0%, #fff 85%, rgba(255,255,255,0) 100%);
   border-radius: 12px;
-  padding: 1rem 0;
-  margin-top: 0.25rem;
-  margin-bottom: 0.5rem;
-  scroll-behavior: smooth;
-  /* Enable smooth scrolling for touch devices */
-  -webkit-overflow-scrolling: touch;
-  /* Hide scrollbar but keep scrolling */
-  scrollbar-width: thin;
-  scrollbar-color: #ddd #f5f5f5;
+  /* give horizontal padding to container; keep track itself flush so
+     duplicated content lines up seamlessly for the marquee */
+  padding: 0.35rem 1rem;
+  margin: 0;
+  /* Slightly reduced to make shop cards a bit shorter */
+  height: 152px;
+  box-sizing: border-box;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .shops-carousel-container::-webkit-scrollbar {
-  height: 6px;
-}
-
-.shops-carousel-container::-webkit-scrollbar-track {
-  background: #f5f5f5;
-  border-radius: 10px;
-}
-
-.shops-carousel-container::-webkit-scrollbar-thumb {
-  background: #ddd;
-  border-radius: 10px;
-  transition: background 0.2s ease;
-}
-
-.shops-carousel-container::-webkit-scrollbar-thumb:hover {
-  background: #999;
+  display: none;
 }
 
 .shops-carousel-track {
+  --scroll-distance: 0px; /* set by JS to half of the track's full width */
   display: flex;
+  flex-wrap: nowrap;
   align-items: flex-start;
-  gap: 1.5rem;
-  height:130px;
-  animation: scroll-left 8s linear infinite;
-  padding: 0 1.5rem;
+  /* tighter gap keeps cards visually side-by-side during loop */
+  gap: 1rem;
+  height: 100%;
+  /* track should be flush (no horizontal padding) so duplicated items
+     tile seamlessly — container provides the outer padding */
+  padding: 0;
+  width: max-content;
+  /* slightly slower marquee for smoother movement */
+  animation: scroll-left 18s linear infinite;
   will-change: transform;
 }
 
-/* Disable auto-scroll animation when React detects prefers-reduced-motion.
-   The class is applied programmatically in Home.jsx via reducedMotionRef. */
 .shops-carousel-track.shops-carousel-no-anim {
   animation: none;
   will-change: auto;
@@ -640,40 +633,22 @@
     transform: translate3d(0, 0, 0);
   }
   100% {
-    transform: translate3d(-50%, 0, 0);
+    /* translate by the exact half-width (pixels) to avoid seams */
+    transform: translate3d(calc(-1 * var(--scroll-distance)), 0, 0);
   }
 }
 
-/* CSS-level reduced-motion pausing — acts as a safety net even when the
-   React-side detection hasn’t run yet (e.g. SSR or before hydration). */
 @media (prefers-reduced-motion: reduce) {
   .shops-carousel-track {
     animation: none;
     will-change: auto;
-  }
-
-  /* Pause banner shimmer pulse — frees GPU/CPU on low-power devices */
-  .home-unavailability-banner::before {
-    animation: none;
-  }
-
-  /* Pause the rotating shop-type icons in the section title */
-  .shops-title-icon {
-    animation: none;
-    opacity: 1;
-    transform: none;
-  }
-
-  /* Suppress homepage section fade-in (already rendered by the time
-     this kicks in, so removing it is purely a CPU win) */
-  .home-shops-section {
-    animation: none;
   }
 }
 
 .shops-carousel-item {
   flex: 0 0 260px;
   min-width: 260px;
+  height: 100%;
 }
 
 .shops-carousel-item .shop-card {
@@ -682,13 +657,30 @@
 
 /* Keep all home shop cards same height and clamp long text */
 .home-page .shops-carousel-item .shop-card {
-  height: auto;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
+/* allow card bottoms (reviews/meta) to be visible inside carousel */
+.home-page .shops-carousel-item .shop-card {
+  overflow: visible;
+}
+
+.home-page .shops-carousel-item .card-meta {
+  margin-top: auto;
+  overflow: visible;
+}
+
+/* Reduce image height inside the horizontal carousel so card body (reviews/meta)
+   remains visible and not clipped. These override the default shop-card image
+   sizes defined in shopcard.css when displayed inside the home carousel. */
+.home-page .shops-carousel-item .shop-card-image {
+  height: 88px;
+}
+
 .home-page .shops-carousel-item-grocery .shop-card {
-  height: auto;
+  height: 100%;
 }
 
 .home-page .shops-carousel-item .shop-card-content {
@@ -789,8 +781,7 @@
 
   .shops-section-title {
     font-size: 1.4rem;
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
+    margin: 0 0 0.1rem 0;
   }
 
   .shops-section-title-grocery {
@@ -799,14 +790,15 @@
 
   .shops-carousel-container {
     background: linear-gradient(90deg, #fff 0%, #fff 80%, rgba(255,255,255,0) 100%);
-    padding: 0.75rem 0;
-    margin-top: 0.25rem;
-    margin-bottom: 0.75rem;
+    padding: 0.25rem 0;
+    margin: 0;
     border-radius: 8px;
+    /* reduced slightly */
+    height: 142px;
   }
 
-  .shops-carousel-container::-webkit-scrollbar {
-    height: 4px;
+  .home-page .shops-carousel-item .shop-card-image {
+    height: 84px;
   }
 }
 
@@ -819,7 +811,7 @@
 
   .shops-carousel-track {
     gap: 0.75rem;
-    padding: 0 0.5rem;
+    padding: 0 0.35rem;
   }
 
   .shops-carousel-item {
@@ -834,12 +826,12 @@
 
   .home-page .shops-carousel-item .shop-card {
     max-width: 96px;
-    height: auto;
+    height: 100%;
   }
 
   .home-page .shops-carousel-item-grocery .shop-card {
     max-width: 82px;
-    height: auto;
+    height: 100%;
   }
 
   .home-page .shops-carousel-item .shop-card-image {
@@ -882,26 +874,24 @@
 
   .shops-section-title {
     font-size: 1.2rem;
-    margin-top: 1.25rem;
-    margin-bottom: 0.5rem;
+    margin: 0 0 0.1rem 0;
     gap: 0.5rem;
   }
 
   .home-shops-section {
-    margin-top: 0.75rem;
-    margin-bottom: 50px;
+    margin: 0 0 0.35rem 0;
   }
 
   .shops-carousel-container {
     background: linear-gradient(90deg, #fff 0%, #fff 75%, rgba(255,255,255,0) 100%);
-    padding: 0.5rem 0;
+    padding: 0.25rem 0;
     border-radius: 6px;
-    margin-top: 0.75rem;
-    margin-bottom: 0.5rem;
+    margin: 0;
+    height: 142px;
   }
 
-  .shops-carousel-container::-webkit-scrollbar {
-    height: 3px;
+  .home-page .shops-carousel-item .shop-card-image {
+    height: 82px;
   }
 
   .home-page .shops-carousel-item .card-status {
@@ -913,6 +903,14 @@
 }
 
 @media (max-width: 480px) {
+  .shops-carousel-container {
+    height: 148px;
+  }
+
+  .home-page .shops-carousel-item .shop-card-image {
+    height: 80px;
+  }
+
   .shops-carousel-item {
     flex: 0 0 86px;
     min-width: 86px;
@@ -947,6 +945,7 @@
     padding: 1px 5px;
     font-size: 0.54rem;
   }
+
 
   .home-page .shops-carousel-item-grocery .card-status {
     top: 4px;

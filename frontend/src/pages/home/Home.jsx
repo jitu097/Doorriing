@@ -293,16 +293,37 @@ const Home = () => {
 const ShopsSection = React.memo(({ shops, businessType, reducedMotion }) => {
   const safeShops = Array.isArray(shops) ? shops : [];
   const shopsCount = safeShops.length;
+  const isEmpty = shopsCount === 0;
+  const scrollingShops = useMemo(() => {
+    if (isEmpty) return [];
+    return [...safeShops, ...safeShops];
+  }, [safeShops, isEmpty]);
 
-  if (shopsCount === 0) {
-    return null;
-  }
+  // Measure the scroll track and set a CSS variable with half the scrollWidth
+  // so the CSS animation can translate by an exact pixel value and avoid
+  // visible seams or empty gaps between duplicated content.
+  const trackRef = useRef(null);
 
-  // Duplicate shops for continuous scrolling effect
-  const scrollingShops = useMemo(() => [...safeShops, ...safeShops], [safeShops]);
+  useEffect(() => {
+    const trackEl = trackRef.current;
+    if (!trackEl || reducedMotion || isEmpty) return;
+
+    const updateScrollDistance = () => {
+      try {
+        const half = Math.round(trackEl.scrollWidth / 2);
+        trackEl.style.setProperty('--scroll-distance', `${half}px`);
+      } catch (e) {
+        // Ignore measurement errors in rare environments
+      }
+    };
+
+    updateScrollDistance();
+    window.addEventListener('resize', updateScrollDistance);
+    return () => window.removeEventListener('resize', updateScrollDistance);
+  }, [scrollingShops, reducedMotion, isEmpty]);
 
   return (
-    <div className="home-shops-section">
+    <div className={`home-shops-section${isEmpty ? ' home-shops-section-empty' : ''}`}>
       <h6 className={`shops-section-title ${businessType === 'grocery' ? 'shops-section-title-grocery' : ''}`}>
         {businessType === 'grocery' ? (
           <> Explore Shops</>
@@ -312,7 +333,10 @@ const ShopsSection = React.memo(({ shops, businessType, reducedMotion }) => {
       </h6>
       <div className="shops-carousel-container">
         {/* Apply no-animation class when user prefers reduced motion */}
-        <div className={`shops-carousel-track${reducedMotion ? ' shops-carousel-no-anim' : ''}`}>
+        <div
+          ref={trackRef}
+          className={`shops-carousel-track${reducedMotion || isEmpty ? ' shops-carousel-no-anim' : ''}`}
+        >
           {scrollingShops.map((shop, index) => (
             <div
               key={`${shop.id}-${index}`}
