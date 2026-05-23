@@ -428,6 +428,11 @@ export const CartProvider = ({ children }) => {
             }
 
             const clientItemId = deriveClientItemId(item, payloadItemId);
+            console.log('=== CART CONTEXT ENTRY ===', {
+                incomingItem: item,
+                variant: item.variant,
+                clientItemId,
+            });
 
             const hasItems = cartItemsRef.current.length > 0;
             if (hasItems) {
@@ -447,16 +452,18 @@ export const CartProvider = ({ children }) => {
                 }
             }
 
+            let optimisticCartItems = null;
             setCartItems(prev => {
                 const exists = prev.find(i => deriveClientItemId(i) === clientItemId);
                 if (exists) {
-                    return prev.map(i =>
+                    optimisticCartItems = prev.map(i =>
                         deriveClientItemId(i) === clientItemId
                             ? { ...i, quantity: i.quantity + 1 }
                             : i
                     );
+                    return optimisticCartItems;
                 }
-                return [...prev, {
+                optimisticCartItems = [...prev, {
                     ...item,
                     id: payloadItemId,
                     clientItemId,
@@ -466,7 +473,9 @@ export const CartProvider = ({ children }) => {
                     shopId: item.shopId,
                     cartItemId: `temp-${Date.now()}`
                 }];
+                return optimisticCartItems;
             });
+            console.log('=== OPTIMISTIC INSERT COMPLETE ===', optimisticCartItems);
             setCartMeta(prev => ({
                 shopId: item.shopId,
                 shopType: item.shopType || prev.shopType

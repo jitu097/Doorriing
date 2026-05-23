@@ -32,7 +32,7 @@ const Cart = () => {
               <h2 className="section-title">Items ({cartItems.length})</h2>
               <div className="cart-items-list">
                 {cartItems.map((item) => (
-                  <CartItem key={item.id} item={item} showControls={true} compact={false} />
+                  <CartItem key={item.clientItemId || item.item_id || item.id} item={item} showControls={true} compact={false} />
                 ))}
               </div>
             </div>

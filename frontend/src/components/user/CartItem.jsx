@@ -4,6 +4,7 @@ import './CartItem.css';
 
 const CartItem = ({ item, showControls = true, compact = false }) => {
     const { increaseQty, decreaseQty, removeFromCart } = useCart();
+    const cartItemId = item.clientItemId || item.item_id || item.id;
 
     const itemTotal = (parseFloat(item.price) * item.quantity).toFixed(2);
     const itemImage = item.image || item.image_url || null;
@@ -35,7 +36,7 @@ const CartItem = ({ item, showControls = true, compact = false }) => {
                     <div className="quantity-controls">
                         <button
                             className="qty-btn"
-                            onClick={() => decreaseQty(item.id)}
+                            onClick={() => decreaseQty(cartItemId)}
                             aria-label="Decrease quantity"
                         >
                             -
@@ -43,7 +44,7 @@ const CartItem = ({ item, showControls = true, compact = false }) => {
                         <span className="qty-display">{item.quantity}</span>
                         <button
                             className="qty-btn"
-                            onClick={() => increaseQty(item.id)}
+                            onClick={() => increaseQty(cartItemId)}
                             aria-label="Increase quantity"
                         >
                             +
@@ -58,7 +59,7 @@ const CartItem = ({ item, showControls = true, compact = false }) => {
             {!compact && (
                 <button
                     className="cart-item-remove"
-                    onClick={() => removeFromCart(item.id)}
+                    onClick={() => removeFromCart(cartItemId)}
                     aria-label="Remove item"
                 >
                     ✕
