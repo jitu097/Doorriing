@@ -723,6 +723,22 @@
   max-width: 100%;
 }
 
+/* Home-only shop card rating: prioritize stars, minimize numeric digit */
+.home-page .shops-carousel-item .card-meta-pill-rating .rating-count {
+  display: none;
+}
+
+.home-page .shops-carousel-item .card-meta-pill-rating .rating-value {
+  font-size: 0.48rem;
+  font-weight: 600;
+  opacity: 0.7;
+  margin-left: 1px;
+}
+
+.home-page .shops-carousel-item .card-meta-pill-rating .rating-star-icon {
+  font-size: 0.52rem;
+}
+
 /* Responsive - Tablet */
 @media (max-width: 1024px) {
   .shops-sections-wrapper {
