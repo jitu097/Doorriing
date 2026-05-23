@@ -26,6 +26,27 @@
   gap: 20px;
 }
 
+.address-back-btn {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  color: #ef6a05;
+  font-size: 24px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.address-back-btn:hover {
+  background: #fff4e6;
+}
+
 .address-header h1 {
   font-size: 36px;
   color: #2c3e50;
@@ -488,11 +509,13 @@
   display: flex;
   gap: 12px;
   margin-top: 24px;
+  flex-wrap: nowrap;
 }
 
 .cancel-btn,
 .save-btn {
   flex: 1;
+  min-width: 0;
   padding: 14px 24px;
   border: none;
   border-radius: 8px;
@@ -561,7 +584,7 @@
   }
 
   .form-actions {
-    flex-direction: column;
+    gap: 10px;
   }
 
   .address-actions {
@@ -588,6 +611,10 @@
     font-size: 24px;
   }
 
+
+  .address-header {
+    align-items: flex-start;
+  }
   .address-card {
     padding: 20px;
   }

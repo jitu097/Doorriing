@@ -177,9 +177,6 @@ const OrderConfirmation = () => {
     /* ── hero banner copy based on payment type ── */
     const heroBadgeText = isOnlinePayment ? '✅ Payment Successful' : '📦 Order Placed';
     const heroTitle = isOnlinePayment ? 'Payment Confirmed!' : 'Order Placed Successfully!';
-    const heroSubtitle = isOnlinePayment
-        ? 'Your payment was processed and the order is confirmed.'
-        : 'Your order has been placed and is waiting for seller confirmation.';
 
     // Determine estimated delivery range based on shop type or shop name heuristics
     const shop = order.shops || order.shop || {};
@@ -213,7 +210,6 @@ const OrderConfirmation = () => {
                 <AnimatedCheck />
 
                 <h1 className="oc-hero-title">{heroTitle}</h1>
-                <p className="oc-hero-sub">{heroSubtitle}</p>
 
                 <div className="oc-order-id-pill">
                     <span className="oc-order-id-label">Order ID</span>

@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAddress } from '../../context/AddressContext';
 import AddressForm from '../../components/common/AddressForm';
 import './Address.css';
 
 const Address = () => {
+  const navigate = useNavigate();
   const { addresses, addAddress, updateAddress, deleteAddress, setDefaultAddress, isLoading } = useAddress();
 
   const [showModal, setShowModal] = useState(false);
@@ -110,6 +112,9 @@ const Address = () => {
     <div className="address-container">
       <div className="address-wrapper">
         <div className="address-header">
+          <button className="address-back-btn" type="button" onClick={() => navigate(-1)} aria-label="Go back">
+            ←
+          </button>
           <div>
             <h1>Saved Addresses</h1>
             <p>Manage your delivery addresses</p>

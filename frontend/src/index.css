@@ -6,24 +6,47 @@
 }
 
 /* ── STEP 6: Touch Latency Optimizations ─────────────────────────────────────
-   These three rules together eliminate the most common sources of "lag" on
-   low-end Android WebView:
+:   These three rules together eliminate the most common sources of "lag" on
+	low-end Android WebView:
+*/
 
-   1. -webkit-tap-highlight-color: transparent
-      Removes the semi-transparent gray rectangle that appears on every tap.
-      Without this, Android WebView renders a highlight layer on each touch,
-      adding a visible delay before the button visually reacts.
+/* Consistent button corner radius across the app */
+:root {
+  --btn-radius: 12px;
+}
 
-   2. touch-action: manipulation (on interactive elements)
-      Tells the browser this element doesn't need double-tap-to-zoom.
-      Removes the 300ms click delay that WebView adds while it "waits" to see
-      if the user is double-tapping. Makes ALL button taps feel instant.
+/* Apply to plain buttons but avoid overriding explicitly circular controls */
+button:not(.address-back-btn):not(.add-address-fab):not(.oc-home-btn):not(.cart-drawer-close):not(.modal-close) ,
+input[type="button"],
+input[type="submit"],
+button[type="submit"] {
+  border-radius: var(--btn-radius) !important;
+}
 
-   3. user-select: none (on buttons)
-      Prevents accidental text selection when the user taps quickly on
-      quantity controls or Add buttons. Eliminates the "long-press context menu"
-      trigger on interactive controls.
-   ──────────────────────────────────────────────────────────────────────────── */
+/* Common button classes used across the codebase */
+.save-btn,
+.cancel-btn,
+.oc-btn,
+.action-btn,
+.add-first-btn,
+.add-address-btn,
+.signup-button,
+.login-button,
+.btn,
+.btn-primary,
+.btn-secondary,
+.shop-now-btn,
+.view-details-btn,
+.home-button {
+  border-radius: var(--btn-radius) !important;
+}
+
+/* Small quantity buttons: keep them slightly rounded but compact */
+.qty-btn-small,
+.back-button {
+  border-radius: 8px !important;
+}
+
 
 /* Eliminate tap highlight flash on ALL elements */
 * {
