@@ -87,6 +87,7 @@ const ItemCard = ({
   const { isOpen: appIsOpen, isLoading: appAvailabilityLoading } = useAppAvailability();
   const [showVariants, setShowVariants] = useState(false);
   const [availabilityToast, setAvailabilityToast] = useState(null);
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const isRestaurantCard = shopType === 'restaurant';
 
   const appClosed = !appAvailabilityLoading && !appIsOpen;
@@ -685,7 +686,7 @@ const ItemCard = ({
   };
 
   return (
-    <div className={`item-card${!isAvailable ? ' item-card-disabled' : ''}${appClosed ? ' item-card-app-closed' : ''}${isRestaurantCard ? ' restaurant-card' : ''}`}>
+    <div className={`item-card${!isAvailable ? ' item-card-disabled' : ''}${appClosed ? ' item-card-app-closed' : ''}${isRestaurantCard ? ' restaurant-card' : ''}${showFullDescription ? ' description-expanded' : ''}`}>
       {availabilityToast && (
         <div className="item-card-availability-toast" role="alert" aria-live="assertive">
           🔒 {availabilityToast}
@@ -721,9 +722,30 @@ const ItemCard = ({
             </span>
           ) : null}
           <h3 className="item-card-name">{name}</h3>
+          {/* show info toggle only when description is long (>5 words) */}
+          {description && description.split(/\s+/).filter(Boolean).length > 5 ? (
+            <button
+              type="button"
+              className={`item-info-btn ${showFullDescription ? 'active' : ''}`}
+              aria-pressed={showFullDescription}
+              aria-label={showFullDescription ? 'Hide description' : 'Show full description'}
+              onClick={(e) => { e.stopPropagation(); setShowFullDescription((s) => !s); }}
+              onPointerDown={(e) => { e.stopPropagation(); /* ensure mobile taps register */ }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setShowFullDescription((s) => !s); } }}
+              tabIndex={0}
+            >
+              <img src="/information.png" alt="info" className="item-info-icon" />
+            </button>
+          ) : null}
         </div>
 
-        {secondaryText && <p className="item-card-subtitle">{secondaryText}</p>}
+        {/* Show shop name (subtitle) and the item description separately so both are visible */}
+        {subtitle && <p className="item-card-subtitle">{subtitle}</p>}
+        {description && (
+          <p className={`item-card-description ${showFullDescription ? 'expanded' : ''}`}>
+            {description}
+          </p>
+        )}
 
         {hasRating && (
           <div className="item-card-rating" aria-label={`Rated ${numericAverageRating.toFixed(1)} out of 5 from ${numericReviewCount} reviews`}>
@@ -742,7 +764,8 @@ const ItemCard = ({
           </div>
         )}
 
-        {(baseQuantity || unit) && (
+        {/* Hide quantity/unit display for restaurant cards (e.g., "1 plate") */}
+        {(baseQuantity || unit) && !isRestaurantCard && (
           <p className="item-card-measure">{baseQuantity ? baseQuantity : ''}{unit ? ` ${unit}` : ''}</p>
         )}
 
@@ -759,6 +782,24 @@ const ItemCard = ({
             >
               {appClosed ? 'Unavailable' : !isAvailable ? 'UNAVAILABLE' : 'Add'}
             </button>
+          </div>
+        )}
+        {showFullDescription && (
+          <div
+            className="item-desc-modal"
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setShowFullDescription(false)}
+          >
+            <div className="item-desc-modal-panel" onClick={(e) => e.stopPropagation()}>
+              <div className="item-desc-modal-header">
+                <h3>{name}</h3>
+                <button type="button" className="item-desc-modal-close" aria-label="Close description" onClick={() => setShowFullDescription(false)}>✕</button>
+              </div>
+              <div className="item-desc-modal-body">
+                <p>{description}</p>
+              </div>
+            </div>
           </div>
         )}
       </div>
