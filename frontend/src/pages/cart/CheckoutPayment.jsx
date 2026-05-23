@@ -500,7 +500,7 @@ const CheckoutPayment = () => {
           finalAmount: grandTotal,
         },
         items: cartItems.map((item) => ({
-          itemId: item.id,
+          itemId: item.item_id || item.clientItemId || item.id,
           quantity: item.quantity,
         })),
       });

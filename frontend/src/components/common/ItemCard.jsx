@@ -239,6 +239,20 @@ const ItemCard = ({
     roundedRatingStars,
   } = ratingAndStockMeta;
 
+  useEffect(() => {
+    console.log('=== ITEMCARD RENDER ===', {
+      itemId: id,
+      clientItemId,
+      variantState: showVariants,
+      timestamp: performance.now(),
+    });
+  });
+
+  useEffect(() => {
+    return () => {
+      console.log('ITEMCARD UNMOUNTED', id);
+    };
+  }, [id]);
   // ── isolated Cart Subscriptions ─────────────────────────────────────────
   const { cartItem, halfCartItem, fullCartItem } = useItemCartInfo(clientItemId, hasHalfVariant);
   
@@ -259,8 +273,6 @@ const ItemCard = ({
 
     if (anyInCart && !showVariants) {
       setShowVariants(true);
-    } else if (!anyInCart && showVariants) {
-      setShowVariants(false);
     }
   }, [hasHalfVariant, halfCartItem, fullCartItem, showVariants]);
 
@@ -299,6 +311,15 @@ const ItemCard = ({
       setShowVariants(true);
       return;
     }
+
+    console.log('=== NORMAL ADD CLICK START ===', {
+      clientItemId,
+      item: {
+        id,
+        name,
+        price: priceValue ?? price,
+      },
+    });
 
     try {
       await addToCart({
@@ -348,6 +369,16 @@ const ItemCard = ({
 
   const handleVariantAdd = useCallback(async (variant) => {
     console.debug('[ItemCard] handleVariantAdd called', { variantKey: variant?.key, orderingDisabled });
+      console.log('=== HANDLE VARIANT ADD ===', {
+        receivedVariant: variant,
+        item: {
+          id,
+          clientItemId,
+          name,
+          price: priceValue ?? price,
+        },
+        timestamp: performance.now(),
+      });
 
     if (orderingDisabled) {
       if (appClosed) {
@@ -448,7 +479,20 @@ const ItemCard = ({
                 className="portion-add-btn"
                 type="button"
                 disabled={!isAvailable}
-                onClick={() => handleVariantAdd(variant)}
+                  onClick={() => {
+                    console.log('=== HALF/FULL CLICK START ===', {
+                      variantKey: variant.key,
+                      variantLabel: variant.label,
+                      priceValue: variant.priceValue,
+                      item: {
+                        id,
+                        clientItemId,
+                        name,
+                        price: priceValue ?? price,
+                      },
+                    });
+                    handleVariantAdd(variant);
+                  }}
               >
                 Add
               </button>
@@ -560,7 +604,20 @@ const ItemCard = ({
                   className="restaurant-variant-add"
                   type="button"
                   disabled={orderingDisabled}
-                  onClick={() => handleVariantAdd(variant)}
+                  onClick={() => {
+                    console.log('=== HALF/FULL CLICK START ===', {
+                      variantKey: variant.key,
+                      variantLabel: variant.label,
+                      priceValue: variant.priceValue,
+                      item: {
+                        id,
+                        clientItemId,
+                        name,
+                        price: priceValue ?? price,
+                      },
+                    });
+                    handleVariantAdd(variant);
+                  }}
                 >
                   {appClosed ? 'Unavailable' : !isAvailable ? 'UNAVAILABLE' : 'Add'}
                 </button>
@@ -619,8 +676,20 @@ const ItemCard = ({
                       className="variant-add-btn"
                       type="button"
                       disabled={orderingDisabled}
-                      onClick={() => handleVariantAdd(variant)}
-                      onPointerDown={(e) => console.debug('[ItemCard] pointerdown on variant add', { variantKey: variant.key, pointerType: e.pointerType })}
+                      onClick={() => {
+                        console.log('=== HALF/FULL CLICK START ===', {
+                          variantKey: variant.key,
+                          variantLabel: variant.label,
+                          priceValue: variant.priceValue,
+                          item: {
+                            id,
+                            clientItemId,
+                            name,
+                            price: priceValue ?? price,
+                          },
+                        });
+                        handleVariantAdd(variant);
+                      }}
                     >
                       {appClosed ? 'Unavailable' : !isAvailable ? 'UNAVAILABLE' : 'Add'}
                     </button>
