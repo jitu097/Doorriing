@@ -400,6 +400,7 @@ const ItemsSection = React.memo(({ title, items, emptyMessage, loading, error })
                 fullPortionPrice={item.fullPortionPrice}
                 fullPortionFinalPrice={item.fullPortionFinalPrice}
                 foodType={item.foodType}
+                is_sweets={item.is_sweets}
                 isVeg={shouldShowVegIndicator ? derivedIsVeg : undefined}
                 baseQuantity={item.baseQuantity}
                 unit={item.unit}

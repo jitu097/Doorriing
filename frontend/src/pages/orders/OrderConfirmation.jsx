@@ -174,8 +174,8 @@ const OrderConfirmation = () => {
 
     const getPortionLabel = (item) => {
         const normalized = String(item?.portion_type || item?.portion || '').trim().toLowerCase();
-        if (normalized === 'half') return 'Half';
-        if (normalized === 'full') return 'Full';
+        if (normalized === 'half') return 'Per Piece';
+        if (normalized === 'full') return 'Per Kg';
         return '';
     };
 

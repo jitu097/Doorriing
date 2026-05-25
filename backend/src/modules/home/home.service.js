@@ -23,6 +23,7 @@ const ITEM_SELECT_COLUMNS = `
   half_discount_type,
   half_discount_value,
   half_portion_final_price,
+  is_sweets,
   food_type,
   base_quantity,
   unit,

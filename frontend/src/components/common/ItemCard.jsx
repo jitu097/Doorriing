@@ -73,6 +73,7 @@ const ItemCard = ({
   stockQuantityValue,
   shopId,
   shopType,
+  is_sweets,
   halfPortionPrice,
   fullPortionPrice,
   halfPortionFinalPrice,
@@ -125,12 +126,13 @@ const ItemCard = ({
     const formattedFullVariantPrice = formatPrice(fullFinalPriceValue);
     const formattedFullVariantOriginalPrice = formatPrice(fullOriginalPriceValue);
     const showVariantPricing = Boolean(hasHalfVariant && formattedHalfVariantPrice);
+    const sweetVariantLabels = Boolean(is_sweets);
 
     const variantOptions = showVariantPricing
       ? [
         {
           key: 'full',
-          label: 'Full',
+          label: sweetVariantLabels ? 'Per Kg' : 'Full',
           formattedPrice: formattedFullVariantPrice,
           formattedOriginalPrice: formattedFullVariantOriginalPrice,
           priceValue: fullFinalPriceValue,
@@ -139,7 +141,7 @@ const ItemCard = ({
         },
         {
           key: 'half',
-          label: 'Half',
+          label: sweetVariantLabels ? 'Per Piece' : 'Half',
           formattedPrice: formattedHalfVariantPrice,
           formattedOriginalPrice: formattedHalfVariantOriginalPrice,
           priceValue: halfFinalPriceValue,
@@ -183,6 +185,7 @@ const ItemCard = ({
     halfPortionPrice,
     halfPortionFinalPrice,
     fullPortionFinalPrice,
+    is_sweets,
     id,
     name,
     subtitle,
@@ -414,7 +417,7 @@ const ItemCard = ({
         description,
         shopId,
         shopType,
-        portion: variant.label,
+        portion: variant.key,
         baseQuantity,
         unit,
       });
@@ -520,8 +523,11 @@ const ItemCard = ({
       <div className="item-card-price-block">
         {showVariantPricing && showVariants && variantOptions ? (
           <div className="item-card-price-variants">
-            <span className="price-variant-text">Half: ₹{formattedHalfVariantPrice}</span>
-            <span className="price-variant-text">Full: ₹{formattedPrice}</span>
+            {variantOptions.map((variant) => (
+              <span key={variant.key} className="price-variant-text">
+                {variant.label}: ₹{variant.formattedPrice}
+              </span>
+            ))}
           </div>
         ) : (
           <div className="item-card-price-inline">

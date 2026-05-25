@@ -245,6 +245,7 @@ const SubCategory = () => {
                     fullPortionFinalPrice={fullPortionFinalPrice}
                     foodType={foodType}
                     isVeg={derivedIsVeg}
+                    is_sweets={item.is_sweets}
                     isAvailable={item.is_available !== false}
                     description={item.description}
                     stockQuantityLabel={stockLabel}

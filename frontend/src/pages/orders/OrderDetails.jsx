@@ -65,9 +65,9 @@ const OrderDetails = () => {
               quantity: oi.quantity,
               portionType: oi.portion_type || oi.portion || null,
               portionLabel: String(oi.portion_type || oi.portion || '').trim().toLowerCase() === 'half'
-                ? 'Half'
+                ? 'Per Piece'
                 : String(oi.portion_type || oi.portion || '').trim().toLowerCase() === 'full'
-                  ? 'Full'
+                  ? 'Per Kg'
                   : null,
               unitPrice: oi.unit_price ?? oi.item_price ?? oi.price ?? null,
               totalPrice: oi.total_price ?? oi.subtotal ?? null,

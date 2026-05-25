@@ -23,14 +23,34 @@ const normalizeIdValue = (value) => {
     return typeof value === 'string' ? value : value.toString();
 };
 
+const normalizeVariantKey = (value) => {
+    const normalized = normalizeIdValue(value).trim().toLowerCase();
+    if (!normalized) return '';
+
+    if (normalized === 'half' || normalized === 'per piece' || normalized === 'piece' || normalized === 'pieces') {
+        return 'half';
+    }
+
+    if (normalized === 'full' || normalized === 'per kg' || normalized === 'kg' || normalized === 'kilogram' || normalized === 'kilograms') {
+        return 'full';
+    }
+
+    return normalized;
+};
+
+const getVariantDisplayLabel = (value) => {
+    const normalized = normalizeVariantKey(value);
+    if (normalized === 'half') return 'Per Piece';
+    if (normalized === 'full') return 'Per Kg';
+    return value ? normalizeIdValue(value) : '';
+};
+
 const ensureVariantSuffix = (idValue, variantLabel) => {
     const normalizedId = normalizeIdValue(idValue);
-    if (!variantLabel) return normalizedId;
-
-    const trimmedVariant = variantLabel.toString().trim().toLowerCase();
+    const trimmedVariant = normalizeVariantKey(variantLabel);
     if (!trimmedVariant) return normalizedId;
 
-    if (normalizedId.endsWith(`-${trimmedVariant}`)) {
+    if (normalizedId.toLowerCase().endsWith(`-${trimmedVariant}`)) {
         return normalizedId;
     }
 
@@ -61,7 +81,7 @@ const resolveApiItemId = (item, fallback = '') => {
 
 const resolveItemVariant = (item) => {
     const rawVariant = item?.portion || item?.variant || item?.portion_label || item?.selectedPortion || '';
-    const normalizedVariant = rawVariant.toString().trim().toLowerCase();
+    const normalizedVariant = normalizeVariantKey(rawVariant);
 
     if (normalizedVariant === 'half') return 'Half';
     if (normalizedVariant === 'full') return 'Full';
@@ -304,11 +324,12 @@ export const CartProvider = ({ children }) => {
         const mappedItems = items.map((ci) => {
             const itemPayload = ci.items || {};
             const fallbackId = itemPayload?.id ?? ci.item_id ?? ci.id;
-            const derivedVariant = itemPayload?.portion || ci.variant;
+            const derivedVariant = normalizeVariantKey(itemPayload?.portion || ci.variant);
+            const variantDisplayLabel = getVariantDisplayLabel(derivedVariant);
             const resolvedImage = itemPayload?.image ?? itemPayload?.image_url ?? null;
             const rawName = itemPayload?.name ?? itemPayload?.title ?? '';
-            const normalizedName = derivedVariant && rawName
-                ? (rawName.toLowerCase().includes(derivedVariant.toLowerCase()) ? rawName : `${rawName} (${derivedVariant})`)
+            const normalizedName = variantDisplayLabel && rawName
+                ? (rawName.toLowerCase().includes(variantDisplayLabel.toLowerCase()) ? rawName : `${rawName} (${variantDisplayLabel})`)
                 : rawName;
             const enrichedPayload = {
                 ...itemPayload,
@@ -316,6 +337,7 @@ export const CartProvider = ({ children }) => {
                 image: resolvedImage,
                 image_url: itemPayload?.image_url ?? resolvedImage,
                 variant: derivedVariant,
+                portionLabel: variantDisplayLabel || itemPayload?.portionLabel || null,
                 shopType: itemPayload?.shopType || businessType || itemPayload?.shops?.business_type || null,
                 shopId: itemPayload?.shop_id || shopIdFromPayload,
                 baseQuantity: itemPayload?.baseQuantity ?? itemPayload?.base_quantity ?? null,
