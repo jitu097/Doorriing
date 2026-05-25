@@ -206,6 +206,18 @@ const ItemCard = ({
     legacyVegIndicator,
   } = memoizedDetails;
 
+  const measureText = useMemo(() => {
+    const quantityText = baseQuantity !== undefined && baseQuantity !== null && String(baseQuantity).trim() !== ''
+      ? String(baseQuantity).trim()
+      : '';
+    const unitText = unit !== undefined && unit !== null && String(unit).trim() !== ''
+      ? String(unit).trim()
+      : '';
+
+    const combined = [quantityText, unitText].filter(Boolean).join(' ');
+    return combined || null;
+  }, [baseQuantity, unit]);
+
   // ── Memoized Rating and Stock metadata ───────────────────────────────────
   const ratingAndStockMeta = useMemo(() => {
     const hasStockLabel = typeof stockQuantityLabel === 'string' && stockQuantityLabel.trim().length > 0;
@@ -834,8 +846,10 @@ const ItemCard = ({
         )}
 
         {/* Hide quantity/unit display for restaurant cards (e.g., "1 plate") */}
-        {(baseQuantity || unit) && !isRestaurantCard && (
-          <p className="item-card-measure">{baseQuantity ? baseQuantity : ''}{unit ? ` ${unit}` : ''}</p>
+        {measureText && !isRestaurantCard && (
+          <div className="item-card-measure" aria-label={`Quantity ${measureText}`}>
+            {measureText}
+          </div>
         )}
 
         {renderFooter()}

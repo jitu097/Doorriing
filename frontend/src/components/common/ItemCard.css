@@ -317,6 +317,7 @@
 .item-card-description.expanded {
   display: block;
   -webkit-line-clamp: unset;
+  line-clamp: none;
   -webkit-box-orient: unset;
   overflow: visible;
   display: block;
@@ -396,6 +397,7 @@
   line-height: 1.25;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -445,10 +447,19 @@
 }
 
 .item-card-measure {
-  font-size: 0.82rem;
-  color: #555555;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #c2410c;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   margin: 0;
-  font-weight: 600;
 }
 
 .item-card-quantity {

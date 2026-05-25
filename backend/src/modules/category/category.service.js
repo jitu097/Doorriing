@@ -162,7 +162,9 @@ class CategoryService {
             image_url,
             is_active,
             is_available,
-            stock_quantity
+            stock_quantity,
+            base_quantity,
+            unit
           `)
           .eq('shop_id', shopId)
           .eq('category_id', categoryId)
