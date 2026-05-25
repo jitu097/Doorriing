@@ -49,11 +49,28 @@ class PushNotificationService {
         reference_id,
       }).catch(err => console.error("⚠️ Failed to store notification in DB:", err.message));
 
+      if (isSeller) {
+        logger.info('history_insert_success', {
+          seller_id: shop_id,
+          type,
+          reference_id,
+        });
+      }
+
       // 3. Fetch Tokens
       const tokenRows = await this.getTokens({ customer_id, shop_id, target });
       const fcmTokens = (tokenRows || [])
         .map(row => row.fcm_token)
         .filter(token => token && typeof token === 'string' && token.trim() !== '');
+
+      if (isSeller) {
+        logger.info('DIRECT_SELLER_PUSH_START', {
+          seller_id: shop_id,
+          token_count: fcmTokens.length,
+          type,
+          reference_id,
+        });
+      }
 
       if (fcmTokens.length === 0) {
         console.log(`[FCM_TRACE] No tokens found for ${isSeller ? 'shop' : 'user'}: ${isSeller ? shop_id : customer_id}`);
@@ -103,10 +120,25 @@ class PushNotificationService {
         const token = fcmTokens[index];
         if (res.success) {
           sent++;
-          if (isSeller) console.log(`✅ [FCM_SUCCESS] Sent to token ending in ...${token.slice(-6)}`);
+          if (isSeller) {
+            logger.info('FCM_SUCCESS', {
+              seller_id: shop_id,
+              token: tokenLabel(token),
+              reference_id,
+            });
+          }
         } else {
           failed++;
-          console.error(`❌ [FCM_FAILURE] Error: ${res.error?.code || 'unknown'} for token ...${token.slice(-6)}`);
+          if (isSeller) {
+            logger.error('FCM_FAILURE', {
+              seller_id: shop_id,
+              token: tokenLabel(token),
+              error: res.error?.code || 'unknown',
+              reference_id,
+            });
+          } else {
+            console.error(`❌ [FCM_FAILURE] Error: ${res.error?.code || 'unknown'} for token ...${token.slice(-6)}`);
+          }
           if (res.error?.code && INVALID_TOKEN_ERRORS.has(res.error.code)) {
             invalidTokens.push(token);
           }
@@ -117,6 +149,12 @@ class PushNotificationService {
         await this.removeTokens(invalidTokens).catch((err) => {
           logger.error('Failed to clean up invalid FCM tokens', { error: err.message });
         });
+        if (isSeller) {
+          logger.info('invalid_token_cleanup', {
+            seller_id: shop_id,
+            token_count: invalidTokens.length,
+          });
+        }
       }
 
       return { sent, failed, stored: true };
