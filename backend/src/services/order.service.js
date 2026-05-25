@@ -3,6 +3,7 @@ import { logger } from '../utils/logger.js';
 import pushNotificationService from './pushNotification.service.js';
 import paymentAuditService from './paymentAudit.service.js';
 import refundService from './refund.service.js';
+import fetch from 'node-fetch';
 
 const computeFinalPrice = (basePrice, discountType, discountValue) => {
     if (basePrice === undefined || basePrice === null) return null;
@@ -448,6 +449,55 @@ export const orderService = {
                     customerId,
                 });
             }
+
+            // Trigger request-driven seller notification via Seller Backend internal webhook (non-blocking)
+            const sellerBackendUrl = process.env.SELLER_BACKEND_URL || 'http://localhost:5000';
+            const internalApiKey = process.env.INTERNAL_API_KEY || 'bz_internal_secret_key_2026';
+            
+            // Asynchronously query the trigger-created notification ID and notify the seller backend
+            (async () => {
+                let notificationId = null;
+                try {
+                    const { data: notifData } = await supabase
+                        .from('seller_notifications')
+                        .select('id')
+                        .eq('shop_id', shopId)
+                        .eq('type', 'NEW_ORDER')
+                        .eq('reference_id', newOrder.id)
+                        .limit(1)
+                        .maybeSingle();
+                    if (notifData) {
+                        notificationId = notifData.id;
+                    }
+                } catch (err) {
+                    logger.error('[Order Service] Failed to query trigger-created notification ID', { error: err.message });
+                }
+
+                try {
+                    const response = await fetch(`${sellerBackendUrl}/api/internal/seller/new-order-notify`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-internal-key': internalApiKey
+                        },
+                        body: JSON.stringify({
+                            shopId: shopId,
+                            orderId: newOrder.id,
+                            orderNumber: orderNumber,
+                            notificationId: notificationId
+                        })
+                    });
+                    if (!response.ok) {
+                        logger.warn('[Order Service] Seller notification webhook returned non-2xx status', { status: response.status });
+                    } else {
+                        logger.info('[Order Service] Request-driven seller notification webhook triggered successfully', { orderId: newOrder.id, notificationId });
+                    }
+                } catch (err) {
+                    logger.error('[Order Service] Seller notification webhook fetch failed (async)', { error: err.message });
+                }
+            })().catch(err => {
+                logger.error('[Order Service] Webhook execution IIFE exception', { error: err.message });
+            });
 
             // STEP 9: Return full response
             return {
@@ -927,19 +977,54 @@ export const orderService = {
                 logger.error('[Online Order] Customer notification failed (non-fatal)', { error: notifError.message, orderId: newOrder.id });
             }
 
-            // Seller notification
-            try {
-                await pushNotificationService.sendPushNotification({
-                    shop_id: shopId,
-                    title: '💳 New Paid Order Received',
-                    message: `New online payment order #${orderNumber}. Payment confirmed!`,
-                    type: 'new_order',
-                    reference_id: newOrder.id,
-                    target: 'shop',
-                });
-            } catch (notifError) {
-                logger.error('[Online Order] Seller notification failed (non-fatal)', { error: notifError.message, orderId: newOrder.id });
-            }
+            // Trigger request-driven seller notification via Seller Backend internal webhook (non-blocking)
+            const sellerBackendUrl = process.env.SELLER_BACKEND_URL || 'http://localhost:5000';
+            const internalApiKey = process.env.INTERNAL_API_KEY || 'bz_internal_secret_key_2026';
+            
+            // Asynchronously query the trigger-created notification ID and notify the seller backend
+            (async () => {
+                let notificationId = null;
+                try {
+                    const { data: notifData } = await supabase
+                        .from('seller_notifications')
+                        .select('id')
+                        .eq('shop_id', shopId)
+                        .eq('type', 'NEW_ORDER')
+                        .eq('reference_id', newOrder.id)
+                        .limit(1)
+                        .maybeSingle();
+                    if (notifData) {
+                        notificationId = notifData.id;
+                    }
+                } catch (err) {
+                    logger.error('[Online Order Service] Failed to query trigger-created notification ID', { error: err.message });
+                }
+
+                try {
+                    const response = await fetch(`${sellerBackendUrl}/api/internal/seller/new-order-notify`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-internal-key': internalApiKey
+                        },
+                        body: JSON.stringify({
+                            shopId: shopId,
+                            orderId: newOrder.id,
+                            orderNumber: orderNumber,
+                            notificationId: notificationId
+                        })
+                    });
+                    if (!response.ok) {
+                        logger.warn('[Online Order Service] Seller notification webhook returned non-2xx status', { status: response.status });
+                    } else {
+                        logger.info('[Online Order Service] Request-driven seller notification webhook triggered successfully', { orderId: newOrder.id, notificationId });
+                    }
+                } catch (err) {
+                    logger.error('[Online Order Service] Seller notification webhook fetch failed (async)', { error: err.message });
+                }
+            })().catch(err => {
+                logger.error('[Online Order Service] Webhook execution IIFE exception', { error: err.message });
+            });
 
             // ── STEP 11: Audit log — payment captured ──────────────────────────
             // Fire-and-forget: audit failure never affects the order creation result.
