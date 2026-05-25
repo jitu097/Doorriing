@@ -22,6 +22,13 @@ class OrderService {
     return value.replace(' ', 'T') + 'Z';
   }
 
+  normalizePortionType(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    if (normalized === 'half') return 'half';
+    if (normalized === 'full') return 'full';
+    return null;
+  }
+
   /**
    * Create order from cart
    */
@@ -96,14 +103,20 @@ class OrderService {
       }
 
       // Create order items
-      const orderItems = cart.cart_items.map(cartItem => ({
-        order_id: order.id,
-        item_id: cartItem.item_id,
-        name: cartItem.items.name,
-        quantity: cartItem.quantity,
-        price: cartItem.items.price,
-        portion: orderData.portion || 'full',
-      }));
+      const orderItems = cart.cart_items.map(cartItem => {
+        const portionType = this.normalizePortionType(cartItem?.items?.portion || cartItem?.variant || orderData?.portion);
+        const unitPrice = Number(cartItem?.items?.price) || 0;
+
+        return {
+          order_id: order.id,
+          item_id: cartItem.item_id,
+          name: cartItem.items.name,
+          quantity: cartItem.quantity,
+          price: unitPrice,
+          portion: portionType ? (portionType === 'half' ? 'Half' : 'Full') : null,
+          portion_type: portionType,
+        };
+      });
 
       const { error: itemsError } = await supabase
         .from('order_items')

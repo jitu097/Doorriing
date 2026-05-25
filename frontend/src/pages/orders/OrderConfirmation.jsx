@@ -172,6 +172,24 @@ const OrderConfirmation = () => {
     const deliveryCharge = parseFloat(order.delivery_charge || 0).toFixed(0);
     const handlingCharge = parseFloat(order.handling_charge || 0).toFixed(0);
 
+    const getPortionLabel = (item) => {
+        const normalized = String(item?.portion_type || item?.portion || '').trim().toLowerCase();
+        if (normalized === 'half') return 'Half';
+        if (normalized === 'full') return 'Full';
+        return '';
+    };
+
+    const getItemTotal = (item) => {
+        const quantity = Number(item?.quantity || 0);
+        const canonicalTotal = item?.total_price ?? item?.subtotal;
+        if (canonicalTotal !== undefined && canonicalTotal !== null) {
+            return Number(canonicalTotal);
+        }
+
+        const unitPrice = Number(item?.unit_price ?? item?.item_price ?? item?.price ?? 0);
+        return unitPrice * quantity;
+    };
+
     const orderDisplayId = order.order_number || order.id;
 
     /* ── hero banner copy based on payment type ── */
@@ -259,9 +277,10 @@ const OrderConfirmation = () => {
                                     <span className="oc-item-qty">{item.quantity}×</span>
                                     <span className="oc-item-name">
                                         {item.item_name || 'Item'}
+                                        {getPortionLabel(item) ? ` (${getPortionLabel(item)})` : ''}
                                     </span>
                                     <span className="oc-item-price">
-                                        ₹{parseFloat(item.subtotal || item.item_price * item.quantity || 0).toFixed(0)}
+                                        ₹{getItemTotal(item).toFixed(0)}
                                     </span>
                                 </div>
                             ))}

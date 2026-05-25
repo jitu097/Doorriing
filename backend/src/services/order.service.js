@@ -27,6 +27,13 @@ const computeFinalPrice = (basePrice, discountType, discountValue) => {
     return Number(basePrice);
 };
 
+const normalizePortionType = (value) => {
+    const normalized = String(value || '').trim().toLowerCase();
+    if (normalized === 'half') return 'half';
+    if (normalized === 'full') return 'full';
+    return null;
+};
+
 const resolveEffectiveItemPrice = (item, variant = null) => {
     if (!item) return 0;
 
@@ -389,6 +396,8 @@ export const orderService = {
             // STEP 7: Insert into order_items
             const orderItemsToInsert = cartItems.map(ci => {
                 const unitPrice = resolveEffectiveItemPrice(ci.items, ci.variant);
+                const portionType = normalizePortionType(ci.variant || ci.items?.portion || ci.items?.portion_type);
+                const totalPrice = unitPrice * ci.quantity;
                 
                 return {
                     order_id: newOrder.id,
@@ -396,7 +405,12 @@ export const orderService = {
                     item_name: ci.items.name,
                     quantity: ci.quantity,
                     item_price: unitPrice,
-                    subtotal: unitPrice * ci.quantity
+                    unit_price: unitPrice,
+                    total_price: totalPrice,
+                    price: unitPrice,
+                    subtotal: totalPrice,
+                    portion: portionType ? (portionType === 'half' ? 'Half' : 'Full') : null,
+                    portion_type: portionType,
                 };
             });
 
@@ -557,7 +571,7 @@ export const orderService = {
              phone
            ),
            order_items (
-                         id, item_id, item_name, quantity, item_price, subtotal,
+                         id, item_id, item_name, quantity, item_price, unit_price, total_price, price, subtotal, portion, portion_type,
                          items (
                              image_url,
                              base_quantity,
@@ -861,13 +875,20 @@ export const orderService = {
             // ── STEP 8: Insert order_items ──────────────────────────────────
             const orderItemsToInsert = cartItems.map(ci => {
                 const unitPrice = resolveEffectiveItemPrice(ci.items, ci.variant);
+                const portionType = normalizePortionType(ci.variant || ci.items?.portion || ci.items?.portion_type);
+                const totalPrice = unitPrice * ci.quantity;
                 return {
                     order_id: newOrder.id,
                     item_id: ci.items.id,
                     item_name: ci.items.name,
                     quantity: ci.quantity,
                     item_price: unitPrice,
-                    subtotal: unitPrice * ci.quantity,
+                    unit_price: unitPrice,
+                    total_price: totalPrice,
+                    price: unitPrice,
+                    subtotal: totalPrice,
+                    portion: portionType ? (portionType === 'half' ? 'Half' : 'Full') : null,
+                    portion_type: portionType,
                 };
             });
 

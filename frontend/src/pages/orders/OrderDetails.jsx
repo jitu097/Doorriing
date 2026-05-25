@@ -63,7 +63,15 @@ const OrderDetails = () => {
               itemId: oi.item_id,
               name: oi.item_name,
               quantity: oi.quantity,
-              price: oi.item_price,
+              portionType: oi.portion_type || oi.portion || null,
+              portionLabel: String(oi.portion_type || oi.portion || '').trim().toLowerCase() === 'half'
+                ? 'Half'
+                : String(oi.portion_type || oi.portion || '').trim().toLowerCase() === 'full'
+                  ? 'Full'
+                  : null,
+              unitPrice: oi.unit_price ?? oi.item_price ?? oi.price ?? null,
+              totalPrice: oi.total_price ?? oi.subtotal ?? null,
+              price: oi.unit_price ?? oi.item_price ?? oi.price ?? null,
               imageUrl: oi.items?.image_url || '',
               baseQuantity: oi.items?.base_quantity ?? null,
               unit: oi.items?.unit || '',
@@ -284,7 +292,10 @@ const OrderDetails = () => {
                     <div className="item-qty-name">
                       <div className="item-name-line">
                         <span className="qty">{item.quantity} x</span>
-                        <span className="name">{item.name}</span>
+                        <span className="name">
+                          {item.name}
+                          {item.portionLabel ? ` (${item.portionLabel})` : ''}
+                        </span>
                       </div>
                       {item.baseQuantity !== null && item.baseQuantity !== undefined && item.unit ? (
                         <span className="base-quantity">{item.baseQuantity}{item.unit}</span>
@@ -307,7 +318,9 @@ const OrderDetails = () => {
                         </div>
                       ) : null}
                     </div>
-                    <span className="price">₹{item.price * item.quantity}</span>
+                    <span className="price">
+                      ₹{Number(item.totalPrice ?? (Number(item.unitPrice ?? item.price ?? 0) * item.quantity)).toFixed(0)}
+                    </span>
                   </div>
                 ))}
               </div>
