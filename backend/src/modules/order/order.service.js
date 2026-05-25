@@ -132,14 +132,6 @@ class OrderService {
       // Clear cart
       await cartService.clearCart(customerId, shop_id);
 
-      logger.info('ORDER_CREATED', {
-        orderId: order.id,
-        orderNumber,
-        shopId: shop_id,
-        customerId,
-        paymentMethod,
-      });
-
       // Create notification for customer
       await pushNotificationService.sendOrderStatusNotification({
         customer_id: customerId,
