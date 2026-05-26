@@ -21,10 +21,6 @@ class PushNotificationService {
     type = '',
     reference_id = '',
     target = null,
-    // If true, skip writing a new row into the `notifications` table.
-    // This is used by background delivery workers which create the
-    // notification row themselves (to avoid duplicate rows).
-    skipStore = false,
   }) {
     try {
       if (!customer_id && !shop_id) {
@@ -44,16 +40,14 @@ class PushNotificationService {
       }
 
       // 2. Persistent storage (Ensures history even if push fails)
-      if (!skipStore) {
-        await this.storeNotification({
-          customer_id,
-          shop_id,
-          title,
-          message,
-          type,
-          reference_id,
-        }).catch(err => console.error("⚠️ Failed to store notification in DB:", err.message));
-      }
+      await this.storeNotification({
+        customer_id,
+        shop_id,
+        title,
+        message,
+        type,
+        reference_id,
+      }).catch(err => console.error("⚠️ Failed to store notification in DB:", err.message));
 
       // 3. Fetch Tokens
       const tokenRows = await this.getTokens({ customer_id, shop_id, target });
