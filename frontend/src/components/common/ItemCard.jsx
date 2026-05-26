@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useCartActions, useItemCartInfo } from '../../context/CartContext';
 import { useAppAvailability } from '../../context/AppAvailabilityContext';
 import './ItemCard.css';
@@ -88,7 +89,8 @@ const ItemCard = ({
   const { isOpen: appIsOpen, isLoading: appAvailabilityLoading } = useAppAvailability();
   const [showVariants, setShowVariants] = useState(false);
   const [availabilityToast, setAvailabilityToast] = useState(null);
-  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [descPosition, setDescPosition] = useState(null); // { top, left } or null
+  const cardRef = useRef(null);
   const isRestaurantCard = shopType === 'restaurant';
 
   const appClosed = !appAvailabilityLoading && !appIsOpen;
@@ -773,7 +775,7 @@ const ItemCard = ({
   };
 
   return (
-    <div className={`item-card${!isAvailable ? ' item-card-disabled' : ''}${appClosed ? ' item-card-app-closed' : ''}${isRestaurantCard ? ' restaurant-card' : ''}${showFullDescription ? ' description-expanded' : ''}`}>
+    <div ref={cardRef} className={`item-card${!isAvailable ? ' item-card-disabled' : ''}${appClosed ? ' item-card-app-closed' : ''}${isRestaurantCard ? ' restaurant-card' : ''}`}>
       {availabilityToast && (
         <div className="item-card-availability-toast" role="alert" aria-live="assertive">
           🔒 {availabilityToast}
@@ -813,12 +815,15 @@ const ItemCard = ({
           {description && description.split(/\s+/).filter(Boolean).length > 5 ? (
             <button
               type="button"
-              className={`item-info-btn ${showFullDescription ? 'active' : ''}`}
-              aria-pressed={showFullDescription}
-              aria-label={showFullDescription ? 'Hide description' : 'Show full description'}
-              onClick={(e) => { e.stopPropagation(); setShowFullDescription((s) => !s); }}
+              className={`item-info-btn ${descPosition ? 'active' : ''}`}
+              aria-pressed={!!descPosition}
+              aria-label={descPosition ? 'Hide description' : 'Show full description'}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDescPosition({ centered: true });
+              }}
               onPointerDown={(e) => { e.stopPropagation(); /* ensure mobile taps register */ }}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setShowFullDescription((s) => !s); } }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setDescPosition(null); } }}
               tabIndex={0}
             >
               <img src="/information.png" alt="info" className="item-info-icon" />
@@ -829,7 +834,7 @@ const ItemCard = ({
         {/* Show shop name (subtitle) and the item description separately so both are visible */}
         {subtitle && <p className="item-card-subtitle">{subtitle}</p>}
         {description && (
-          <p className={`item-card-description ${showFullDescription ? 'expanded' : ''}`}>
+          <p className={`item-card-description`}>
             {description}
           </p>
         )}
@@ -873,23 +878,28 @@ const ItemCard = ({
             </button>
           </div>
         )}
-        {showFullDescription && (
+        {descPosition && createPortal(
           <div
             className="item-desc-modal"
             role="dialog"
             aria-modal="true"
-            onClick={() => setShowFullDescription(false)}
+            onClick={() => setDescPosition(null)}
           >
-            <div className="item-desc-modal-panel" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="item-desc-modal-panel"
+              onClick={(e) => e.stopPropagation()}
+              style={descPosition.centered ? { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' } : { position: 'fixed', left: descPosition.left, bottom: 90 }}
+            >
               <div className="item-desc-modal-header">
                 <h3>{name}</h3>
-                <button type="button" className="item-desc-modal-close" aria-label="Close description" onClick={() => setShowFullDescription(false)}>✕</button>
+                <button type="button" className="item-desc-modal-close" aria-label="Close description" onClick={() => setDescPosition(null)}>✕</button>
               </div>
               <div className="item-desc-modal-body">
                 <p>{description}</p>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </div>

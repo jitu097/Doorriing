@@ -338,23 +338,23 @@
 .item-desc-modal {
   position: fixed;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.45);
+  display: block;
   z-index: 10000;
-  padding: 20px;
+  padding: 0;
+  pointer-events: auto; /* allow closing by clicking outside */
 }
 
 .item-desc-modal-panel {
-  background: #fff;
-  border-radius: 10px;
-  max-width: 680px;
-  width: 100%;
-  max-height: 80vh;
+  background: rgba(255,255,255,0.92);
+  border-radius: 12px;
+  max-width: 360px;
+  width: auto;
+  max-height: 70vh;
   overflow: auto;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
-  padding: 18px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  padding: 12px 14px;
+  border: 1px solid rgba(0,0,0,0.06);
+  pointer-events: auto; /* allow interaction inside panel */
 }
 
 .item-desc-modal-header {
