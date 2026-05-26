@@ -181,6 +181,15 @@ const startServer = async () => {
         console.log('🔥 NETWORK TIMEOUT CONNECTING TO DB URL:', process.env.SUPABASE_URL);
         logger.warn('Continuing startup despite Supabase network probe failure so the API remains reachable.');
       }
+
+      // Start the order_accepted delivery worker (additive, restart-safe)
+      try {
+        // lazy import to avoid circular issues during startup
+        const { default: startOrderAcceptedWorker } = await import('./workers/orderAcceptedDelivery.worker.js');
+        startOrderAcceptedWorker({ intervalMs: Number(process.env.ORDER_ACCEPT_WORKER_MS) || 30_000 });
+      } catch (err) {
+        logger.error('Failed to start OrderAcceptedWorker', { error: err.message });
+      }
     });
 
     server.on('error', (error) => {
