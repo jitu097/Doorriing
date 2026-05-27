@@ -6,6 +6,7 @@ import app from './app.js';
 import { logger } from './utils/logger.js';
 import { supabase } from './config/supabaseClient.js';
 import { WebSocketServer } from 'ws';
+import orderAcceptedNotifier from './services/orderAcceptedNotifier.service.js';
 
 const REQUESTED_PORT = Number(config.port) || 5000;
 const MAX_PORT_SEARCH = 20;
@@ -180,6 +181,12 @@ const startServer = async () => {
         logger.error('🔥 CRITICAL SUPABASE NETWORK FAILURE:', { message: err.message, cause: err.cause, stack: err.stack });
         console.log('🔥 NETWORK TIMEOUT CONNECTING TO DB URL:', process.env.SUPABASE_URL);
         logger.warn('Continuing startup despite Supabase network probe failure so the API remains reachable.');
+      }
+      // Start background notifier for order_accepted events (durable, async)
+      try {
+        orderAcceptedNotifier.start();
+      } catch (err) {
+        logger.error('Failed to start OrderAcceptedNotifier', { error: err.message });
       }
     });
 
