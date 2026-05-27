@@ -325,6 +325,36 @@ class OrderService {
   }
 
   /**
+   * Atomically accept an order if and only if its current status is 'pending'.
+   * Returns the updated order row when accepted, or null if it wasn't pending.
+   * This method does NOT perform any push sending — notification delivery is handled
+   * asynchronously by the OrderAcceptedNotifier to avoid blocking seller APIs.
+   */
+  async acceptOrderAtomically(orderId, shopId) {
+    try {
+      const now = new Date().toISOString();
+      const { data: updatedOrder, error } = await supabase
+        .from('orders')
+        .update({ status: 'accepted', updated_at: now })
+        .eq('id', orderId)
+        .eq('shop_id', shopId)
+        .eq('status', 'pending')
+        .select('id, customer_id, shop_id, order_number')
+        .maybeSingle();
+
+      if (error) {
+        logger.error('Failed to accept order atomically', { error, orderId, shopId });
+        throw new Error('Failed to accept order');
+      }
+
+      return updatedOrder || null;
+    } catch (err) {
+      logger.error('Error in acceptOrderAtomically', { error: err.message, orderId, shopId });
+      throw err;
+    }
+  }
+
+  /**
    * Create order notification
    */
   async createOrderNotification(customerId, orderId, title, message) {
