@@ -89,7 +89,7 @@ const ItemCard = ({
   const { isOpen: appIsOpen, isLoading: appAvailabilityLoading } = useAppAvailability();
   const [showVariants, setShowVariants] = useState(false);
   const [availabilityToast, setAvailabilityToast] = useState(null);
-  const [descPosition, setDescPosition] = useState(null); // { top, left } or null
+  const [descPosition, setDescPosition] = useState(null); // null or { open: true }
   const cardRef = useRef(null);
   const isRestaurantCard = shopType === 'restaurant';
 
@@ -159,7 +159,7 @@ const ItemCard = ({
 
     const secondaryText = subtitle || description;
     const showFoodIndicator = Boolean(foodIndicatorSymbol);
-    const legacyVegIndicator = !isRestaurantCard && typeof isVeg === 'boolean';
+    const legacyVegIndicator = isRestaurantCard && typeof isVeg === 'boolean';
 
     return {
       derivedIsVeg,
@@ -811,24 +811,35 @@ const ItemCard = ({
             </span>
           ) : null}
           <h3 className="item-card-name">{name}</h3>
-          {/* show info toggle only when description is long (>5 words) */}
-          {description && description.split(/\s+/).filter(Boolean).length > 5 ? (
-            <button
-              type="button"
-              className={`item-info-btn ${descPosition ? 'active' : ''}`}
-              aria-pressed={!!descPosition}
-              aria-label={descPosition ? 'Hide description' : 'Show full description'}
-              onClick={(e) => {
-                e.stopPropagation();
-                setDescPosition({ centered: true });
-              }}
-              onPointerDown={(e) => { e.stopPropagation(); /* ensure mobile taps register */ }}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setDescPosition(null); } }}
-              tabIndex={0}
-            >
-              <img src="/information.png" alt="info" className="item-info-icon" />
-            </button>
-          ) : null}
+          {/* show info toggle: long descriptions OR grocery items with subtitle/description */}
+          {(() => {
+            const longDesc = description && description.split(/\s+/).filter(Boolean).length > 5;
+            const showInfoForGrocery = !isRestaurantCard && (subtitle || description);
+            const showInfoButton = Boolean(longDesc || showInfoForGrocery);
+            return showInfoButton ? (
+              <button
+                type="button"
+                className={`item-info-btn ${descPosition ? 'active' : ''}`}
+                aria-pressed={!!descPosition}
+                aria-label={descPosition ? 'Hide description' : 'Show full description'}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDescPosition((current) => (current ? null : { open: true }));
+                }}
+                onPointerDown={(e) => { e.stopPropagation(); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDescPosition((current) => (current ? null : { open: true }));
+                  }
+                }}
+                tabIndex={0}
+              >
+                <img src="/information.png" alt="info" className="item-info-icon" />
+              </button>
+            ) : null;
+          })()}
         </div>
 
         {/* Show shop name (subtitle) and the item description separately so both are visible */}
@@ -888,14 +899,81 @@ const ItemCard = ({
             <div
               className="item-desc-modal-panel"
               onClick={(e) => e.stopPropagation()}
-              style={descPosition.centered ? { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' } : { position: 'fixed', left: descPosition.left, bottom: 90 }}
             >
-              <div className="item-desc-modal-header">
-                <h3>{name}</h3>
+              <div className="item-desc-modal-media">
+                {optimizedImage ? (
+                  <img src={optimizedImage} alt={name} className="item-desc-modal-image" />
+                ) : (
+                  <div className="item-desc-modal-placeholder">{name ? name.charAt(0).toUpperCase() : '?'}</div>
+                )}
                 <button type="button" className="item-desc-modal-close" aria-label="Close description" onClick={() => setDescPosition(null)}>✕</button>
               </div>
-              <div className="item-desc-modal-body">
-                <p>{description}</p>
+              <div className="item-desc-modal-content">
+                <div className="item-desc-modal-header">
+                  <div className="item-desc-modal-toprow">
+                    <div className="item-desc-modal-top-left">
+                      {isRestaurantCard && (
+                        <span className={`item-desc-modal-diet ${derivedIsVeg ? 'veg' : 'non-veg'}`}>
+                          <span className="item-desc-modal-diet-dot" aria-hidden="true" />
+                          {derivedIsVeg ? 'Veg' : 'Non-Veg'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="item-desc-modal-top-right">
+                      {subtitle && (
+                        <p className="item-desc-modal-subtitle item-desc-modal-subtitle-header">{subtitle}</p>
+                      )}
+                    </div>
+                  </div>
+                  <h3 className="item-desc-modal-name">{name}</h3>
+                </div>
+
+                {showVariantPricing && variantOptions && (
+                  <div className="item-desc-modal-variants">
+                    {variantOptions.map((option) => (
+                      <div key={option.key} className="item-desc-modal-variant-row">
+                        <span className="item-desc-modal-variant-label">{option.label}</span>
+                        <span className="item-desc-modal-variant-price">
+                          {option.hasDiscount && option.originalValue != null && option.formattedOriginalPrice && (
+                            <span className="item-desc-modal-price-original">₹{option.formattedOriginalPrice}</span>
+                          )}
+                          <span className="item-desc-modal-price-current">₹{option.formattedPrice}</span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {!showVariantPricing && (
+                  <div className="item-desc-modal-price-row">
+                    {shouldShowOriginal && formattedOriginalPrice && (
+                      <span className="item-desc-modal-price-original">₹{formattedOriginalPrice}</span>
+                    )}
+                    <span className="item-desc-modal-price-current">
+                      {formattedPrice ? `₹${formattedPrice}` : 'Price unavailable'}
+                    </span>
+                  </div>
+                )}
+
+                {hasRating && (
+                  <div className="item-desc-modal-rating" aria-label={`Rated ${numericAverageRating.toFixed(1)} out of 5 from ${numericReviewCount} reviews`}>
+                    <span className="item-desc-modal-rating-stars" aria-hidden="true">
+                      {STARS_ARRAY.map((index) => (
+                        <span
+                          key={index}
+                          className={`item-desc-modal-rating-star ${index < roundedRatingStars ? 'filled' : 'empty'}`}
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </span>
+                    <span className="item-desc-modal-rating-value">{numericAverageRating.toFixed(1)}</span>
+                    <span className="item-desc-modal-rating-count">({numericReviewCount})</span>
+                  </div>
+                )}
+                <div className="item-desc-modal-body">
+                  <p>{description}</p>
+                </div>
               </div>
             </div>
           </div>,
