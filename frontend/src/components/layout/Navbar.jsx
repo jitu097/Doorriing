@@ -148,6 +148,27 @@ const Navbar = () => {
     }
   };
 
+  const MobileQuickIcons = ({ onClick }) => {
+    const icons = [
+      { id: 'all', src: '/ek.png', alt: 'All', label: 'All' },
+      { id: 'food', src: '/do.png', alt: 'Food', label: 'Food' },
+      { id: 'mart', src: '/tin.png', alt: 'Mart', label: 'Mart' },
+      { id: 'beauty-essential', src: '/pach.png', alt: 'Beauty Essential', label: 'Beauty Essential' },
+      { id: 'pharmacy', src: '/char.png', alt: 'Pharmacy', label: 'Pharmacy' },
+    ];
+
+    return (
+      <div className="mobile-quick-icons" role="list">
+        {icons.map((icon) => (
+          <button key={icon.id} type="button" className="mobile-quick-icon" onClick={() => onClick?.(icon.id)} aria-label={icon.label} title={icon.label}>
+            <img src={icon.src} alt={icon.alt} />
+            <span className="mobile-quick-icon-label">{icon.label}</span>
+          </button>
+        ))}
+      </div>
+    );
+  };
+
   // LOGOUT
 
   const handleLogout = async () => {
@@ -191,6 +212,7 @@ const Navbar = () => {
                 ▼
               </span>
             </div>
+
           </div>
 
         </div>
@@ -239,6 +261,8 @@ const Navbar = () => {
           </button>
 
         </div>
+        
+         
 
         {/* RIGHT */}
 
@@ -344,6 +368,19 @@ const Navbar = () => {
           />
 
         </div>
+        
+              {/* MOBILE QUICK ICONS (under navbar container) */}
+              <MobileQuickIcons onClick={(id) => {
+                try {
+                  const params = new URLSearchParams(window.location.search || '');
+                  params.set('search', id);
+                  const newUrl = `${window.location.pathname}?${params.toString()}`;
+                  window.history.replaceState({}, '', newUrl);
+                  window.dispatchEvent(new PopStateEvent('popstate'));
+                } catch (e) {
+                  // ignore
+                }
+              }} />
 
       </div>
     </nav>

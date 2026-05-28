@@ -20,6 +20,8 @@ import { computeFinalPrice } from '../../utils/pricing';
 // component only renders when an order is already active.
 const NoFallback = () => null;
 
+
+
 const SECTION_CONFIG = {
   grocery: {
     key: 'grocery',
@@ -436,11 +438,11 @@ const CategoriesSection = React.memo(({ categories, onCategoryClick }) => {
             <button key={category.id} type="button" className="home-category-card" onClick={() => onCategoryClick(category)}>
               <div className="home-category-icon-wrap">
                 {category.image_url ? (
-                  <img
-                    src={category.image_url}
-                    alt={category.name}
+                  <div
                     className="home-category-image"
-                    loading="lazy"
+                    style={{ backgroundImage: `url(${category.image_url})` }}
+                    role="img"
+                    aria-label={category.name}
                   />
                 ) : (
                   <span className="home-category-fallback">{initial}</span>

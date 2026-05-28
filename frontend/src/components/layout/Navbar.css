@@ -355,6 +355,50 @@
 
     padding: 0 14px;
   }
+
+  /* Mobile quick icons under navbar */
+  .mobile-quick-icons {
+    display: flex;
+    gap: 0.25rem;
+    padding: 8px 10px 10px 10px;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .mobile-quick-icon {
+    appearance: none;
+    border: none;
+    background: transparent;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    width: 58px;
+    min-width: 58px;
+    border-radius: 12px;
+    flex: 1 1 0;
+  }
+
+  .mobile-quick-icon img {
+    width: 24px !important;
+    height: 24px !important;
+    object-fit: contain;
+    display: block;
+  }
+
+  .mobile-quick-icon-label {
+    font-size: 10px;
+    line-height: 1.1;
+    font-weight: 600;
+    color: #1b1b1b;
+    text-align: center;
+    white-space: normal;
+    max-width: 64px;
+  }
 }
 
 @media (max-width: 480px) {
