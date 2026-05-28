@@ -33,6 +33,8 @@
 .home-content .home-shops-section {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
+  background: linear-gradient(180deg, #f7e18a  0%, #fef0b7  100%);
+  padding: 0.75rem 0 1rem;
 }
 
 @keyframes banner-slide-down {
@@ -176,7 +178,7 @@
   }
 }
 .home-page {
-  background: #f8f9fa;
+  background: linear-gradient(180deg, #fce8b0 0%, #f8daaf 26vh, #ffffff 26vh, #f8f9fa 100%);
   padding-top: 0;
 }
 
@@ -330,11 +332,17 @@
   }
 }
 
-@media (max-width: 600px) {
-  .home-content {
-    margin-top: 60px!important;
-    padding: 1.5rem 1rem;
-  }
+.home-page {
+  /* make the header gradient full-bleed to viewport edges */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  box-sizing: border-box;
+  background: linear-gradient(180deg,  #efb619,
+   #f7e18a  0%,  #f3f1eb  60vh, #ffffff 60vh, #f8f9fa 100%);
+  padding-top: 0;
+}
+  
 
   .home-content h1 {
     font-size: 2rem;
@@ -431,7 +439,7 @@
     padding: 5px 10px !important;
     font-size: 0.68rem !important;
   }
-}
+
 
 @media (max-width: 600px) {
   .items-grid {
