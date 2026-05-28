@@ -1,281 +1,354 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import Modal from '../common/Modal';
-import AddressForm from '../common/AddressForm';
-import { useAddress } from '../../context/AddressContext';
-import { useCart } from '../../context/CartContext';
+
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
+
+import {
+  Link,
+  useNavigate,
+  useLocation,
+} from 'react-router-dom';
+
 import { useAuth } from '../../hooks/useAuth';
+import { useAddress } from '../../context/AddressContext';
+
 import './Navbar.css';
 
-const Navbar = ({ onCartClick }) => {
-  const searchPlaceholders = useMemo(() => ['Search products...', 'Search by shop...', 'Find your favorite food...'], []);
+const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { getCartCount } = useCart();
+
   const { user, logout } = useAuth();
-  const [showAccount, setShowAccount] = useState(false);
-  const [showLocation, setShowLocation] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
+  const { activeAddress } = useAddress();
+
+  const accountRef = useRef(null);
+
   const [search, setSearch] = useState('');
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const accountWrapperRef = useRef(null);
+  const [showAccount, setShowAccount] =
+    useState(false);
 
-  const { activeAddress, addAddress, updateAddress } = useAddress();
+  const [scrolled, setScrolled] =
+    useState(false);
 
-  const [navFormData, setNavFormData] = useState({
-    type: 'Home',
-    name: user?.displayName || '',
-    phone: '',
-    building: '',
-    area: '',
-    landmark: '',
-    city: 'Latehar',
-    state: 'Jharkhand',
-    postalCode: '829206',
-    isDefault: true
-  });
+  const placeholders = useMemo(
+    () => [
+      'Search groceries...',
+      'Search restaurants...',
+      'Search snacks...',
+      'Search cold drinks...',
+    ],
+    []
+  );
 
-  React.useEffect(() => {
-    if (activeAddress) {
-      setNavFormData(activeAddress);
-    }
-  }, [activeAddress, showLocation]);
+  const [placeholderIndex, setPlaceholderIndex] =
+    useState(0);
 
-  // Handle click outside account dropdown to close it
+  // SCROLL EFFECT
+
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (accountWrapperRef.current && !accountWrapperRef.current.contains(event.target)) {
+    const handleScroll = () => {
+      if (window.scrollY > 40) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener(
+      'scroll',
+      handleScroll
+    );
+
+    return () => {
+      window.removeEventListener(
+        'scroll',
+        handleScroll
+      );
+    };
+  }, []);
+
+  // PLACEHOLDER ROTATION
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) =>
+        prev === placeholders.length - 1
+          ? 0
+          : prev + 1
+      );
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [placeholders.length]);
+
+  // OUTSIDE CLICK
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (
+        accountRef.current &&
+        !accountRef.current.contains(e.target)
+      ) {
         setShowAccount(false);
       }
     };
 
-    if (showAccount) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showAccount]);
-
-  useEffect(() => {
-    let intervalId = null;
-
-    const startRotation = () => {
-      if (intervalId || document.visibilityState !== 'visible') return;
-      intervalId = setInterval(() => {
-        setPlaceholderIndex((prev) => (prev + 1) % searchPlaceholders.length);
-      }, 1800);
-    };
-
-    const stopRotation = () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        startRotation();
-      } else {
-        stopRotation();
-      }
-    };
-
-    startRotation();
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener(
+      'mousedown',
+      handleOutsideClick
+    );
 
     return () => {
-      stopRotation();
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener(
+        'mousedown',
+        handleOutsideClick
+      );
     };
-  }, [searchPlaceholders.length]);
+  }, []);
 
-  const cartCount = getCartCount();
+  // SEARCH
 
+  const handleSearch = (e) => {
+    if (
+      e.key === 'Enter' ||
+      e.type === 'click'
+    ) {
+      if (!search.trim()) return;
 
-  const handleLogout = useCallback(async () => {
+      const encoded = encodeURIComponent(
+        search.trim()
+      );
+
+      if (
+        location.pathname.startsWith(
+          '/restaurant'
+        )
+      ) {
+        navigate(
+          `/restaurant/browse?search=${encoded}`
+        );
+        return;
+      }
+
+      if (
+        location.pathname.startsWith(
+          '/grocery'
+        )
+      ) {
+        navigate(
+          `/grocery/browse?search=${encoded}`
+        );
+        return;
+      }
+
+      navigate(`/home?search=${encoded}`);
+    }
+  };
+
+  // LOGOUT
+
+  const handleLogout = async () => {
     try {
       await logout();
       navigate('/');
     } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  }, [logout, navigate]);
-
-  const handleAccountClick = useCallback(() => setShowAccount((v) => !v), []);
-  const handleLocationClick = useCallback(() => navigate('/address'), [navigate]);
-  const handleLocationClose = useCallback(() => setShowLocation(false), []);
-
-  const handleSearch = useCallback((e) => {
-    if (e.key === 'Enter' || e.type === 'click') {
-      if (search.trim()) {
-        setShowSearch(false);
-        const encodedSearch = encodeURIComponent(search.trim());
-
-        if (location.pathname.startsWith('/restaurant')) {
-          navigate(`/restaurant/browse?search=${encodedSearch}`);
-          return;
-        }
-
-        if (location.pathname.startsWith('/grocery')) {
-          navigate(`/grocery/browse?search=${encodedSearch}`);
-          return;
-        }
-
-        navigate(`/home?search=${encodedSearch}`);
-      }
-    }
-  }, [location.pathname, navigate, search]);
-
-  const handleNavAddressSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (activeAddress && activeAddress.id) {
-        await updateAddress(activeAddress.id, navFormData);
-      } else {
-        await addAddress({ ...navFormData, isDefault: true });
-      }
-      setShowLocation(false);
-    } catch (error) {
-      alert(error.message || 'Error saving address from Navbar');
+      console.error(error);
     }
   };
 
   return (
-    <nav className={`navbar ${!user ? 'navbar-no-user' : ''}`}>
+    <nav
+      className={`navbar ${
+        scrolled
+          ? 'navbar-scrolled'
+          : 'navbar-top'
+      }`}
+    >
       <div className="navbar-container">
-        {/* Logo */}
-        {/* Doorriing logo removed as per request */}
 
-        {/* Location */}
-        {user && (
-          <div className="navbar-location" onClick={handleLocationClick} title="Manage delivery addresses" style={{ cursor: 'pointer' }}>
-            <div className="location-address-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: 0 }}>
-              <span className="location-address" style={{ display: 'flex', alignItems: 'center', padding: 0 }}>
-                {activeAddress?.area || 'Select Location'}
-                <span className="account-caret">
-                  <img src="/location.webp" alt="Location" className="location-caret-img" style={{ width: '1em', height: '1em', marginLeft: '0.2em', verticalAlign: 'middle' }} />
-                </span>
+        {/* LEFT */}
+
+        <div className="navbar-left">
+
+          <div
+            className="navbar-location"
+            onClick={() =>
+              navigate('/address')
+            }
+          >
+            <span className="location-label">
+              Deliver to
+            </span>
+
+            <div className="location-main">
+              {activeAddress?.area ||
+                'Select Location'}
+
+              <span className="location-arrow">
+                ▼
               </span>
             </div>
           </div>
-        )}
 
-        {/* Search - Desktop */}
-        <div className="navbar-searchbar navbar-searchbar-desktop">
-          <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.35-4.35"></path>
-          </svg>
-          <input
-            type="text"
-            className="searchbar-input"
-            placeholder={searchPlaceholders[placeholderIndex]}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            onKeyDown={handleSearch}
-          />
         </div>
 
-        {/* Search - Mobile Icon */}
-        <button
-          className={`searchbar-icon-btn searchbar-mobile-icon ${showSearch ? 'hidden' : ''}`}
-          type="button"
-          onClick={() => setShowSearch(true)}
-          aria-label="Open search"
-        >
-          <img src="/search.webp" alt="Search" className="searchbar-icon" loading="lazy" />
-        </button>
+        {/* CENTER */}
 
-        {/* Search - Mobile Dropdown */}
-        {showSearch && (
-          <div className="navbar-searchbar-dropdown">
-            <div className="searchbar-dropdown-content">
-              <div className="searchbar-input-wrapper">
-                <input
-                  type="text"
-                  className="searchbar-input-dropdown"
-                  placeholder={searchPlaceholders[placeholderIndex]}
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  onKeyDown={handleSearch}
-                  autoFocus
-                />
-                <button
-                  className="searchbar-search-btn-inside"
-                  type="button"
-                  onClick={handleSearch}
-                  aria-label="Search"
-                >
-                  <img src="/search.webp" alt="Search" className="searchbar-inside-icon" loading="lazy" />
-                </button>
-              </div>
+        <div className="navbar-search">
+
+          <svg
+            className="search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <circle
+              cx="11"
+              cy="11"
+              r="8"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+
+            <path
+              d="m21 21-4.35-4.35"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+          </svg>
+
+          <input
+            type="text"
+            placeholder={
+              placeholders[placeholderIndex]
+            }
+            value={search}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
+            onKeyDown={handleSearch}
+          />
+
+          <button
+            className="search-btn"
+            onClick={handleSearch}
+          >
+            Search
+          </button>
+
+        </div>
+
+        {/* RIGHT */}
+
+        <div className="navbar-right">
+
+          {/* ACCOUNT */}
+
+          {user ? (
+            <div
+              className="account-wrapper"
+              ref={accountRef}
+            >
               <button
-                className="searchbar-close-btn-dropdown"
-                type="button"
-                onClick={() => setShowSearch(false)}
+                className="account-btn"
+                onClick={() =>
+                  setShowAccount(
+                    !showAccount
+                  )
+                }
               >
-                ✕
+                <img
+                  src="/account.png"
+                  alt="account"
+                />
               </button>
+
+              {showAccount && (
+                <div className="account-dropdown">
+
+                  <Link to="/home">
+                    Home
+                  </Link>
+
+                  <Link to="/orders">
+                    Orders
+                  </Link>
+
+                  <Link to="/profile">
+                    Profile
+                  </Link>
+
+                  <Link to="/address">
+                    Address
+                  </Link>
+
+                  <button
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </button>
+
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          ) : (
+            <Link
+              to="/login"
+              className="login-btn"
+            >
+              Login
+            </Link>
+          )}
+        </div>
 
-        {/* Account Dropdown - Only show when logged in */}
-        {user && (
-          <div className="navbar-account-wrapper" ref={accountWrapperRef}>
-            <div className="navbar-account" onClick={handleAccountClick} tabIndex={0}>
-              <img src="/account.webp" alt="Account" className="account-icon" loading="lazy" />
-            </div>
-            {showAccount && (
-              <div className="account-dropdown">
-                <ul>
-                  <li><Link to="/home">Home</Link></li>
-                  <li><Link to="/orders">My Orders</Link></li>
-                  <li><Link to="/address">Address</Link></li>
-                  <li><Link to="/profile">Profile</Link></li>
-                  <li><Link to="/about">About Us</Link></li>
-                  <li><Link to="/settings/delete-account" style={{ color: '#d32f2f' }}>Delete Account</Link></li>
-                  <li><button onClick={handleLogout} className="logout-btn">Logout</button></li>
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Login Button - Show when not logged in */}
-        {!user && (
-          <Link to="/login" className="navbar-login-btn">
-            Login
-          </Link>
-        )}
-
-        {/* Cart Icon */}
-        <button onClick={onCartClick} className="navbar-cart-ui">
-          <span className="cart-svg">
-            {/* Bag icon SVG */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#222" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="5" y="7" width="14" height="12" rx="3" />
-              <path d="M9 7V6a3 3 0 0 1 6 0v1" />
-            </svg>
-          </span>
-          <span className="cart-ui-label">Cart</span>
-          <span className="cart-ui-badge">{cartCount}</span>
-        </button>
       </div>
 
-      {/* Location Modal */}
-      {showLocation && (
-        <AddressForm
-          formData={navFormData}
-          setFormData={setNavFormData}
-          onSubmit={handleNavAddressSubmit}
-          onCancel={handleLocationClose}
-          isEditing={!!activeAddress}
-        />
-      )}
+      {/* MOBILE SEARCH */}
+
+      <div className="mobile-search-wrapper">
+
+        <div className="mobile-search">
+
+          <svg
+            className="search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <circle
+              cx="11"
+              cy="11"
+              r="8"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+
+            <path
+              d="m21 21-4.35-4.35"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+          </svg>
+
+          <input
+            type="text"
+            placeholder={
+              placeholders[placeholderIndex]
+            }
+            value={search}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
+            onKeyDown={handleSearch}
+          />
+
+        </div>
+
+      </div>
     </nav>
   );
 };
 
 export default Navbar;
-//jitu
+
