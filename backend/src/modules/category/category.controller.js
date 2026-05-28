@@ -29,6 +29,41 @@ class CategoryController {
   }
 
   /**
+   * Get grouped dashboard categories
+   * GET /api/categories/dashboard
+   * Used in: Home page to render the category strip before Explore Shops
+   */
+  async getDashboardCategories(req, res, next) {
+    try {
+      const categories = await categoryService.getDashboardCategories();
+      return sendSuccess(res, categories, 'Dashboard categories fetched successfully');
+    } catch (error) {
+      logger.error('GetDashboardCategories controller error', { error: error.message });
+      next(error);
+    }
+  }
+
+  /**
+   * Get all items that match a dashboard category name across shops.
+   * GET /api/categories/dashboard/items?name=pizza
+   */
+  async getDashboardCategoryItems(req, res, next) {
+    try {
+      const { name } = req.query;
+
+      if (!name) {
+        return sendError(res, 'Category name is required', 400);
+      }
+
+      const result = await categoryService.getDashboardCategoryItems(name);
+      return sendSuccess(res, result, 'Dashboard category items fetched successfully');
+    } catch (error) {
+      logger.error('GetDashboardCategoryItems controller error', { error: error.message, name: req.query.name });
+      next(error);
+    }
+  }
+
+  /**
    * Get category details with subcategories and items
    * GET /api/categories/:categoryId
    * Used in: Category Page

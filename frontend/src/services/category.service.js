@@ -9,6 +9,25 @@ export const getCategoriesByShop = async (shopId) => {
   return response.data || [];
 };
 
+export const getDashboardCategories = async () => {
+  const response = await api.get('/categories/dashboard');
+  return response.data || [];
+};
+
+export const getDashboardCategoryItems = async (categoryName) => {
+  if (!categoryName) {
+    throw new Error('categoryName is required');
+  }
+
+  const response = await api.get('/categories/dashboard/items', {
+    params: {
+      name: categoryName,
+    },
+  });
+
+  return response.data || { items: [] };
+};
+
 export const getCategoryWithDetails = async (categoryId, shopId) => {
   if (!categoryId || !shopId) {
     throw new Error('categoryId and shopId are required');
@@ -53,6 +72,8 @@ export const getSubcategoriesByCategory = async (categoryId) => {
 
 export default {
   getCategoriesByShop,
+  getDashboardCategories,
+  getDashboardCategoryItems,
   getCategoryWithDetails,
   getSubcategoriesByCategory,
 };

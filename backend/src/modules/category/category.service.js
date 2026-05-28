@@ -104,6 +104,206 @@ class CategoryService {
   }
 
   /**
+   * Get grouped categories for the home dashboard.
+   * Returns one entry per category name with the number of shops using it.
+   */
+  async getDashboardCategories() {
+    try {
+      const cached = cacheManager.get('category', 'dashboard');
+      if (cached) {
+        logger.debug('Returning cached dashboard categories');
+        return cached;
+      }
+
+      const { data, error } = await supabase
+        .from('categories')
+        .select('id, shop_id, name, image_url, is_active, created_at')
+        .eq('is_active', true);
+
+      if (error) {
+        logger.error('Failed to fetch dashboard categories', { error });
+        return [];
+      }
+
+      const groupedCategories = new Map();
+
+      (data || []).forEach((category) => {
+        const categoryName = typeof category?.name === 'string' ? category.name.trim() : '';
+        const shopId = category?.shop_id;
+
+        if (!categoryName || !shopId) {
+          return;
+        }
+
+        const key = categoryName.toLowerCase();
+        if (!groupedCategories.has(key)) {
+          groupedCategories.set(key, {
+            id: key,
+            name: categoryName,
+            image_url: category.image_url || null,
+            shopIds: new Set(),
+          });
+        }
+
+        const entry = groupedCategories.get(key);
+        entry.shopIds.add(shopId);
+
+        if (!entry.image_url && category.image_url) {
+          entry.image_url = category.image_url;
+        }
+      });
+
+      const dashboardCategories = Array.from(groupedCategories.values())
+        .map((category) => ({
+          id: category.id,
+          name: category.name,
+          image_url: category.image_url,
+          shop_count: category.shopIds.size,
+        }))
+        .sort((left, right) => {
+          const countDelta = (right.shop_count || 0) - (left.shop_count || 0);
+          if (countDelta !== 0) {
+            return countDelta;
+          }
+
+          return left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
+        });
+
+      cacheManager.set('category', 'dashboard', dashboardCategories, 1800);
+
+      return dashboardCategories;
+    } catch (error) {
+      logger.error('Error in getDashboardCategories', { error: error.message });
+      return [];
+    }
+  }
+
+  /**
+   * Get all items for a dashboard category name across shops.
+   * Used when the Home category strip is clicked.
+   */
+  async getDashboardCategoryItems(categoryName) {
+    try {
+      const normalizedName = typeof categoryName === 'string' ? categoryName.trim() : '';
+
+      if (!normalizedName) {
+        throw new Error('Category name is required');
+      }
+
+      const cacheKey = `dashboard-items:${normalizedName.toLowerCase()}`;
+      const cached = cacheManager.get('category', cacheKey);
+      if (cached) {
+        logger.debug('Returning cached dashboard category items', { categoryName: normalizedName });
+        return cached;
+      }
+
+      const { data: categories, error: categoriesError } = await supabase
+        .from('categories')
+        .select('id, name, image_url, shop_id, is_active')
+        .eq('is_active', true)
+        .ilike('name', normalizedName);
+
+      if (categoriesError) {
+        logger.error('Failed to fetch dashboard category matches', { error: categoriesError, categoryName: normalizedName });
+        return {
+          category_name: normalizedName,
+          items: [],
+          matched_categories: [],
+          total_items: 0,
+        };
+      }
+
+      const matchedCategories = (categories || []).filter((category) => category?.id);
+      const categoryIds = [...new Set(matchedCategories.map((category) => category.id))];
+
+      if (categoryIds.length === 0) {
+        const emptyResult = {
+          category_name: normalizedName,
+          items: [],
+          matched_categories: [],
+          total_items: 0,
+        };
+
+        cacheManager.set('category', cacheKey, emptyResult, 900);
+        return emptyResult;
+      }
+
+      const { data: items, error: itemsError } = await supabase
+        .from('items')
+        .select(`
+          id,
+          shop_id,
+          category_id,
+          subcategory_id,
+          name,
+          description,
+          price,
+          discount_type,
+          discount_value,
+          final_price,
+          full_price,
+          full_discount_type,
+          full_discount_value,
+          full_final_price,
+          half_portion_price,
+          half_discount_type,
+          half_discount_value,
+          half_portion_final_price,
+          is_sweets,
+          food_type,
+          base_quantity,
+          unit,
+          image_url,
+          is_active,
+          is_available,
+          stock_quantity,
+          created_at,
+          shops!inner(id, name, business_type, is_active, is_open)
+        `)
+        .in('category_id', categoryIds)
+        .eq('is_active', true)
+        .eq('is_available', true)
+        .order('created_at', { ascending: false });
+
+      if (itemsError) {
+        logger.error('Failed to fetch dashboard category items', { error: itemsError, categoryName: normalizedName, categoryIds });
+        return {
+          category_name: normalizedName,
+          items: [],
+          matched_categories: matchedCategories,
+          total_items: 0,
+        };
+      }
+
+      const ratedItems = await enrichItemsWithRatings(items || []);
+
+      const result = {
+        category_name: normalizedName,
+        items: ratedItems,
+        matched_categories: matchedCategories.map((category) => ({
+          id: category.id,
+          name: category.name,
+          image_url: category.image_url,
+          shop_id: category.shop_id,
+        })),
+        total_items: ratedItems.length,
+      };
+
+      cacheManager.set('category', cacheKey, result, 900);
+
+      return result;
+    } catch (error) {
+      logger.error('Error in getDashboardCategoryItems', { error: error.message, categoryName });
+      return {
+        category_name: typeof categoryName === 'string' ? categoryName.trim() : '',
+        items: [],
+        matched_categories: [],
+        total_items: 0,
+      };
+    }
+  }
+
+  /**
    * Get category details with subcategories and items
    * This is the critical function for the Category Page
    * 

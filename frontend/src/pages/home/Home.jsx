@@ -11,6 +11,7 @@ const OrderNotification = lazy(() => import('../../components/common/OrderNotifi
 import ShopCard from '../shopcard/shopcard';
 import { itemService } from '../../services/item.service';
 import { getCachedHomeShops, getHomeShops } from '../../services/shop.service';
+import { getDashboardCategories, getDashboardCategoryItems } from '../../services/category.service';
 import { useAppAvailability } from '../../context/AppAvailabilityContext';
 import './Home.css';
 import { computeFinalPrice } from '../../utils/pricing';
@@ -185,12 +186,18 @@ const Home = () => {
   const [restaurantItems, setRestaurantItems] = useState(() => normalizeItems(cachedHomeItems?.restaurant_items || []));
   const [groceryShops, setGroceryShops] = useState(() => cachedHomeShops?.grocery || []);
   const [restaurantShops, setRestaurantShops] = useState(() => cachedHomeShops?.restaurant || []);
+  const [dashboardCategories, setDashboardCategories] = useState([]);
+  const [activeDashboardCategory, setActiveDashboardCategory] = useState(null);
+  const [activeCategoryItems, setActiveCategoryItems] = useState([]);
+  const [activeCategoryLoading, setActiveCategoryLoading] = useState(false);
+  const [activeCategoryError, setActiveCategoryError] = useState('');
   const [loading, setLoading] = useState(!hasCache);
   const [error, setError] = useState('');
   const [activeSection, setActiveSection] = useState(SECTION_CONFIG.restaurant.key);
   const [pageVisible, setPageVisible] = useState(() => (
     typeof document === 'undefined' || document.visibilityState === 'visible'
   ));
+  const categoryItemsRequestRef = useRef(0);
 
   const mergeShopPayload = (currentValue, nextValue) => {
     if (Array.isArray(nextValue) && nextValue.length > 0) {
@@ -204,6 +211,50 @@ const Home = () => {
     setGroceryShops((currentValue) => mergeShopPayload(currentValue, shopsData.grocery));
     setRestaurantShops((currentValue) => mergeShopPayload(currentValue, shopsData.restaurant));
   };
+
+  const closeDashboardCategory = useCallback(() => {
+    categoryItemsRequestRef.current += 1;
+    setActiveDashboardCategory(null);
+    setActiveCategoryItems([]);
+    setActiveCategoryError('');
+    setActiveCategoryLoading(false);
+  }, []);
+
+  const handleDashboardCategoryClick = useCallback(async (category) => {
+    if (!category?.name) {
+      return;
+    }
+
+    const requestId = categoryItemsRequestRef.current + 1;
+    categoryItemsRequestRef.current = requestId;
+
+    setActiveDashboardCategory(category);
+    setActiveCategoryItems([]);
+    setActiveCategoryError('');
+    setActiveCategoryLoading(true);
+
+    try {
+      const categoryDetails = await getDashboardCategoryItems(category.name);
+
+      if (categoryItemsRequestRef.current !== requestId) {
+        return;
+      }
+
+      const normalizedItems = normalizeItems(categoryDetails?.items || []);
+      setActiveCategoryItems(normalizedItems);
+    } catch (fetchError) {
+      if (categoryItemsRequestRef.current !== requestId) {
+        return;
+      }
+
+      setActiveCategoryError(fetchError.message || 'Unable to load items for this category.');
+      setActiveCategoryItems([]);
+    } finally {
+      if (categoryItemsRequestRef.current === requestId) {
+        setActiveCategoryLoading(false);
+      }
+    }
+  }, []);
 
   // ── Global App Availability ───────────────────────────────────────────────
   // Polled every 30s by AppAvailabilityProvider at the app root.
@@ -220,12 +271,23 @@ const Home = () => {
         }
         setError('');
 
-        // 1. Fetch shops first (above-the-fold content)
-        try {
-          const shopsData = await getHomeShops(8);
-          applyShopUpdate(shopsData);
-        } catch (shopsErr) {
-          console.error('Error fetching shops:', shopsErr);
+        // 1. Fetch shops and categories first (above-the-fold content)
+        const [shopsResult, categoriesResult] = await Promise.allSettled([
+          getHomeShops(8),
+          getDashboardCategories(),
+        ]);
+
+        if (shopsResult.status === 'fulfilled') {
+          applyShopUpdate(shopsResult.value);
+        } else {
+          console.error('Error fetching shops:', shopsResult.reason);
+        }
+
+        if (categoriesResult.status === 'fulfilled') {
+          setDashboardCategories(Array.isArray(categoriesResult.value) ? categoriesResult.value : []);
+        } else {
+          console.error('Error fetching dashboard categories:', categoriesResult.reason);
+          setDashboardCategories([]);
         }
 
         // Reveal layout with shops as soon as they are ready
@@ -356,12 +418,57 @@ const ShopsSection = React.memo(({ shops, businessType, reducedMotion }) => {
 
 ShopsSection.displayName = 'ShopsSection';
 
+const CategoriesSection = React.memo(({ categories, onCategoryClick }) => {
+  const safeCategories = Array.isArray(categories) ? categories : [];
+
+  if (safeCategories.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="home-categories-section">
+      <h6 className="home-categories-title">Categories</h6>
+      <div className="home-categories-grid">
+        {safeCategories.map((category) => {
+          const initial = (category?.name || '?').trim().charAt(0).toUpperCase() || '?';
+
+          return (
+            <button key={category.id} type="button" className="home-category-card" onClick={() => onCategoryClick(category)}>
+              <div className="home-category-icon-wrap">
+                {category.image_url ? (
+                  <img
+                    src={category.image_url}
+                    alt={category.name}
+                    className="home-category-image"
+                    loading="lazy"
+                  />
+                ) : (
+                  <span className="home-category-fallback">{initial}</span>
+                )}
+              </div>
+              <div className="home-category-meta">
+                <span className="home-category-name">{category.name}</span>
+                <span className="home-category-count">
+                  {category.shop_count === 1 ? '1 shop' : `${category.shop_count || 0} shops`}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+});
+
+CategoriesSection.displayName = 'CategoriesSection';
+
 const ItemsSection = React.memo(({ title, items, emptyMessage, loading, error }) => {
   const safeItems = Array.isArray(items) ? items : [];
   const itemCount = safeItems.length;
 
   return (
     <div className="home-items-section">
+      {title && <h2 className="home-items-title">{title}</h2>}
       {loading ? (
         <ItemCardSkeletonGrid count={8} />
       ) : error ? (
@@ -416,6 +523,85 @@ const ItemsSection = React.memo(({ title, items, emptyMessage, loading, error })
 });
 
 ItemsSection.displayName = 'ItemsSection';
+
+const CategoryItemsModal = React.memo(({ category, items, loading, error, onClose }) => {
+  if (!category) {
+    return null;
+  }
+
+  return (
+    <div className="home-category-modal" role="dialog" aria-modal="true" aria-label={`${category.name} items`} onClick={onClose}>
+      <div className="home-category-modal-panel" onClick={(event) => event.stopPropagation()}>
+        <div className="home-category-modal-header">
+          <div>
+            <p className="home-category-modal-kicker">Category</p>
+            <h3 className="home-category-modal-title">{category.name}</h3>
+            <p className="home-category-modal-subtitle">
+              {loading ? 'Loading items...' : `${items.length} items available`}
+            </p>
+          </div>
+          <button type="button" className="home-category-modal-close" onClick={onClose} aria-label="Close category items">
+            ×
+          </button>
+        </div>
+
+        <div className="home-category-modal-body">
+          {error ? (
+            <p className="error-message">{error}</p>
+          ) : loading ? (
+            <ItemCardSkeletonGrid count={8} />
+          ) : items.length > 0 ? (
+            <div className="items-grid home-category-modal-grid">
+              {items.map((item) => {
+                const stockLabel = typeof item.stock_quantity === 'number'
+                  ? (item.stock_quantity > 0 ? `${item.stock_quantity} in stock` : 'Out of stock')
+                  : undefined;
+                const normalizedFoodType = (item.foodType || '').toLowerCase();
+                const derivedIsVeg = normalizedFoodType
+                  ? normalizedFoodType !== 'nonveg'
+                  : (typeof item.is_veg === 'boolean' ? item.is_veg : true);
+                const shouldShowVegIndicator = (item.shopType || '').toLowerCase() === 'restaurant';
+
+                return (
+                  <ItemCard
+                    key={item.id}
+                    id={item.id}
+                    name={item.name}
+                    subtitle={item.shopName}
+                    description={item.description}
+                    price={item.price}
+                    originalPrice={item.originalPrice}
+                    image={item.image_url}
+                    isAvailable={item.is_available}
+                    stockQuantityLabel={stockLabel}
+                    stockQuantityValue={item.stock_quantity}
+                    averageRating={item.average_rating}
+                    reviewCount={item.review_count}
+                    shopId={item.shopId}
+                    shopType={item.shopType}
+                    halfPortionPrice={item.halfPortionPrice}
+                    halfPortionFinalPrice={item.halfPortionFinalPrice}
+                    fullPortionPrice={item.fullPortionPrice}
+                    fullPortionFinalPrice={item.fullPortionFinalPrice}
+                    foodType={item.foodType}
+                    is_sweets={item.is_sweets}
+                    isVeg={shouldShowVegIndicator ? derivedIsVeg : undefined}
+                    baseQuantity={item.baseQuantity}
+                    unit={item.unit}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <p className="no-items-message">No items found for this category yet.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+CategoryItemsModal.displayName = 'CategoryItemsModal';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -487,6 +673,18 @@ ItemsSection.displayName = 'ItemsSection';
       <div className="home-content">
         {!searchQuery && (
           <h1 className="home-main-title"></h1>
+        )}
+
+        {!searchQuery && <CategoriesSection categories={dashboardCategories} onCategoryClick={handleDashboardCategoryClick} />}
+
+        {activeDashboardCategory && (
+          <CategoryItemsModal
+            category={activeDashboardCategory}
+            items={activeCategoryItems}
+            loading={activeCategoryLoading}
+            error={activeCategoryError}
+            onClose={closeDashboardCategory}
+          />
         )}
         
         {/* Display Shops Sections */}
