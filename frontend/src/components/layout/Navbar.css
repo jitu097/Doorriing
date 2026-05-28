@@ -13,13 +13,16 @@
 
   z-index: 1000;
 
-  /* ensure navbar sits below mobile status/notch */
+  /* respect device safe area (notch/status bar) */
   padding-top: env(safe-area-inset-top);
 
   transition:
     background 0.3s ease,
     box-shadow 0.3s ease,
     backdrop-filter 0.3s ease;
+
+  /* keep a bit of bottom padding for visual spacing */
+  padding-bottom: 12px!important;
 }
 
 /* TOP ORANGE */
@@ -27,8 +30,8 @@
 .navbar-top {
   background: linear-gradient(
     to bottom,
-    #ff7a00,
-    #ff9f1c
+    #f47b0a,
+    #f8daaf
   );
 
   box-shadow: none;
@@ -58,8 +61,8 @@
 
   gap: 18px;
 
-  /* provide consistent inner padding below the safe-area */
-  padding: 12px 18px;
+  /* add vertical padding so content sits below the safe inset */
+  padding: 12px 18px 12px 18px;
 }
 
 /* LEFT */

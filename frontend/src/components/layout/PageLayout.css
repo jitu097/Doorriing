@@ -8,6 +8,6 @@
   width: 100%;
   min-height: 100vh;
   overflow: visible;
-  /* Increased to account for fixed navbar + mobile safe area */
+  /* increased top padding to account for safe-area + navbar height (mobile search present) */
   padding-top: 130px;
 }
