@@ -805,11 +805,7 @@ const ItemCard = ({
       )}
       <div className="item-card-body">
         <div className="item-card-title-row">
-          {legacyVegIndicator ? (
-            <span className={`item-card-veg-badge ${isVeg ? 'veg' : 'non-veg'}`}>
-              <span className="veg-dot" />
-            </span>
-          ) : null}
+          {/* legacy veg badge removed */}
           <h3 className="item-card-name">{name}</h3>
           {/* show info toggle: long descriptions OR grocery items with subtitle/description */}
           {(() => {
