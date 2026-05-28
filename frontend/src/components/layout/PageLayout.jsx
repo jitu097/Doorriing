@@ -17,6 +17,7 @@ const PageLayout = () => {
 
   const lastScrollY = useRef(0);
 
+  const handleCartOpen = () => setShowCart(true);
   const handleCartClose = () => setShowCart(false);
 
   const hideFooterAndCart =
@@ -73,11 +74,17 @@ const PageLayout = () => {
       </main>
 
       {!hideFooterAndCart && (
-        <MobileFooter visible={footerVisible} />
+        <MobileFooter
+          visible={footerVisible}
+          onCartClick={handleCartOpen}
+        />
       )}
 
       {!hideFloatingCart && (
-        <FloatingCart footerVisible={footerVisible} />
+        <FloatingCart
+          onCartClick={handleCartOpen}
+          footerVisible={footerVisible}
+        />
       )}
 
       <CartDrawer
