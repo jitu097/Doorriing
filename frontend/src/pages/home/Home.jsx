@@ -11,7 +11,7 @@ const OrderNotification = lazy(() => import('../../components/common/OrderNotifi
 import ShopCard from '../shopcard/shopcard';
 import { itemService } from '../../services/item.service';
 import { getCachedHomeShops, getHomeShops } from '../../services/shop.service';
-import { getDashboardCategories, getDashboardCategoryItems } from '../../services/category.service';
+import { getDashboardCategories, getDashboardCategoryItems, getCategoriesByShop } from '../../services/category.service';
 import { useAppAvailability } from '../../context/AppAvailabilityContext';
 import './Home.css';
 import { computeFinalPrice } from '../../utils/pricing';
@@ -189,6 +189,8 @@ const Home = () => {
   const [groceryShops, setGroceryShops] = useState(() => cachedHomeShops?.grocery || []);
   const [restaurantShops, setRestaurantShops] = useState(() => cachedHomeShops?.restaurant || []);
   const [dashboardCategories, setDashboardCategories] = useState([]);
+  const [restaurantDashboardCategories, setRestaurantDashboardCategories] = useState([]);
+  const [groceryDashboardCategories, setGroceryDashboardCategories] = useState([]);
   const [activeDashboardCategory, setActiveDashboardCategory] = useState(null);
   const [activeCategoryItems, setActiveCategoryItems] = useState([]);
   const [activeCategoryLoading, setActiveCategoryLoading] = useState(false);
@@ -321,6 +323,58 @@ const Home = () => {
     fetchHomeData();
   }, []);
 
+  // Aggregate categories by shop type (restaurant vs grocery) by querying categories for a sample of shops
+  useEffect(() => {
+    let mounted = true;
+
+    const aggregateForShops = async (shops = [], limit = 8) => {
+      const map = new Map();
+      const sample = Array.isArray(shops) ? shops.slice(0, limit) : [];
+
+      await Promise.all(sample.map(async (shop) => {
+        try {
+          const cats = await getCategoriesByShop(shop.id);
+          (cats || []).forEach((c) => {
+            const name = (c?.name || '').trim();
+            if (!name) return;
+            const key = name.toLowerCase();
+            if (!map.has(key)) {
+              map.set(key, { id: key, name, image_url: c.image_url || null, shop_count: new Set() });
+            }
+            const entry = map.get(key);
+            entry.shop_count.add(shop.id);
+            if (!entry.image_url && c.image_url) entry.image_url = c.image_url;
+          });
+        } catch (e) {
+          // ignore per-shop failures
+        }
+      }));
+
+      const list = Array.from(map.values()).map((v) => ({ id: v.id, name: v.name, image_url: v.image_url, shop_count: v.shop_count.size }));
+      list.sort((a, b) => (b.shop_count || 0) - (a.shop_count || 0));
+      return list;
+    };
+
+    const run = async () => {
+      try {
+        const [restCats, groCats] = await Promise.all([
+          aggregateForShops(restaurantShops, 10),
+          aggregateForShops(groceryShops, 10),
+        ]);
+
+        if (!mounted) return;
+        setRestaurantDashboardCategories(restCats);
+        setGroceryDashboardCategories(groCats);
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    run();
+
+    return () => { mounted = false; };
+  }, [restaurantShops, groceryShops]);
+
   useEffect(() => {
     const handleVisibilityChange = () => {
       setPageVisible(document.visibilityState === 'visible');
@@ -420,7 +474,7 @@ const ShopsSection = React.memo(({ shops, businessType, reducedMotion }) => {
 
 ShopsSection.displayName = 'ShopsSection';
 
-const CategoriesSection = React.memo(({ categories, onCategoryClick }) => {
+const CategoriesSection = React.memo(({ categories, onCategoryClick, title }) => {
   const safeCategories = Array.isArray(categories) ? categories : [];
 
   if (safeCategories.length === 0) {
@@ -429,7 +483,7 @@ const CategoriesSection = React.memo(({ categories, onCategoryClick }) => {
 
   return (
     <div className="home-categories-section">
-      <h6 className="home-categories-title">Categories</h6>
+      <h6 className="home-categories-title">{title || 'Categories'}</h6>
       <div className="home-categories-grid">
         {safeCategories.map((category) => {
           const initial = (category?.name || '?').trim().charAt(0).toUpperCase() || '?';
@@ -677,7 +731,21 @@ CategoryItemsModal.displayName = 'CategoryItemsModal';
           <h1 className="home-main-title"></h1>
         )}
 
-        {!searchQuery && <CategoriesSection categories={dashboardCategories} onCategoryClick={handleDashboardCategoryClick} />}
+        {!searchQuery && (
+          <>
+            <CategoriesSection
+              categories={restaurantDashboardCategories.length ? restaurantDashboardCategories : dashboardCategories}
+              onCategoryClick={handleDashboardCategoryClick}
+              title={"What's on your mind?"}
+            />
+
+            <CategoriesSection
+              categories={groceryDashboardCategories.length ? groceryDashboardCategories : dashboardCategories}
+              onCategoryClick={handleDashboardCategoryClick}
+              title={'Groceries & Daily essentials'}
+            />
+          </>
+        )}
 
         {activeDashboardCategory && (
           <CategoryItemsModal
