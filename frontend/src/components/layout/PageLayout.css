@@ -11,3 +11,32 @@
   /* increased top padding to account for safe-area + navbar height (mobile search present) */
   padding-top: 130px;
 }
+
+@media (max-width: 768px) {
+  .main-content {
+    padding-top: 108px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding-top: 76px;
+  }
+}
+
+/* Nudge the address page wrapper slightly upward so content sits closer to navbar */
+.address-container .address-wrapper {
+  margin-top: -18px;
+}
+
+@media (max-width: 768px) {
+  .address-container .address-wrapper {
+    margin-top: -12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .address-container .address-wrapper {
+    margin-top: -60px;
+  }
+}

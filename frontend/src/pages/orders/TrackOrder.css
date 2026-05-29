@@ -10,6 +10,23 @@
   margin: 0 auto;
 }
 
+/* Nudge track page wrapper slightly upward so it sits closer to the navbar */
+.track-container .track-wrapper {
+  margin-top: -48px!important;
+}
+
+@media (max-width: 768px) {
+  .track-container .track-wrapper {
+    margin-top: -12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .track-container .track-wrapper {
+    margin-top: -6px;
+  }
+}
+
 @media (max-width: 600px) {
   .track-container {
     padding-top: 5rem;
@@ -181,6 +198,22 @@
   font-size: 16px;
   font-weight: 700;
   color: #333;
+}
+
+/* Override any global .shop-info orange banner styles for this page */
+.tracking-footer .shop-info {
+  background: transparent !important;
+  color: inherit !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+.tracking-footer .shop-info h3,
+.tracking-footer .shop-info p {
+  background: transparent !important;
+  color: inherit !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .driver-contact-card {

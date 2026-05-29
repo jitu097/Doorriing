@@ -24,6 +24,7 @@ const Navbar = () => {
   const { activeAddress } = useAddress();
 
   const accountRef = useRef(null);
+  const mobileSearchRef = useRef(null);
 
   const [search, setSearch] = useState('');
   const [showAccount, setShowAccount] =
@@ -44,6 +45,15 @@ const Navbar = () => {
 
   const [placeholderIndex, setPlaceholderIndex] =
     useState(0);
+
+  const isRestaurantPage = location.pathname.startsWith('/restaurant');
+  const isGroceryPage = location.pathname.startsWith('/grocery');
+  const isAddressPage = location.pathname.startsWith('/address');
+  const isOrdersPage = location.pathname.startsWith('/orders');
+  const isTrackPage = location.pathname.startsWith('/track');
+  const isBrowsePage = isRestaurantPage || isGroceryPage || isAddressPage || isOrdersPage || isTrackPage;
+  const freezeNavbar = isBrowsePage;
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   // SCROLL EFFECT
 
@@ -95,6 +105,14 @@ useEffect(() => {
         console.debug('[Navbar] outside click detected, target:', e.target);
         setShowAccount(false);
       }
+
+      if (
+        mobileSearchRef.current &&
+        !mobileSearchRef.current.contains(e.target) &&
+        !e.target.closest('.page-search-btn')
+      ) {
+        setMobileSearchOpen(false);
+      }
     };
 
     // Listen for both mouse and touch so mobile taps are detected
@@ -143,6 +161,8 @@ useEffect(() => {
       }
 
       navigate(`/home?search=${encoded}`);
+      // close mobile search after performing search on mobile restaurant page
+      if (mobileSearchOpen) setMobileSearchOpen(false);
     }
   };
 
@@ -203,14 +223,14 @@ useEffect(() => {
   return (
     <nav
       className={`navbar ${
-        scrolled
+        !freezeNavbar && scrolled
           ? 'navbar-scrolled'
           : 'navbar-top'
       }`}
     >
         <div
   className={`navbar-container ${
-    scrolled ? "navbar-container-hidden" : ""
+    !freezeNavbar && scrolled ? "navbar-container-hidden" : ""
   }`}
 >
   
@@ -295,6 +315,19 @@ useEffect(() => {
 
           {/* ACCOUNT */}
 
+          {isBrowsePage && (
+                <button
+                  className="page-search-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMobileSearchOpen((s) => !s);
+                  }}
+                  onTouchStart={(e) => e.stopPropagation()}
+                >
+                  <img src="/search.webp" alt="search" />
+                </button>
+              )}
+
           {user ? (
             <div
               className="account-wrapper"
@@ -355,50 +388,52 @@ useEffect(() => {
 
       </div>
 
-      {/* MOBILE SEARCH */}
+        {/* MOBILE SEARCH */}
 
-      <div className="mobile-search-wrapper">
+      {(!isBrowsePage || mobileSearchOpen) && (
+        <div className={`mobile-search-wrapper ${mobileSearchOpen ? 'expanded' : ''}`} ref={mobileSearchRef}>
 
-        <div className="mobile-search">
+          <div className="mobile-search">
 
-          <svg
-            className="search-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
-            <circle
-              cx="11"
-              cy="11"
-              r="8"
-              stroke="currentColor"
-              strokeWidth="2"
+            <svg
+              className="search-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                cx="11"
+                cy="11"
+                r="8"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+
+              <path
+                d="m21 21-4.35-4.35"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+            </svg>
+
+            <input
+              type="text"
+              placeholder={
+                placeholders[placeholderIndex]
+              }
+              value={search}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+              onKeyDown={handleSearch}
             />
 
-            <path
-              d="m21 21-4.35-4.35"
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-          </svg>
+          </div>
 
-          <input
-            type="text"
-            placeholder={
-              placeholders[placeholderIndex]
-            }
-            value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
-            onKeyDown={handleSearch}
-          />
+                {/* MOBILE QUICK ICONS (under navbar container) */}
+                {!isBrowsePage && <MobileQuickIcons onClick={handleQuickIconClick} />}
 
         </div>
-        
-              {/* MOBILE QUICK ICONS (under navbar container) */}
-              <MobileQuickIcons onClick={handleQuickIconClick} />
-
-      </div>
+      )}
     </nav>
   );
 };

@@ -357,7 +357,7 @@
   width: 90%;
   margin: 0 auto;
   /* slightly increased top margin to move the Home section down */
-  margin-top: 2.5rem;
+  margin-top: 2.9rem;
   padding: 1.5rem 2rem;
 }
 
@@ -366,7 +366,7 @@
     width: 100%;
     max-width: 100%;
     /* nudged a bit more on mobile as well */
-    margin-top: 3.8rem;
+    margin-top: 7.5rem;
     padding: 0.5rem 1rem 5rem 1rem;
     margin-bottom: 0;
   }
@@ -1018,14 +1018,17 @@
 }
 
 .home-page .shops-carousel-item .shop-card-title {
+  line-clamp: 1;
   -webkit-line-clamp: 1;
 }
 
 .home-page .shops-carousel-item .shop-card-description {
+  line-clamp: 2;
   -webkit-line-clamp: 2;
 }
 
 .home-page .shops-carousel-item .shop-card-location {
+  line-clamp: 1;
   -webkit-line-clamp: 1;
 }
 

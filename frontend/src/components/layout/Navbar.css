@@ -240,6 +240,22 @@
   border-radius: 50%;
 }
 
+.page-search-btn {
+  background: transparent;
+  border: none;
+  padding: 6px;
+  margin-right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.page-search-btn img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
 .account-dropdown {
   position: absolute;
 

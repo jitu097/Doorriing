@@ -1,4 +1,4 @@
-us.orders-container {
+.orders-container {
   padding: 20px;
   background-color: #f8f9fa;
   min-height: 100vh;
@@ -8,6 +8,23 @@ us.orders-container {
   max-width: 1300px;
   width: 90%;
   margin: 0 auto;
+}
+
+/* Nudge orders wrapper slightly upward to sit closer to navbar */
+.orders-container .orders-wrapper {
+  margin-top: -48px!important;
+}
+
+@media (max-width: 768px) {
+  .orders-container .orders-wrapper {
+    margin-top: -12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .orders-container .orders-wrapper {
+    margin-top: -6px;
+  }
 }
 
 @media (max-width: 600px) {

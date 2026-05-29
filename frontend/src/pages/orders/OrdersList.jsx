@@ -76,7 +76,6 @@ const OrdersList = () => {
           </div>
         ) : (
           <div className="orders-list">
-            <div className="all-orders-label">All Orders ({orders.length})</div>
             {orders.map(order => (
               <div
                 key={order.id}
