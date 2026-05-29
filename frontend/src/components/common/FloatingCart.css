@@ -3,7 +3,7 @@
   position: fixed;
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: 2000; /* above modals (modal z-index ~1500) so it's visible when overlays open */
   margin-left: auto;
   margin-right: auto;
   width: 260px;
@@ -17,6 +17,53 @@
   transition: bottom 0.3s cubic-bezier(0.4,0,0.2,1);
 }
 
+.floating-cart.compact {
+  left: auto;
+  right: 14px;
+  width: auto;
+  max-width: none;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.floating-cart-mini-btn {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  border: none;
+  border-radius: 999px;
+  background: #F5CB58;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+}
+
+.floating-cart-mini-btn .cart-icon {
+  width: 26px;
+  height: 26px;
+}
+
+.floating-cart-mini-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+  padding: 0 4px;
+}
+
 @media (max-width: 768px) {
   .floating-cart {
     display: block;
@@ -24,6 +71,14 @@
   }
   .floating-cart.at-bottom {
     bottom: 10px; /* move to bottom when footer hidden */
+  }
+
+  .floating-cart.compact {
+    bottom: 88px;
+  }
+
+  .floating-cart.compact.at-bottom {
+    bottom: 18px;
   }
 }
 

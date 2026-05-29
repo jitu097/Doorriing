@@ -91,24 +91,19 @@ useEffect(() => {
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
-      if (
-        accountRef.current &&
-        !accountRef.current.contains(e.target)
-      ) {
+      if (accountRef.current && !accountRef.current.contains(e.target)) {
+        console.debug('[Navbar] outside click detected, target:', e.target);
         setShowAccount(false);
       }
     };
 
-    document.addEventListener(
-      'mousedown',
-      handleOutsideClick
-    );
+    // Listen for both mouse and touch so mobile taps are detected
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
 
     return () => {
-      document.removeEventListener(
-        'mousedown',
-        handleOutsideClick
-      );
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
     };
   }, []);
 
@@ -170,6 +165,28 @@ useEffect(() => {
         ))}
       </div>
     );
+  };
+
+  const handleQuickIconClick = (id) => {
+    try {
+      const tab =
+        id === 'all' ? 'all' :
+        id === 'food' ? 'food' :
+        id === 'mart' ? 'mart' :
+        id === 'beauty-essential' ? 'beauty-essential' :
+        id === 'pharmacy' ? 'pharmacy' :
+        null;
+
+      if (!tab) return;
+
+      const nextUrl = tab === 'all'
+        ? '/home'
+        : `/home?tab=${tab}`;
+
+      navigate(nextUrl);
+    } catch (e) {
+      // ignore navigation issues
+    }
   };
 
   // LOGOUT
@@ -285,11 +302,12 @@ useEffect(() => {
             >
               <button
                 className="account-btn"
-                onClick={() =>
-                  setShowAccount(
-                    !showAccount
-                  )
-                }
+                onClick={() => {
+                  console.debug('[Navbar] account-btn clicked. showAccount before:', showAccount);
+                  setShowAccount(!showAccount);
+                }}
+                onTouchStart={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
               >
                 <img
                   src="/account.png"
@@ -378,36 +396,7 @@ useEffect(() => {
         </div>
         
               {/* MOBILE QUICK ICONS (under navbar container) */}
-              <MobileQuickIcons onClick={(id) => {
-                try {
-                  const params = new URLSearchParams(window.location.search || '');
-
-                  if (id === 'all') {
-                    params.set('tab', 'all');
-                    params.delete('search');
-                  } else if (id === 'food') {
-                    params.set('tab', 'food');
-                    params.delete('search');
-                  } else if (id === 'mart') {
-                    params.set('tab', 'mart');
-                    params.delete('search');
-                  } else if (id === 'beauty-essential') {
-                    params.set('tab', 'beauty-essential');
-                    params.delete('search');
-                  } else if (id === 'pharmacy') {
-                    params.set('tab', 'pharmacy');
-                    params.delete('search');
-                  } else {
-                    params.set('search', id);
-                  }
-
-                  const newUrl = `${window.location.pathname}?${params.toString()}`;
-                  window.history.replaceState({}, '', newUrl);
-                  window.dispatchEvent(new PopStateEvent('popstate'));
-                } catch (e) {
-                  // ignore
-                }
-              }} />
+              <MobileQuickIcons onClick={handleQuickIconClick} />
 
       </div>
     </nav>

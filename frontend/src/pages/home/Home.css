@@ -504,13 +504,14 @@
   background: rgba(17, 24, 39, 0.58);
   backdrop-filter: blur(4px);
   display: flex;
-  align-items: flex-end;
+  /* center on larger screens so modal doesn't cover whole page */
+  align-items: center;
   justify-content: center;
   padding: 1rem;
 }
 
 .home-category-modal-panel {
-  width: min(1100px, 100%);
+  width: min(900px, 100%);
   max-height: 88vh;
   background: #fff;
   border-radius: 24px 24px 18px 18px;
@@ -567,6 +568,8 @@
 .home-category-modal-body {
   padding: 1rem;
   overflow: auto;
+  /* allow the body to take remaining space and scroll internally */
+  flex: 1 1 auto;
 }
 
 .home-category-modal-grid {
@@ -585,10 +588,13 @@
 
   .home-category-modal {
     padding: 0;
+    /* on small screens behave like a bottom sheet */
+    align-items: flex-end;
   }
 
   .home-category-modal-panel {
-    max-height: 100vh;
+    /* fill most of screen but leave a small top gap */
+    max-height: calc(100vh - 80px);
     border-radius: 20px 20px 0 0;
   }
 }

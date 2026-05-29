@@ -36,7 +36,6 @@
 
   box-shadow: none;
 }
-
 /* AFTER SCROLL */
 
 .navbar-scrolled {
@@ -412,6 +411,16 @@
     text-align: center;
     white-space: normal;
     max-width: 64px;
+  }
+
+  /* Make account dropdown fixed on mobile to avoid clipping by collapsed navbar container */
+  .account-dropdown {
+    position: fixed !important;
+    top: calc(env(safe-area-inset-top, 0px) + 60px) !important;
+    right: 12px !important;
+    width: 220px !important;
+    z-index: 100001 !important;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12) !important;
   }
 }
 

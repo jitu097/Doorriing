@@ -1,12 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCart } from '../../context/CartContext';
 import './FloatingCart.css';
 
 const FloatingCart = ({ onCartClick, footerVisible = true }) => {
   const { getCartCount, getCartTotal } = useCart();
+  const [compactMode, setCompactMode] = useState(false);
 
   const itemCount = getCartCount();
   const totalPrice = getCartTotal();
+
+  useEffect(() => {
+    const detectModal = () => {
+      setCompactMode(!!document.querySelector('.home-category-modal'));
+    };
+
+    detectModal();
+
+    const observer = new MutationObserver(() => {
+      detectModal();
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Don't render if cart is empty
   if (itemCount === 0) {
@@ -14,44 +31,56 @@ const FloatingCart = ({ onCartClick, footerVisible = true }) => {
   }
 
   return (
-    <div className={`floating-cart${footerVisible ? '' : ' at-bottom'}`}>
-      <div className="floating-cart-content">
-        <div className="floating-cart-info">
-          <div className="cart-icon-wrapper">
-            <img 
-              src="/shoppingbag.webp" 
-              alt="Cart" 
-              className="cart-icon"
-              loading="lazy"
-            />
-          </div>
-          <div className="cart-details">
-            <span className="cart-item-count">
-              {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
-            </span>
-            <span className="cart-total">₹ {totalPrice.toFixed(0)}</span>
-          </div>
-        </div>
-        <button className="view-cart-btn" onClick={onCartClick}>
-          checkout
-          <svg 
-            className="arrow-icon" 
-            width="16" 
-            height="16" 
-            viewBox="0 0 16 16" 
-            fill="none" 
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path 
-              d="M6 12L10 8L6 4" 
-              stroke="white" 
-              strokeWidth="2" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-            />
-          </svg>
+    <div className={`floating-cart${footerVisible ? '' : ' at-bottom'}${compactMode ? ' compact' : ''}`}>
+      {compactMode ? (
+        <button className="floating-cart-mini-btn" onClick={onCartClick} aria-label="Open cart">
+          <img
+            src="/shoppingbag.webp"
+            alt="Cart"
+            className="cart-icon"
+            loading="lazy"
+          />
+          <span className="floating-cart-mini-badge">{itemCount}</span>
         </button>
-      </div>
+      ) : (
+        <div className="floating-cart-content">
+          <div className="floating-cart-info">
+            <div className="cart-icon-wrapper">
+              <img
+                src="/shoppingbag.webp"
+                alt="Cart"
+                className="cart-icon"
+                loading="lazy"
+              />
+            </div>
+            <div className="cart-details">
+              <span className="cart-item-count">
+                {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
+              </span>
+              <span className="cart-total">₹ {totalPrice.toFixed(0)}</span>
+            </div>
+          </div>
+          <button className="view-cart-btn" onClick={onCartClick}>
+            checkout
+            <svg
+              className="arrow-icon"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M6 12L10 8L6 4"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

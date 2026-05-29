@@ -700,6 +700,11 @@ CategoryItemsModal.displayName = 'CategoryItemsModal';
 
   const effectiveActiveSection = isFoodTab ? SECTION_CONFIG.restaurant.key : isMartTab ? SECTION_CONFIG.grocery.key : activeSection;
 
+  const handleSectionChange = useCallback((sectionKey) => {
+    if (sectionKey === activeSection) return;
+    setActiveSection(sectionKey);
+  }, [activeSection]);
+
   if (isBeautyTab) {
     return (
       <div className="home-page home-beauty-page">
@@ -727,11 +732,6 @@ CategoryItemsModal.displayName = 'CategoryItemsModal';
       </div>
     );
   }
-
-  const handleSectionChange = useCallback((sectionKey) => {
-    if (sectionKey === activeSection) return;
-    setActiveSection(sectionKey);
-  }, [activeSection]);
 
   return (
     <div className="home-page">
