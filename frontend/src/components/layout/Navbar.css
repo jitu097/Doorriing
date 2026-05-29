@@ -39,7 +39,7 @@
 /* AFTER SCROLL */
 
 .navbar-scrolled {
-  background: rgba(243, 122, 52, 0.92);
+  background: #e8c552;
 
   backdrop-filter: blur(12px);
 

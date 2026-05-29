@@ -20,6 +20,267 @@ import { computeFinalPrice } from '../../utils/pricing';
 // component only renders when an order is already active.
 const NoFallback = () => null;
 
+const scheduleIdleWork = (callback) => {
+  if (typeof window === 'undefined') {
+    return () => {};
+  }
+
+  if (typeof window.requestIdleCallback === 'function') {
+    const idleId = window.requestIdleCallback(callback, { timeout: 1500 });
+    return () => window.cancelIdleCallback(idleId);
+  }
+
+  const timeoutId = window.setTimeout(callback, 250);
+  return () => window.clearTimeout(timeoutId);
+};
+
+const ShopsSection = React.memo(({ shops, businessType, reducedMotion }) => {
+  const safeShops = Array.isArray(shops) ? shops : [];
+  const shopsCount = safeShops.length;
+  const isEmpty = shopsCount === 0;
+  const scrollingShops = useMemo(() => {
+    if (isEmpty) return [];
+    return [...safeShops, ...safeShops];
+  }, [safeShops, isEmpty]);
+
+  const trackRef = useRef(null);
+
+  useEffect(() => {
+    const trackEl = trackRef.current;
+    if (!trackEl || reducedMotion || isEmpty) return;
+
+    const updateScrollDistance = () => {
+      try {
+        const half = Math.round(trackEl.scrollWidth / 2);
+        trackEl.style.setProperty('--scroll-distance', `${half}px`);
+      } catch (e) {
+        // Ignore measurement errors in rare environments
+      }
+    };
+
+    updateScrollDistance();
+    window.addEventListener('resize', updateScrollDistance);
+    return () => window.removeEventListener('resize', updateScrollDistance);
+  }, [scrollingShops, reducedMotion, isEmpty]);
+
+  return (
+    <div className={`home-shops-section${isEmpty ? ' home-shops-section-empty' : ''}`}>
+      <h6 className={`shops-section-title ${businessType === 'grocery' ? 'shops-section-title-grocery' : ''}`}>
+        {businessType === 'grocery' ? (
+          <> Explore Shops</>
+        ) : (
+          <> Top Restaurants</>
+        )}
+      </h6>
+      <div className="shops-carousel-container">
+        <div
+          ref={trackRef}
+          className={`shops-carousel-track${reducedMotion || isEmpty ? ' shops-carousel-no-anim' : ''}`}
+        >
+          {scrollingShops.map((shop, index) => (
+            <div
+              key={`${shop.id}-${index}`}
+              className={`shops-carousel-item ${businessType === 'grocery' ? 'shops-carousel-item-grocery' : ''}`}
+            >
+              <ShopCard
+                shop={shop}
+                routePrefix={businessType}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+ShopsSection.displayName = 'ShopsSection';
+
+const CategoriesSection = React.memo(({ categories, onCategoryClick, title }) => {
+  const safeCategories = Array.isArray(categories) ? categories : [];
+
+  if (safeCategories.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="home-categories-section">
+      <h6 className="home-categories-title">{title || 'Categories'}</h6>
+      <div className="home-categories-grid">
+        {safeCategories.map((category) => {
+          const initial = (category?.name || '?').trim().charAt(0).toUpperCase() || '?';
+
+          return (
+            <button key={category.id} type="button" className="home-category-card" onClick={() => onCategoryClick(category)}>
+              <div className="home-category-icon-wrap">
+                {category.image_url ? (
+                  <div
+                    className="home-category-image"
+                    style={{ backgroundImage: `url(${category.image_url})` }}
+                    role="img"
+                    aria-label={category.name}
+                  />
+                ) : (
+                  <span className="home-category-fallback">{initial}</span>
+                )}
+              </div>
+              <div className="home-category-meta">
+                <span className="home-category-name">{category.name}</span>
+                <span className="home-category-count">
+                  {category.shop_count === 1 ? '1 shop' : `${category.shop_count || 0} shops`}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+});
+
+CategoriesSection.displayName = 'CategoriesSection';
+
+const ItemsSection = React.memo(({ title, items, emptyMessage, loading, error }) => {
+  const safeItems = Array.isArray(items) ? items : [];
+  const itemCount = safeItems.length;
+
+  return (
+    <div className="home-items-section">
+      {title && <h2 className="home-items-title">{title}</h2>}
+      {loading ? (
+        <ItemCardSkeletonGrid count={8} />
+      ) : error ? (
+        <p className="error-message">{error}</p>
+      ) : itemCount > 0 ? (
+        <div className="items-grid">
+          {safeItems.map(item => {
+            const stockLabel = typeof item.stock_quantity === 'number'
+              ? (item.stock_quantity > 0 ? `${item.stock_quantity} in stock` : 'Out of stock')
+              : undefined;
+            const normalizedFoodType = (item.foodType || '').toLowerCase();
+            const derivedIsVeg = normalizedFoodType
+              ? normalizedFoodType !== 'nonveg'
+              : (typeof item.is_veg === 'boolean' ? item.is_veg : true);
+            const shouldShowVegIndicator = (item.shopType || '').toLowerCase() === 'restaurant';
+
+            return (
+              <ItemCard
+                key={item.id}
+                id={item.id}
+                name={item.name}
+                subtitle={item.shopName}
+                description={item.description}
+                price={item.price}
+                originalPrice={item.originalPrice}
+                image={item.image_url}
+                isAvailable={item.is_available}
+                stockQuantityLabel={stockLabel}
+                stockQuantityValue={item.stock_quantity}
+                averageRating={item.average_rating}
+                reviewCount={item.review_count}
+                shopId={item.shopId}
+                shopType={item.shopType}
+                halfPortionPrice={item.halfPortionPrice}
+                halfPortionFinalPrice={item.halfPortionFinalPrice}
+                fullPortionPrice={item.fullPortionPrice}
+                fullPortionFinalPrice={item.fullPortionFinalPrice}
+                foodType={item.foodType}
+                is_sweets={item.is_sweets}
+                isVeg={shouldShowVegIndicator ? derivedIsVeg : undefined}
+                baseQuantity={item.baseQuantity}
+                unit={item.unit}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <p className="no-items-message">{emptyMessage}</p>
+      )}
+    </div>
+  );
+});
+
+ItemsSection.displayName = 'ItemsSection';
+
+const CategoryItemsModal = React.memo(({ category, items, loading, error, onClose }) => {
+  if (!category) {
+    return null;
+  }
+
+  return (
+    <div className="home-category-modal" role="dialog" aria-modal="true" aria-label={`${category.name} items`} onClick={onClose}>
+      <div className="home-category-modal-panel" onClick={(event) => event.stopPropagation()}>
+        <div className="home-category-modal-header">
+          <div>
+            <p className="home-category-modal-kicker">Category</p>
+            <h3 className="home-category-modal-title">{category.name}</h3>
+            <p className="home-category-modal-subtitle">
+              {loading ? 'Loading items...' : `${items.length} items available`}
+            </p>
+          </div>
+          <button type="button" className="home-category-modal-close" onClick={onClose} aria-label="Close category items">
+            ×
+          </button>
+        </div>
+
+        <div className="home-category-modal-body">
+          {error ? (
+            <p className="error-message">{error}</p>
+          ) : loading ? (
+            <ItemCardSkeletonGrid count={8} />
+          ) : items.length > 0 ? (
+            <div className="items-grid home-category-modal-grid">
+              {items.map((item) => {
+                const stockLabel = typeof item.stock_quantity === 'number'
+                  ? (item.stock_quantity > 0 ? `${item.stock_quantity} in stock` : 'Out of stock')
+                  : undefined;
+                const normalizedFoodType = (item.foodType || '').toLowerCase();
+                const derivedIsVeg = normalizedFoodType
+                  ? normalizedFoodType !== 'nonveg'
+                  : (typeof item.is_veg === 'boolean' ? item.is_veg : true);
+                const shouldShowVegIndicator = (item.shopType || '').toLowerCase() === 'restaurant';
+
+                return (
+                  <ItemCard
+                    key={item.id}
+                    id={item.id}
+                    name={item.name}
+                    subtitle={item.shopName}
+                    description={item.description}
+                    price={item.price}
+                    originalPrice={item.originalPrice}
+                    image={item.image_url}
+                    isAvailable={item.is_available}
+                    stockQuantityLabel={stockLabel}
+                    stockQuantityValue={item.stock_quantity}
+                    averageRating={item.average_rating}
+                    reviewCount={item.review_count}
+                    shopId={item.shopId}
+                    shopType={item.shopType}
+                    halfPortionPrice={item.halfPortionPrice}
+                    halfPortionFinalPrice={item.halfPortionFinalPrice}
+                    fullPortionPrice={item.fullPortionPrice}
+                    fullPortionFinalPrice={item.fullPortionFinalPrice}
+                    foodType={item.foodType}
+                    is_sweets={item.is_sweets}
+                    isVeg={shouldShowVegIndicator ? derivedIsVeg : undefined}
+                    baseQuantity={item.baseQuantity}
+                    unit={item.unit}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <p className="no-items-message">No items found for this category yet.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+CategoryItemsModal.displayName = 'CategoryItemsModal';
+
 
 
 const SECTION_CONFIG = {
@@ -332,7 +593,7 @@ const Home = () => {
   useEffect(() => {
     let mounted = true;
 
-    const aggregateForShops = async (shops = [], limit = 8) => {
+    const aggregateForShops = async (shops = [], limit = 6) => {
       const map = new Map();
       const sample = Array.isArray(shops) ? shops.slice(0, limit) : [];
 
@@ -360,24 +621,29 @@ const Home = () => {
       return list;
     };
 
-    const run = async () => {
-      try {
-        const [restCats, groCats] = await Promise.all([
-          aggregateForShops(restaurantShops, 10),
-          aggregateForShops(groceryShops, 10),
-        ]);
+    const cancelIdle = scheduleIdleWork(() => {
+      const run = async () => {
+        try {
+          const [restCats, groCats] = await Promise.all([
+            aggregateForShops(restaurantShops, 6),
+            aggregateForShops(groceryShops, 6),
+          ]);
 
-        if (!mounted) return;
-        setRestaurantDashboardCategories(restCats);
-        setGroceryDashboardCategories(groCats);
-      } catch (e) {
-        // ignore
-      }
+          if (!mounted) return;
+          setRestaurantDashboardCategories(restCats);
+          setGroceryDashboardCategories(groCats);
+        } catch (e) {
+          // ignore
+        }
+      };
+
+      run();
+    });
+
+    return () => {
+      mounted = false;
+      cancelIdle();
     };
-
-    run();
-
-    return () => { mounted = false; };
   }, [restaurantShops, groceryShops]);
 
   useEffect(() => {
@@ -410,262 +676,6 @@ const Home = () => {
       window.removeEventListener('home-shops-refreshed', handleShopsRefreshed);
     };
   }, []);
-
-// ── STANDALONE MEMOIZED COMPONENTS ──────────────────────────────────────────
-
-const ShopsSection = React.memo(({ shops, businessType, reducedMotion }) => {
-  const safeShops = Array.isArray(shops) ? shops : [];
-  const shopsCount = safeShops.length;
-  const isEmpty = shopsCount === 0;
-  const scrollingShops = useMemo(() => {
-    if (isEmpty) return [];
-    return [...safeShops, ...safeShops];
-  }, [safeShops, isEmpty]);
-
-  // Measure the scroll track and set a CSS variable with half the scrollWidth
-  // so the CSS animation can translate by an exact pixel value and avoid
-  // visible seams or empty gaps between duplicated content.
-  const trackRef = useRef(null);
-
-  useEffect(() => {
-    const trackEl = trackRef.current;
-    if (!trackEl || reducedMotion || isEmpty) return;
-
-    const updateScrollDistance = () => {
-      try {
-        const half = Math.round(trackEl.scrollWidth / 2);
-        trackEl.style.setProperty('--scroll-distance', `${half}px`);
-      } catch (e) {
-        // Ignore measurement errors in rare environments
-      }
-    };
-
-    updateScrollDistance();
-    window.addEventListener('resize', updateScrollDistance);
-    return () => window.removeEventListener('resize', updateScrollDistance);
-  }, [scrollingShops, reducedMotion, isEmpty]);
-
-  return (
-    <div className={`home-shops-section${isEmpty ? ' home-shops-section-empty' : ''}`}>
-      <h6 className={`shops-section-title ${businessType === 'grocery' ? 'shops-section-title-grocery' : ''}`}>
-        {businessType === 'grocery' ? (
-          <> Explore Shops</>
-        ) : (
-          <> Top Restaurants</>
-        )}
-      </h6>
-      <div className="shops-carousel-container">
-        {/* Apply no-animation class when user prefers reduced motion */}
-        <div
-          ref={trackRef}
-          className={`shops-carousel-track${reducedMotion || isEmpty ? ' shops-carousel-no-anim' : ''}`}
-        >
-          {scrollingShops.map((shop, index) => (
-            <div
-              key={`${shop.id}-${index}`}
-              className={`shops-carousel-item ${businessType === 'grocery' ? 'shops-carousel-item-grocery' : ''}`}
-            >
-              <ShopCard
-                shop={shop}
-                routePrefix={businessType}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-});
-
-ShopsSection.displayName = 'ShopsSection';
-
-const CategoriesSection = React.memo(({ categories, onCategoryClick, title }) => {
-  const safeCategories = Array.isArray(categories) ? categories : [];
-
-  if (safeCategories.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="home-categories-section">
-      <h6 className="home-categories-title">{title || 'Categories'}</h6>
-      <div className="home-categories-grid">
-        {safeCategories.map((category) => {
-          const initial = (category?.name || '?').trim().charAt(0).toUpperCase() || '?';
-
-          return (
-            <button key={category.id} type="button" className="home-category-card" onClick={() => onCategoryClick(category)}>
-              <div className="home-category-icon-wrap">
-                {category.image_url ? (
-                  <div
-                    className="home-category-image"
-                    style={{ backgroundImage: `url(${category.image_url})` }}
-                    role="img"
-                    aria-label={category.name}
-                  />
-                ) : (
-                  <span className="home-category-fallback">{initial}</span>
-                )}
-              </div>
-              <div className="home-category-meta">
-                <span className="home-category-name">{category.name}</span>
-                <span className="home-category-count">
-                  {category.shop_count === 1 ? '1 shop' : `${category.shop_count || 0} shops`}
-                </span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-});
-
-CategoriesSection.displayName = 'CategoriesSection';
-
-const ItemsSection = React.memo(({ title, items, emptyMessage, loading, error }) => {
-  const safeItems = Array.isArray(items) ? items : [];
-  const itemCount = safeItems.length;
-
-  return (
-    <div className="home-items-section">
-      {title && <h2 className="home-items-title">{title}</h2>}
-      {loading ? (
-        <ItemCardSkeletonGrid count={8} />
-      ) : error ? (
-        <p className="error-message">{error}</p>
-      ) : itemCount > 0 ? (
-        <div className="items-grid">
-          {safeItems.map(item => {
-            const stockLabel = typeof item.stock_quantity === 'number'
-              ? (item.stock_quantity > 0 ? `${item.stock_quantity} in stock` : 'Out of stock')
-              : undefined;
-            const normalizedFoodType = (item.foodType || '').toLowerCase();
-            const derivedIsVeg = normalizedFoodType
-              ? normalizedFoodType !== 'nonveg'
-              : (typeof item.is_veg === 'boolean' ? item.is_veg : true);
-            const shouldShowVegIndicator = (item.shopType || '').toLowerCase() === 'restaurant';
-
-            return (
-              <ItemCard
-                key={item.id}
-                id={item.id}
-                name={item.name}
-                subtitle={item.shopName}
-                description={item.description}
-                price={item.price}
-                originalPrice={item.originalPrice}
-                image={item.image_url}
-                isAvailable={item.is_available}
-                stockQuantityLabel={stockLabel}
-                stockQuantityValue={item.stock_quantity}
-                averageRating={item.average_rating}
-                reviewCount={item.review_count}
-                shopId={item.shopId}
-                shopType={item.shopType}
-                halfPortionPrice={item.halfPortionPrice}
-                halfPortionFinalPrice={item.halfPortionFinalPrice}
-                fullPortionPrice={item.fullPortionPrice}
-                fullPortionFinalPrice={item.fullPortionFinalPrice}
-                foodType={item.foodType}
-                is_sweets={item.is_sweets}
-                isVeg={shouldShowVegIndicator ? derivedIsVeg : undefined}
-                baseQuantity={item.baseQuantity}
-                unit={item.unit}
-              />
-            );
-          })}
-        </div>
-      ) : (
-        <p className="no-items-message">{emptyMessage}</p>
-      )}
-    </div>
-  );
-});
-
-ItemsSection.displayName = 'ItemsSection';
-
-const CategoryItemsModal = React.memo(({ category, items, loading, error, onClose }) => {
-  if (!category) {
-    return null;
-  }
-
-  return (
-    <div className="home-category-modal" role="dialog" aria-modal="true" aria-label={`${category.name} items`} onClick={onClose}>
-      <div className="home-category-modal-panel" onClick={(event) => event.stopPropagation()}>
-        <div className="home-category-modal-header">
-          <div>
-            <p className="home-category-modal-kicker">Category</p>
-            <h3 className="home-category-modal-title">{category.name}</h3>
-            <p className="home-category-modal-subtitle">
-              {loading ? 'Loading items...' : `${items.length} items available`}
-            </p>
-          </div>
-          <button type="button" className="home-category-modal-close" onClick={onClose} aria-label="Close category items">
-            ×
-          </button>
-        </div>
-
-        <div className="home-category-modal-body">
-          {error ? (
-            <p className="error-message">{error}</p>
-          ) : loading ? (
-            <ItemCardSkeletonGrid count={8} />
-          ) : items.length > 0 ? (
-            <div className="items-grid home-category-modal-grid">
-              {items.map((item) => {
-                const stockLabel = typeof item.stock_quantity === 'number'
-                  ? (item.stock_quantity > 0 ? `${item.stock_quantity} in stock` : 'Out of stock')
-                  : undefined;
-                const normalizedFoodType = (item.foodType || '').toLowerCase();
-                const derivedIsVeg = normalizedFoodType
-                  ? normalizedFoodType !== 'nonveg'
-                  : (typeof item.is_veg === 'boolean' ? item.is_veg : true);
-                const shouldShowVegIndicator = (item.shopType || '').toLowerCase() === 'restaurant';
-
-                return (
-                  <ItemCard
-                    key={item.id}
-                    id={item.id}
-                    name={item.name}
-                    subtitle={item.shopName}
-                    description={item.description}
-                    price={item.price}
-                    originalPrice={item.originalPrice}
-                    image={item.image_url}
-                    isAvailable={item.is_available}
-                    stockQuantityLabel={stockLabel}
-                    stockQuantityValue={item.stock_quantity}
-                    averageRating={item.average_rating}
-                    reviewCount={item.review_count}
-                    shopId={item.shopId}
-                    shopType={item.shopType}
-                    halfPortionPrice={item.halfPortionPrice}
-                    halfPortionFinalPrice={item.halfPortionFinalPrice}
-                    fullPortionPrice={item.fullPortionPrice}
-                    fullPortionFinalPrice={item.fullPortionFinalPrice}
-                    foodType={item.foodType}
-                    is_sweets={item.is_sweets}
-                    isVeg={shouldShowVegIndicator ? derivedIsVeg : undefined}
-                    baseQuantity={item.baseQuantity}
-                    unit={item.unit}
-                  />
-                );
-              })}
-            </div>
-          ) : (
-            <p className="no-items-message">No items found for this category yet.</p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-});
-
-CategoryItemsModal.displayName = 'CategoryItemsModal';
-
-// ─────────────────────────────────────────────────────────────────────────────
-
 
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 

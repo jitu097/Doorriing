@@ -51,7 +51,9 @@ const Navbar = () => {
   const isAddressPage = location.pathname.startsWith('/address');
   const isOrdersPage = location.pathname.startsWith('/orders');
   const isTrackPage = location.pathname.startsWith('/track');
-  const isBrowsePage = isRestaurantPage || isGroceryPage || isAddressPage || isOrdersPage || isTrackPage;
+  const isCheckoutPage = location.pathname.startsWith('/checkout');
+  const isOrderConfirmationPage = location.pathname.startsWith('/order-confirmation');
+  const isBrowsePage = isRestaurantPage || isGroceryPage || isAddressPage || isOrdersPage || isTrackPage || isCheckoutPage || isOrderConfirmationPage;
   const freezeNavbar = isBrowsePage;
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
