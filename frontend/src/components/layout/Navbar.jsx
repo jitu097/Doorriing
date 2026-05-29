@@ -1,4 +1,3 @@
-
 import React, {
   useState,
   useEffect,
@@ -48,28 +47,32 @@ const Navbar = () => {
 
   // SCROLL EFFECT
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 40) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
+useEffect(() => {
+  const handleScroll = () => {
+    const scrollTop =
+      window.pageYOffset ||
+      document.documentElement.scrollTop ||
+      document.body.scrollTop ||
+      0;
 
-    window.addEventListener(
-      'scroll',
-      handleScroll
+    
+    setScrolled(scrollTop > 50);
+  };
+
+  document.addEventListener(
+    "scroll",
+    handleScroll,
+    true
+  );
+
+  return () => {
+    document.removeEventListener(
+      "scroll",
+      handleScroll,
+      true
     );
-
-    return () => {
-      window.removeEventListener(
-        'scroll',
-        handleScroll
-      );
-    };
-  }, []);
-
+  };
+}, []);
   // PLACEHOLDER ROTATION
 
   useEffect(() => {
@@ -188,7 +191,12 @@ const Navbar = () => {
           : 'navbar-top'
       }`}
     >
-      <div className="navbar-container">
+        <div
+  className={`navbar-container ${
+    scrolled ? "navbar-container-hidden" : ""
+  }`}
+>
+  
 
         {/* LEFT */}
 
@@ -388,4 +396,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-

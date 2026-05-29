@@ -351,7 +351,8 @@
   max-width: 1300px;
   width: 90%;
   margin: 0 auto;
-  margin-top: 0.75rem;
+  /* slightly increased top margin to move the Home section down */
+  margin-top: 2.5rem;
   padding: 1.5rem 2rem;
 }
 
@@ -359,7 +360,8 @@
   .home-content {
     width: 100%;
     max-width: 100%;
-    margin-top: 0.6rem;
+    /* nudged a bit more on mobile as well */
+    margin-top: 3.8rem;
     padding: 0.5rem 1rem 5rem 1rem;
     margin-bottom: 0;
   }

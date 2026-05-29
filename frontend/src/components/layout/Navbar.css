@@ -40,7 +40,7 @@
 /* AFTER SCROLL */
 
 .navbar-scrolled {
-  background: rgba(255,255,255,0.92);
+  background: rgba(243, 122, 52, 0.92);
 
   backdrop-filter: blur(12px);
 
@@ -144,6 +144,7 @@
 
   flex-shrink: 0;
 }
+
 
 .navbar-search input {
   flex: 1;
@@ -444,4 +445,19 @@
     text-overflow: ellipsis;
   }
 }
+@media (max-width: 768px) {
 
+  .navbar-container {
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .navbar-container-hidden {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+  }
+}
