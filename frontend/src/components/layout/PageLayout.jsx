@@ -33,62 +33,39 @@ const PageLayout = () => {
     location.pathname === '/home';
 
   useEffect(() => {
-    const mainEl = document.querySelector('.main-content');
+    const handleScroll = () => {
+      const scrollTop =
+        window.pageYOffset ||
+        document.documentElement.scrollTop ||
+        document.body.scrollTop ||
+        0;
 
-    const readPos = (source) => {
-      if (!source) return 0;
-      if (source === window) return window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
-      return source.scrollTop || 0;
-    };
+      const delta = 6;
 
-    const handleScroll = (e) => {
-      const src = e && e.target && e.target !== document ? e.target : window;
-      const currentY = readPos(src === document ? window : src);
-
-      if (currentY <= 20) {
+      if (scrollTop <= 50) {
         setFooterVisible(true);
-        lastScrollY.current = currentY;
-        return;
-      }
-
-      const delta = 8;
-      if (currentY > lastScrollY.current + delta) {
+      } else if (scrollTop > lastScrollY.current + delta) {
         setFooterVisible(false);
-      } else if (currentY < lastScrollY.current - delta) {
+      } else if (scrollTop < lastScrollY.current - delta) {
         setFooterVisible(true);
       }
 
-      lastScrollY.current = currentY;
+      lastScrollY.current = scrollTop;
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    if (mainEl) mainEl.addEventListener('scroll', handleScroll, { passive: true });
+    setFooterVisible(true);
+    lastScrollY.current =
+      window.pageYOffset ||
+      document.documentElement.scrollTop ||
+      document.body.scrollTop ||
+      0;
+
+    document.addEventListener('scroll', handleScroll, true);
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (mainEl) mainEl.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('scroll', handleScroll, true);
     };
-  }, []);
-
-  // Toggle body class to remove the bottom padding when footer is hidden
-  useEffect(() => {
-    const cls = 'footer-hidden';
-    if (typeof document !== 'undefined') {
-      if (!hideFooterAndCart) {
-        if (!footerVisible) {
-          document.body.classList.add(cls);
-        } else {
-          document.body.classList.remove(cls);
-        }
-      } else {
-        document.body.classList.remove(cls);
-      }
-    }
-
-    return () => {
-      if (typeof document !== 'undefined') document.body.classList.remove(cls);
-    };
-  }, [footerVisible, hideFooterAndCart]);
+  }, [location.pathname]);
 
   return (
     <div className="page-layout">
