@@ -167,6 +167,11 @@ const normalizeItems = (items = []) => {
 const Home = () => {
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('search') || '';
+  const activeTab = (searchParams.get('tab') || 'all').toLowerCase();
+  const isFoodTab = activeTab === 'food';
+  const isMartTab = activeTab === 'mart';
+  const isBeautyTab = activeTab === 'beauty-essential';
+  const isPharmacyTab = activeTab === 'pharmacy';
 
   // Detect reduced-motion once at mount — stored in a ref to avoid re-renders.
   // Used by ShopsSection to disable the infinite carousel animation on low-power devices.
@@ -693,6 +698,36 @@ CategoryItemsModal.displayName = 'CategoryItemsModal';
     ? 'No products or shops match your search.'
     : SECTION_CONFIG[activeSection].emptyMessage;
 
+  const effectiveActiveSection = isFoodTab ? SECTION_CONFIG.restaurant.key : isMartTab ? SECTION_CONFIG.grocery.key : activeSection;
+
+  if (isBeautyTab) {
+    return (
+      <div className="home-page home-beauty-page">
+        <div className="home-content home-beauty-content">
+          <div className="home-beauty-card">
+            <img src="/pach.png" alt="Beauty essentials coming soon" className="home-beauty-image" />
+            <h1 className="home-beauty-title">Coming Soon</h1>
+            <p className="home-beauty-subtitle">Beauty shops and items coming soon</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isPharmacyTab) {
+    return (
+      <div className="home-page home-beauty-page">
+        <div className="home-content home-beauty-content">
+          <div className="home-beauty-card">
+            <img src="/char.png" alt="Pharmacy coming soon" className="home-beauty-image" />
+            <h1 className="home-beauty-title">Coming Soon</h1>
+            <p className="home-beauty-subtitle">Pharmacy shops and items coming soon</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const handleSectionChange = useCallback((sectionKey) => {
     if (sectionKey === activeSection) return;
     setActiveSection(sectionKey);
@@ -731,7 +766,7 @@ CategoryItemsModal.displayName = 'CategoryItemsModal';
           <h1 className="home-main-title"></h1>
         )}
 
-        {!searchQuery && (
+        {!searchQuery && !isFoodTab && !isMartTab && (
           <>
             <CategoriesSection
               categories={restaurantDashboardCategories.length ? restaurantDashboardCategories : dashboardCategories}
@@ -747,6 +782,22 @@ CategoryItemsModal.displayName = 'CategoryItemsModal';
           </>
         )}
 
+        {!searchQuery && isFoodTab && (
+          <CategoriesSection
+            categories={restaurantDashboardCategories.length ? restaurantDashboardCategories : dashboardCategories}
+            onCategoryClick={handleDashboardCategoryClick}
+            title={"What's on your mind?"}
+          />
+        )}
+
+        {!searchQuery && isMartTab && (
+          <CategoriesSection
+            categories={groceryDashboardCategories.length ? groceryDashboardCategories : dashboardCategories}
+            onCategoryClick={handleDashboardCategoryClick}
+            title={'Groceries & Daily essentials'}
+          />
+        )}
+
         {activeDashboardCategory && (
           <CategoryItemsModal
             category={activeDashboardCategory}
@@ -758,34 +809,48 @@ CategoryItemsModal.displayName = 'CategoryItemsModal';
         )}
         
         {/* Display Shops Sections */}
-        {!searchQuery && (
+        {!searchQuery && !isFoodTab && !isMartTab && (
           <>
             <ShopsSection shops={groceryShops} businessType="grocery" reducedMotion={reducedMotionRef.current || !pageVisible} />
             <ShopsSection shops={restaurantShops} businessType="restaurant" reducedMotion={reducedMotionRef.current || !pageVisible} />
           </>
         )}
 
+        {!searchQuery && isFoodTab && (
+          <>
+            <ShopsSection shops={restaurantShops} businessType="restaurant" reducedMotion={reducedMotionRef.current || !pageVisible} />
+          </>
+        )}
+
+        {!searchQuery && isMartTab && (
+          <>
+            <ShopsSection shops={groceryShops} businessType="grocery" reducedMotion={reducedMotionRef.current || !pageVisible} />
+          </>
+        )}
+
         {/* Items Section with Toggle */}
-        <div className="home-section-toggle">
-          <button
-            type="button"
-            className={`home-toggle-btn ${activeSection === SECTION_CONFIG.grocery.key ? 'is-active' : ''}`}
-            onClick={() => handleSectionChange(SECTION_CONFIG.grocery.key)}
-          >
-            Fresh Grocery Items
-          </button>
-          <button
-            type="button"
-            className={`home-toggle-btn ${activeSection === SECTION_CONFIG.restaurant.key ? 'is-active' : ''}`}
-            onClick={() => handleSectionChange(SECTION_CONFIG.restaurant.key)}
-          >
-            Restaurant Specials
-          </button>
-        </div>
+        {!isFoodTab && !isMartTab && (
+          <div className="home-section-toggle">
+            <button
+              type="button"
+              className={`home-toggle-btn ${effectiveActiveSection === SECTION_CONFIG.grocery.key ? 'is-active' : ''}`}
+              onClick={() => handleSectionChange(SECTION_CONFIG.grocery.key)}
+            >
+              Fresh Grocery Items
+            </button>
+            <button
+              type="button"
+              className={`home-toggle-btn ${effectiveActiveSection === SECTION_CONFIG.restaurant.key ? 'is-active' : ''}`}
+              onClick={() => handleSectionChange(SECTION_CONFIG.restaurant.key)}
+            >
+              Restaurant Specials
+            </button>
+          </div>
+        )}
 
         <ItemsSection
           title={title}
-          items={filteredItems}
+          items={isFoodTab ? restaurantItems : isMartTab ? groceryItems : filteredItems}
           emptyMessage={emptyMessage}
           loading={loading}
           error={error}

@@ -381,7 +381,26 @@ useEffect(() => {
               <MobileQuickIcons onClick={(id) => {
                 try {
                   const params = new URLSearchParams(window.location.search || '');
-                  params.set('search', id);
+
+                  if (id === 'all') {
+                    params.set('tab', 'all');
+                    params.delete('search');
+                  } else if (id === 'food') {
+                    params.set('tab', 'food');
+                    params.delete('search');
+                  } else if (id === 'mart') {
+                    params.set('tab', 'mart');
+                    params.delete('search');
+                  } else if (id === 'beauty-essential') {
+                    params.set('tab', 'beauty-essential');
+                    params.delete('search');
+                  } else if (id === 'pharmacy') {
+                    params.set('tab', 'pharmacy');
+                    params.delete('search');
+                  } else {
+                    params.set('search', id);
+                  }
+
                   const newUrl = `${window.location.pathname}?${params.toString()}`;
                   window.history.replaceState({}, '', newUrl);
                   window.dispatchEvent(new PopStateEvent('popstate'));

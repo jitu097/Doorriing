@@ -33,7 +33,7 @@
 .home-content .home-shops-section {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
-  background: linear-gradient(180deg, #f7e18a  0%, #fef0b7  100%);
+  background: linear-gradient(180deg, #ffffff  0%, #ffffff  100%);
   padding: 0.75rem 0 1rem;
 }
 
@@ -602,6 +602,49 @@
   background: linear-gradient(180deg,  #efb619,
    #f7e18a  0%,  #f3f1eb  60vh, #ffffff 60vh, #f8f9fa 100%);
   padding-top: 0;
+}
+
+.home-beauty-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f7e5cc 0%, #ffffff 36%, #ffffff 100%);
+}
+
+.home-beauty-content {
+  min-height: calc(100vh - 160px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem 6rem;
+}
+
+.home-beauty-card {
+  width: min(100%, 420px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.9rem;
+}
+
+.home-beauty-image {
+  width: 160px;
+  max-width: 42vw;
+  height: auto;
+  display: block;
+}
+
+.home-beauty-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #19212b;
+}
+
+.home-beauty-subtitle {
+  margin: 0;
+  font-size: 1rem;
+  color: #8a919b;
+  font-weight: 500;
 }
   
 
@@ -1192,6 +1235,24 @@
     height: 148px;
   }
 
+
+  .home-beauty-content {
+    min-height: calc(100vh - 140px);
+    padding: 2rem 1rem 5rem;
+  }
+
+  .home-beauty-image {
+    width: 140px;
+    max-width: 48vw;
+  }
+
+  .home-beauty-title {
+    font-size: 1.8rem;
+  }
+
+  .home-beauty-subtitle {
+    font-size: 0.96rem;
+  }
   .home-page .shops-carousel-item .shop-card-image {
     height: 80px;
   }
