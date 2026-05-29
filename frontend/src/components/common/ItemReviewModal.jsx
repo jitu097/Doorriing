@@ -65,19 +65,7 @@ const ItemReviewModal = ({ orderId, item, onClose, onSubmit }) => {
             </p>
           </div>
 
-          <div className="comment-section">
-            <label htmlFor="item-review-comment">Additional feedback (optional)</label>
-            <textarea
-              id="item-review-comment"
-              className="comment-input"
-              placeholder="Tell us about item quality, freshness, taste, etc."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              maxLength={500}
-              rows={4}
-            />
-            <p className="char-count">{comment.length}/500</p>
-          </div>
+          {/* Feedback textarea removed per UI request */}
 
           {error && <p className="error-message">{error}</p>}
 

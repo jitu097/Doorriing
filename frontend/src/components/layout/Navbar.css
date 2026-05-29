@@ -94,8 +94,7 @@
   font-size: 12px;
 
   font-weight: 500;
-
-  color: white;
+  color: #111;
 }
 
 .location-main {
@@ -108,8 +107,7 @@
   font-size: 15px;
 
   font-weight: 700;
-
-  color: white;
+  color: #111;
 }
 
 .navbar-scrolled .location-label {
