@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { prefersReducedMotion, enableGPUAcceleration } from "../../utils/animationOptimization";
 import "./LoadingScreen.css";
@@ -36,6 +36,8 @@ const shops = [
 ];
 
 export default function LoadingScreen() {
+  const [allLoaded, setAllLoaded] = useState(false);
+
   useEffect(() => {
     // Enable GPU acceleration for loading screen
     const container = document.querySelector('.loading-screen-map');
@@ -43,6 +45,41 @@ export default function LoadingScreen() {
       enableGPUAcceleration(container);
       container.classList.add('framer-motion-optimized');
     }
+  }, []);
+
+  useEffect(() => {
+    // Preload map + shop images concurrently to avoid staggered appearance
+    let mounted = true;
+    let loaded = 0;
+    const urls = ['/map.png', ...shops.map(s => s.src)];
+
+    const onLoaded = () => {
+      loaded += 1;
+      if (!mounted) return;
+      if (loaded >= urls.length) {
+        // small repaint before animations
+        window.requestAnimationFrame(() => setAllLoaded(true));
+      }
+    };
+
+    urls.forEach((u) => {
+      try {
+        const img = new Image();
+        img.decoding = 'async';
+        img.loading = 'eager';
+        img.src = u;
+        if (img.complete) {
+          onLoaded();
+        } else {
+          img.onload = onLoaded;
+          img.onerror = onLoaded; // treat errors as loaded to avoid blocking
+        }
+      } catch (e) {
+        onLoaded();
+      }
+    });
+
+    return () => { mounted = false; };
   }, []);
 
   return (
@@ -53,7 +90,7 @@ export default function LoadingScreen() {
         <span style={{display: 'block', color: '#ff4d4f', fontWeight: 'bold', letterSpacing: '2px', fontSize: '1.3em'}}>DOORRIING</span>
       </div>
       <div className="map-container">
-        <img src="/map.png" className="map-bg" alt="Map" loading="eager" decoding="async" />
+        <img src="/map.png" className="map-bg" alt="Map" loading="eager" decoding="async" fetchPriority="high" />
         {shops.map((shop, i) => (
           <motion.img
             key={shop.className}
@@ -62,10 +99,11 @@ export default function LoadingScreen() {
             custom={i + 1}
             variants={drop}
             initial="hidden"
-            animate="visible"
+            animate={allLoaded ? "visible" : "hidden"}
             alt={shop.label}
             loading="eager"
             decoding="async"
+            fetchPriority="high"
             style={{ willChange: 'transform, opacity' }}
           />
         ))}

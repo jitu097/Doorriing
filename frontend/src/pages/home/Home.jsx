@@ -13,6 +13,7 @@ import { itemService } from '../../services/item.service';
 import { getCachedHomeShops, getHomeShops } from '../../services/shop.service';
 import { getDashboardCategories, getDashboardCategoryItems, getCategoriesByShop } from '../../services/category.service';
 import { useAppAvailability } from '../../context/AppAvailabilityContext';
+import persistentCache from '../../utils/persistentCache';
 import './Home.css';
 import { computeFinalPrice } from '../../utils/pricing';
 
@@ -114,11 +115,13 @@ const CategoriesSection = React.memo(({ categories, onCategoryClick, title }) =>
             <button key={category.id} type="button" className="home-category-card" onClick={() => onCategoryClick(category)}>
               <div className="home-category-icon-wrap">
                 {category.image_url ? (
-                  <div
+                  <img
+                    src={category.image_url}
                     className="home-category-image"
-                    style={{ backgroundImage: `url(${category.image_url})` }}
-                    role="img"
-                    aria-label={category.name}
+                    alt={category.name}
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
                   />
                 ) : (
                   <span className="home-category-fallback">{initial}</span>
@@ -445,6 +448,8 @@ const Home = () => {
   // Try to restore cached dashboard data for instant render
   const cachedHomeShops = getCachedHomeShops();
   const cachedHomeItems = itemService.getCachedHomeItems?.() || null;
+  const cachedQueryEntries = persistentCache.restoreKeys();
+  const cachedDashboardCategories = cachedQueryEntries['dashboard:categories']?.data || [];
   const hasCache = !!(
     (cachedHomeShops && (cachedHomeShops.grocery?.length > 0 || cachedHomeShops.restaurant?.length > 0)) &&
     (cachedHomeItems && (cachedHomeItems.grocery_items?.length > 0 || cachedHomeItems.restaurant_items?.length > 0))
@@ -454,9 +459,9 @@ const Home = () => {
   const [restaurantItems, setRestaurantItems] = useState(() => normalizeItems(cachedHomeItems?.restaurant_items || []));
   const [groceryShops, setGroceryShops] = useState(() => cachedHomeShops?.grocery || []);
   const [restaurantShops, setRestaurantShops] = useState(() => cachedHomeShops?.restaurant || []);
-  const [dashboardCategories, setDashboardCategories] = useState([]);
-  const [restaurantDashboardCategories, setRestaurantDashboardCategories] = useState([]);
-  const [groceryDashboardCategories, setGroceryDashboardCategories] = useState([]);
+  const [dashboardCategories, setDashboardCategories] = useState(() => Array.isArray(cachedDashboardCategories) ? cachedDashboardCategories : []);
+  const [restaurantDashboardCategories, setRestaurantDashboardCategories] = useState(() => Array.isArray(cachedDashboardCategories) ? cachedDashboardCategories : []);
+  const [groceryDashboardCategories, setGroceryDashboardCategories] = useState(() => Array.isArray(cachedDashboardCategories) ? cachedDashboardCategories : []);
   const [activeDashboardCategory, setActiveDashboardCategory] = useState(null);
   const [activeCategoryItems, setActiveCategoryItems] = useState([]);
   const [activeCategoryLoading, setActiveCategoryLoading] = useState(false);
@@ -534,60 +539,61 @@ const Home = () => {
   const showUnavailableBanner = !appAvailabilityLoading && !appIsOpen;
 
   useEffect(() => {
-    const fetchHomeData = async () => {
+    let mounted = true;
+
+    const fetchDashboardData = async () => {
       try {
         if (!hasCache) {
           setLoading(true);
         }
         setError('');
 
-        // 1. Fetch shops and categories first (above-the-fold content)
-        const [shopsResult, categoriesResult] = await Promise.allSettled([
-          getHomeShops(8),
-          getDashboardCategories(),
-        ]);
+        getDashboardCategories()
+          .then((categories) => {
+            if (!mounted) return;
+            const safeCategories = Array.isArray(categories) ? categories : [];
+            setDashboardCategories(safeCategories);
+            setRestaurantDashboardCategories(safeCategories);
+            setGroceryDashboardCategories(safeCategories);
+          })
+          .catch((categoriesError) => {
+            console.error('Error fetching dashboard categories:', categoriesError);
+            if (!mounted) return;
+          });
 
-        if (shopsResult.status === 'fulfilled') {
-          applyShopUpdate(shopsResult.value);
-        } else {
-          console.error('Error fetching shops:', shopsResult.reason);
-        }
+        getHomeShops(8)
+          .then((shops) => {
+            if (!mounted) return;
+            applyShopUpdate(shops);
+          })
+          .catch((shopsError) => {
+            console.error('Error fetching shops:', shopsError);
+          });
 
-        if (categoriesResult.status === 'fulfilled') {
-          setDashboardCategories(Array.isArray(categoriesResult.value) ? categoriesResult.value : []);
-        } else {
-          console.error('Error fetching dashboard categories:', categoriesResult.reason);
-          setDashboardCategories([]);
-        }
-
-        // Reveal layout with shops as soon as they are ready
-        if (!hasCache) {
-          setLoading(false);
-        }
-
-        // 2. Fetch items (below-the-fold content, staggered by 50ms to prioritize network/rendering threads)
+        // Fetch items separately so categories can render without waiting on them.
         await new Promise((resolve) => setTimeout(resolve, 50));
 
-        try {
-          const itemPayload = await itemService.getHomeItems();
-          setGroceryItems(normalizeItems(itemPayload.grocery_items));
-          setRestaurantItems(normalizeItems(itemPayload.restaurant_items));
-        } catch (itemError) {
-          console.error('Error fetching home items:', itemError);
-          setError(itemError.message || 'Failed to load items');
-          setGroceryItems([]);
-          setRestaurantItems([]);
-        }
+        const itemPayload = await itemService.getHomeItems();
+        if (!mounted) return;
+        setGroceryItems(normalizeItems(itemPayload.grocery_items));
+        setRestaurantItems(normalizeItems(itemPayload.restaurant_items));
       } catch (err) {
+        if (!mounted) return;
         console.error('Unexpected error fetching home data:', err);
         setError(err.message || 'Failed to load home data');
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchHomeData();
-  }, []);
+    fetchDashboardData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [hasCache]);
 
   // Aggregate categories by shop type (restaurant vs grocery) by querying categories for a sample of shops
   useEffect(() => {

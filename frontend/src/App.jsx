@@ -1,22 +1,14 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { getRedirectResult } from 'firebase/auth';
 import UserRoutes from './routes/UserRoutes';
-import LoadingScreen from './components/common/LoadingScreen';
 import { auth } from './config/firebase';
 import persistentCache from './utils/persistentCache';
 import prefetchManager from './utils/prefetchManager';
 import useQueryCache from './store/queryCache.store';
 
-function isMobile() {
-  if (typeof window === 'undefined') return false;
-  return window.innerWidth <= 600;
-}
-
 
 function App() {
-  const [loading, setLoading] = useState(isMobile());
-
   useEffect(() => {
     // Skip Firebase redirect check when running inside Android WebView shell
     const isAndroidWrapper = typeof window !== 'undefined' && !!(window.AndroidAuth || window.Android);
@@ -41,52 +33,23 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!isMobile()) {
-      setLoading(false);
-      return;
-    }
-
-    // Try to restore persisted dashboard cache for instant reopen
+    // Restore persisted dashboard cache in the background without blocking first paint.
     try {
       const restored = persistentCache.restoreKeys();
       const setCache = useQueryCache.getState().setCache;
-      let any = false;
       for (const k in restored) {
         const e = restored[k];
         if (e && e.data) {
-          // restore with a safe TTL (default 2 minutes)
           setCache(k, e.data, e.ttl ?? (2 * 60 * 1000));
-          any = true;
         }
-      }
-      if (any) {
-        // show UI immediately with restored data
-        setLoading(false);
       }
     } catch (e) {
       console.warn('[App] restore persistent cache failed', e);
     }
 
-    // Wait for auth state to hydrate; ensure auth wont block long on first open
-    auth.authStateReady().then(() => {
-      setLoading(false);
-    }).catch(() => {
-      setLoading(false);
-    });
+    // Let Firebase hydrate auth state in the background so protected routes can catch up later.
+    auth.authStateReady().catch(() => {});
   }, []);
-
-  // Toggle body scroll based on loading state
-  useEffect(() => {
-    if (loading) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    // Clean up on unmount
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [loading]);
   // Start lightweight background revalidation and predictive prefetch after first paint.
   // STEP 5: Deferred with setTimeout(0) to yield the JS thread to React's commit phase
   // first, ensuring the first paint is not delayed by non-critical background work.
@@ -131,10 +94,6 @@ function App() {
       window.removeEventListener('beforeunload', onHide);
     };
   }, []);
-
-  if (loading) {
-    return <LoadingScreen />;
-  }
 
   return <UserRoutes />;
 }
