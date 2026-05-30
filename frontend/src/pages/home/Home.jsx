@@ -12,7 +12,6 @@ import ShopCard from '../shopcard/shopcard';
 import { itemService } from '../../services/item.service';
 import { getCachedHomeShops, getHomeShops } from '../../services/shop.service';
 import { getDashboardCategories, getDashboardCategoryItems, getCategoriesByShop } from '../../services/category.service';
-import { useAppAvailability } from '../../context/AppAvailabilityContext';
 import persistentCache from '../../utils/persistentCache';
 import './Home.css';
 import { computeFinalPrice } from '../../utils/pricing';
@@ -535,13 +534,6 @@ const Home = () => {
     }
   }, []);
 
-  // ── Global App Availability ───────────────────────────────────────────────
-  // Polled every 30s by AppAvailabilityProvider at the app root.
-  // isOpen is optimistically true during initial load (isLoading=true).
-  const { isOpen: appIsOpen, isLoading: appAvailabilityLoading, reason: appReason, blockedBy } = useAppAvailability();
-  // Show banner only when we have a confirmed closed state (not still loading first poll)
-  const showUnavailableBanner = !appAvailabilityLoading && !appIsOpen;
-
   useEffect(() => {
     let mounted = true;
 
@@ -755,26 +747,6 @@ const Home = () => {
 
   return (
     <div className="home-page">
-      {/* ── Unavailability Banner ──────────────────────────────────────── */}
-      {showUnavailableBanner && (
-        <div className="home-unavailability-banner" role="alert">
-          <span className="home-unavailability-icon">
-            {blockedBy === 'time_window' ? '🕐' : '🔒'}
-          </span>
-          <div className="home-unavailability-text">
-            <strong className="home-unavailability-title">
-              {blockedBy === 'time_window'
-                ? 'Outside Delivery Hours'
-                : 'Currently Unavailable for Orders'}
-            </strong>
-            <span className="home-unavailability-sub">
-              {appReason ||
-                'We are currently not accepting orders. You can still browse available shops.'}
-            </span>
-          </div>
-        </div>
-      )}
-      {/* ─────────────────────────────────────────────────────────────── */}
       {/* ImageScroller disabled: remove the comment below to re-enable */}
       {/* <ImageScroller /> */}
       {/* OrderNotification is lazy — only fetched when an active order exists */}

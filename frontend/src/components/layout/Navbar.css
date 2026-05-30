@@ -5,6 +5,9 @@
 
 .navbar {
   position: fixed;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 
   top: 0;
   left: 0;
@@ -23,6 +26,45 @@
 
   /* keep a bit of bottom padding for visual spacing */
   padding-bottom: 12px!important;
+}
+
+.navbar-unavailability-banner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #ff4757 0%, #c0392b 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(192, 57, 43, 0.35);
+  overflow: hidden;
+  z-index: 1001;
+}
+
+.navbar-unavailability-icon {
+  font-size: 1.55rem;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.navbar-unavailability-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.navbar-unavailability-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.navbar-unavailability-sub {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  line-height: 1.4;
 }
 
 /* TOP ORANGE */
@@ -323,6 +365,23 @@
 
   .navbar {
     padding: 12px 0;
+  }
+
+  .navbar-unavailability-banner {
+    padding: 11px 14px;
+    gap: 10px;
+  }
+
+  .navbar-unavailability-icon {
+    font-size: 1.35rem;
+  }
+
+  .navbar-unavailability-title {
+    font-size: 0.88rem;
+  }
+
+  .navbar-unavailability-sub {
+    font-size: 0.74rem;
   }
 
   .navbar-search {

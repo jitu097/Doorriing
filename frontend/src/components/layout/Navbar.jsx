@@ -13,6 +13,7 @@ import {
 
 import { useAuth } from '../../hooks/useAuth';
 import { useAddress } from '../../context/AddressContext';
+import { useAppAvailability } from '../../context/AppAvailabilityContext';
 
 import './Navbar.css';
 
@@ -22,6 +23,7 @@ const Navbar = () => {
 
   const { user, logout } = useAuth();
   const { activeAddress } = useAddress();
+  const { isOpen: appIsOpen, isLoading: appAvailabilityLoading, reason: appReason, blockedBy } = useAppAvailability();
 
   const accountRef = useRef(null);
   const mobileSearchRef = useRef(null);
@@ -55,6 +57,8 @@ const Navbar = () => {
   const isOrderConfirmationPage = location.pathname.startsWith('/order-confirmation');
   const isBrowsePage = isRestaurantPage || isGroceryPage || isAddressPage || isOrdersPage || isTrackPage || isCheckoutPage || isOrderConfirmationPage;
   const freezeNavbar = isBrowsePage;
+  const isHomePage = location.pathname === '/' || location.pathname === '/home';
+  const showUnavailableBanner = isHomePage && !appAvailabilityLoading && !appIsOpen;
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   // SCROLL EFFECT
@@ -389,6 +393,24 @@ useEffect(() => {
         </div>
 
       </div>
+
+      {showUnavailableBanner && (
+        <div className="navbar-unavailability-banner" role="alert">
+          <span className="navbar-unavailability-icon">
+            {blockedBy === 'time_window' ? '🕐' : '🔒'}
+          </span>
+          <div className="navbar-unavailability-text">
+            <strong className="navbar-unavailability-title">
+              {blockedBy === 'time_window'
+                ? 'Outside Delivery Hours'
+                : 'Currently Unavailable for Orders'}
+            </strong>
+            <span className="navbar-unavailability-sub">
+              {appReason || 'We are currently not accepting orders. You can still browse available shops.'}
+            </span>
+          </div>
+        </div>
+      )}
 
         {/* MOBILE SEARCH */}
 
