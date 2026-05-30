@@ -1,11 +1,12 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { getRedirectResult } from 'firebase/auth';
 import UserRoutes from './routes/UserRoutes';
 import { auth } from './config/firebase';
 import persistentCache from './utils/persistentCache';
 import prefetchManager from './utils/prefetchManager';
 import useQueryCache from './store/queryCache.store';
+import LoadingScreen from './components/common/LoadingScreen';
 
 
 function App() {
@@ -94,6 +95,19 @@ function App() {
       window.removeEventListener('beforeunload', onHide);
     };
   }, []);
+
+  // Show a dedicated initial loading screen only on the very first mount
+  // to avoid full-page fallbacks during later route lazy-loads.
+  const [showInitialLoading, setShowInitialLoading] = useState(true);
+
+  useEffect(() => {
+    // Keep the initial loading screen for a brief moment to allow
+    // critical chunks to load and for the first paint to finish.
+    const t = setTimeout(() => setShowInitialLoading(false), 600);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (showInitialLoading) return <LoadingScreen />;
 
   return <UserRoutes />;
 }

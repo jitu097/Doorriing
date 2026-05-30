@@ -120,7 +120,6 @@ const CategoryItem = () => {
       {/* Menu Section */}
       <div className="menu-section">
         <h2 className="menu-title">MENU</h2>
-        {loading && <p>Loading categories...</p>}
 
         {!loading && error && (
           <EmptyState

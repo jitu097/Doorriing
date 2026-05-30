@@ -473,6 +473,10 @@ const Home = () => {
     typeof document === 'undefined' || document.visibilityState === 'visible'
   ));
   const categoryItemsRequestRef = useRef(0);
+  const categoriesLoading =
+    dashboardCategories.length === 0 &&
+    restaurantDashboardCategories.length === 0 &&
+    groceryDashboardCategories.length === 0;
 
   const mergeShopPayload = (currentValue, nextValue) => {
     if (Array.isArray(nextValue) && nextValue.length > 0) {
@@ -777,7 +781,7 @@ const Home = () => {
       <Suspense fallback={<NoFallback />}>
         <OrderNotification />
       </Suspense>
-      <div className="home-content">
+      <div className={`home-content${categoriesLoading ? ' home-content-blurred' : ''}`} aria-busy={categoriesLoading}>
         {!searchQuery && (
           <h1 className="home-main-title"></h1>
         )}
@@ -872,6 +876,15 @@ const Home = () => {
           error={error}
         />
       </div>
+
+      {categoriesLoading && (
+        <div className="home-loading-overlay" role="status" aria-live="polite">
+          <div className="home-loading-card">
+            <div className="home-loading-spinner" />
+            
+          </div>
+        </div>
+      )}
     </div>
   );
 };
