@@ -123,7 +123,7 @@ const TrackOrder = () => {
             </div>
             <div className="eta-info">
               <h3>Estimated Time</h3>
-              <p>{currentStepIdx < 4 ? 'Arriving in 25-35 mins' : 'Delivered'}</p>
+              <p>{currentStepIdx < 4 ? 'Arriving in 40 to 60 min' : 'Delivered'}</p>
             </div>
           </div>
 
