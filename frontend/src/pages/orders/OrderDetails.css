@@ -1,5 +1,5 @@
 .order-details-container {
-  padding: 20px;
+  padding: 8px 20px 20px;
   background-color: #f8f9fa;
   min-height: 100vh;
 }
@@ -12,7 +12,7 @@
 
 @media (max-width: 600px) {
   .order-details-container {
-    padding-top: 5rem;
+    padding-top: 2.5rem;
   }
 
   .order-details-wrapper {

@@ -74,7 +74,7 @@ const PageLayout = () => {
       <main
         className="main-content"
         style={{
-          paddingBottom: !hideFooterAndCart ? '80px' : '0px',
+          paddingBottom: !hideFooterAndCart ? '0px' : '0px',
         }}
       >
         <Outlet />
