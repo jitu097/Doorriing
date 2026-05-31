@@ -211,6 +211,12 @@ const ItemCard = ({
     legacyVegIndicator,
   } = memoizedDetails;
 
+  const truncateWords = (text, maxWords = 4) => {
+    if (!text) return text;
+    const words = String(text).trim().split(/\s+/);
+    return words.length > maxWords ? `${words.slice(0, maxWords).join(' ')}...` : text;
+  };
+
   const measureText = useMemo(() => {
     const quantityText = baseQuantity !== undefined && baseQuantity !== null && String(baseQuantity).trim() !== ''
       ? String(baseQuantity).trim()
@@ -782,7 +788,7 @@ const ItemCard = ({
         </div>
       )}
       {optimizedImage && (
-        <div className="item-card-image" style={{ aspectRatio: '4/3', height: 'auto', overflow: 'hidden' }}>
+        <div className="item-card-image" style={{ aspectRatio: '4/3', height: 'var(--item-image-height, 320px)', overflow: 'hidden' }}>
           <img src={optimizedImage} alt={name} loading="lazy" decoding="async" fetchPriority="low" draggable="false" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           {showFoodIndicator && (
             <span
@@ -800,6 +806,11 @@ const ItemCard = ({
                 style={{ width: 20, height: 20, verticalAlign: 'middle' }}
               />
             </span>
+          )}
+          {measureText && !isRestaurantCard && (
+            <div className="item-card-measure" aria-label={`Quantity ${measureText}`}>
+              {measureText}
+            </div>
           )}
         </div>
       )}
@@ -841,8 +852,8 @@ const ItemCard = ({
         {/* Show shop name (subtitle) and the item description separately so both are visible */}
         {subtitle && <p className="item-card-subtitle">{subtitle}</p>}
         {description && (
-          <p className={`item-card-description`}>
-            {description}
+          <p className={`item-card-description`} title={description} aria-label={description}>
+            {truncateWords(description, 4)}
           </p>
         )}
 
@@ -863,12 +874,7 @@ const ItemCard = ({
           </div>
         )}
 
-        {/* Hide quantity/unit display for restaurant cards (e.g., "1 plate") */}
-        {measureText && !isRestaurantCard && (
-          <div className="item-card-measure" aria-label={`Quantity ${measureText}`}>
-            {measureText}
-          </div>
-        )}
+        {/* measure is shown over the image for grocery cards */}
 
         {renderFooter()}
 

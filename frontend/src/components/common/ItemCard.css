@@ -178,7 +178,9 @@
 .item-card-image {
   position: relative;
   width: 100%;
-  height: 260px;
+  /* desktop default: expose a CSS variable so inline style can use it */
+  --item-image-height: 320px;
+  height: var(--item-image-height, 320px);
   background: #f8f8f8;
   overflow: hidden;
 }
@@ -190,9 +192,39 @@
   transform: translateZ(0);
 }
 
+/* ensure image container is positioned for absolute children */
+.item-card-image {
+  position: relative;
+}
+
+/* place the unit-measure at the bottom-right of the image for grocery cards */
+.item-card-image .item-card-measure {
+  position: absolute;
+  bottom: 6px! important;
+  right: 10px;
+  z-index: 12;
+  background: rgba(255,255,255,0.95);
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+@media (max-width: 480px) {
+  .item-card-image .item-card-measure {
+    bottom: 12px;
+    right: 8px;
+    padding: 5px 8px;
+    font-size: 0.68rem;
+  }
+}
+
 @media (max-width: 1024px) {
   .item-card-image {
-    height: 180px;
+    /* tablet */
+    --item-image-height: 180px;
+    height: var(--item-image-height, 180px);
   }
 }
 

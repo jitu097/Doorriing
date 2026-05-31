@@ -770,7 +770,8 @@
     width: 100% !important;
     min-width: 0 !important;
     max-width: 100% !important;
-    height: 110px !important;
+    /* allow desktop to use larger image height via CSS variable; mobile rules still win */
+    height: var(--item-image-height, 320px) !important;
     border-radius: 12px 12px 0 0 !important;
   }
 
