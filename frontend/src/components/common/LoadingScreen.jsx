@@ -3,25 +3,24 @@ import { motion } from "framer-motion";
 import { prefersReducedMotion, enableGPUAcceleration } from "../../utils/animationOptimization";
 import "./LoadingScreen.css";
 
-// Stage 6: Optimized animation config
-// Reduced delay per item from 0.20s to 0.12s for faster load
-// Reduced stiffness for smoother animations
-const MIN_LOADING_SCREEN_MS = 1000;
-const POST_DROP_HOLD_MS = 2000;
+// Keep the splash, but make it feel immediate.
+const MIN_LOADING_SCREEN_MS = 120;
+const POST_DROP_HOLD_MS = 250;
 const drop = {
   hidden: { y: -200, opacity: 0, scale: 0.8 },
   visible: (i) => {
     const reducedMotion = prefersReducedMotion();
+    const staggerDelay = reducedMotion ? 0 : (i - 1) * 0.035;
     
     return {
       y: 0,
       opacity: 1,
       scale: 1,
       transition: {
-        delay: 0, // All shops drop at the same time
+        delay: staggerDelay,
         type: "spring",
-        stiffness: reducedMotion ? 1 : 180,
-        damping: reducedMotion ? 1 : 10,
+        stiffness: reducedMotion ? 1 : 260,
+        damping: reducedMotion ? 1 : 16,
         duration: reducedMotion ? 0.01 : undefined,
       },
     };
@@ -54,40 +53,43 @@ export default function LoadingScreen({ onReady }) {
   }, []);
 
   useEffect(() => {
-    // Preload map + shop images concurrently to avoid staggered appearance
+    // Only wait on the map image; the shops should animate almost immediately.
     let mounted = true;
-    let loaded = 0;
-    const urls = ['/map.png', ...shops.map(s => s.src)];
+    const mapImage = new Image();
 
-    const onLoaded = () => {
-      loaded += 1;
+    const revealSoon = () => {
       if (!mounted) return;
-      if (loaded >= urls.length) {
-        const elapsed = Date.now() - startedAtRef.current;
-        const remaining = Math.max(0, MIN_LOADING_SCREEN_MS - elapsed);
+      const elapsed = Date.now() - startedAtRef.current;
+      const remaining = Math.max(0, MIN_LOADING_SCREEN_MS - elapsed);
 
-        window.setTimeout(() => {
-          if (!mounted) return;
-          // small repaint before animations
-          window.requestAnimationFrame(() => setAllLoaded(true));
-        }, remaining);
-      }
+      window.setTimeout(() => {
+        if (!mounted) return;
+        window.requestAnimationFrame(() => setAllLoaded(true));
+      }, remaining);
     };
 
-    urls.forEach((u) => {
+    try {
+      mapImage.decoding = 'async';
+      mapImage.loading = 'eager';
+      mapImage.onload = revealSoon;
+      mapImage.onerror = revealSoon;
+      mapImage.src = '/map.png';
+      if (mapImage.complete) {
+        revealSoon();
+      }
+    } catch (e) {
+      revealSoon();
+    }
+
+    shops.forEach((u) => {
       try {
         const img = new Image();
         img.decoding = 'async';
         img.loading = 'eager';
-        img.src = u;
-        if (img.complete) {
-          onLoaded();
-        } else {
-          img.onload = onLoaded;
-          img.onerror = onLoaded; // treat errors as loaded to avoid blocking
-        }
+        img.src = u.src;
+        // Fire-and-forget: shops should not block the animation start.
       } catch (e) {
-        onLoaded();
+        // Ignore image preload errors; the component can still animate.
       }
     });
 
@@ -132,7 +134,7 @@ export default function LoadingScreen({ onReady }) {
             alt={shop.label}
             loading="eager"
             decoding="async"
-            fetchPriority="high"
+            fetchPriority={i < 2 ? "high" : "auto"}
             style={{ willChange: 'transform, opacity' }}
           />
         ))}
