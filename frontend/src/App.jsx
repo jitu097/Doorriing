@@ -6,9 +6,12 @@ import { auth } from './config/firebase';
 import persistentCache from './utils/persistentCache';
 import prefetchManager from './utils/prefetchManager';
 import useQueryCache from './store/queryCache.store';
+import LoadingScreen from './components/common/LoadingScreen';
 
 
 function App() {
+  const [showInitialLoading, setShowInitialLoading] = useState(true);
+
   useEffect(() => {
     // Skip Firebase redirect check when running inside Android WebView shell
     const isAndroidWrapper = typeof window !== 'undefined' && !!(window.AndroidAuth || window.Android);
@@ -94,6 +97,8 @@ function App() {
       window.removeEventListener('beforeunload', onHide);
     };
   }, []);
+
+  if (showInitialLoading) return <LoadingScreen onReady={() => setShowInitialLoading(false)} />;
 
   return <UserRoutes />;
 }

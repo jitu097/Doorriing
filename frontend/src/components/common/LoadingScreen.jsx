@@ -3,24 +3,23 @@ import { motion } from "framer-motion";
 import { prefersReducedMotion, enableGPUAcceleration } from "../../utils/animationOptimization";
 import "./LoadingScreen.css";
 
-// Keep the splash, but make it feel immediate.
-const MIN_LOADING_SCREEN_MS = 120;
-const POST_DROP_HOLD_MS = 250;
+// Keep the splash, but start the fall quickly once the map is ready.
+const START_ANIMATION_DELAY_MS = 60;
+const POST_DROP_HOLD_MS = 1000;
 const drop = {
   hidden: { y: -200, opacity: 0, scale: 0.8 },
   visible: (i) => {
     const reducedMotion = prefersReducedMotion();
-    const staggerDelay = reducedMotion ? 0 : (i - 1) * 0.035;
     
     return {
       y: 0,
       opacity: 1,
       scale: 1,
       transition: {
-        delay: staggerDelay,
+        delay: 0, // All shops drop at the same time
         type: "spring",
-        stiffness: reducedMotion ? 1 : 260,
-        damping: reducedMotion ? 1 : 16,
+        stiffness: reducedMotion ? 1 : 180,
+        damping: reducedMotion ? 1 : 10,
         duration: reducedMotion ? 0.01 : undefined,
       },
     };
@@ -38,12 +37,9 @@ const shops = [
 
 export default function LoadingScreen({ onReady }) {
   const [allLoaded, setAllLoaded] = useState(false);
-  const startedAtRef = useRef(Date.now());
   const onReadyTimerRef = useRef(null);
 
   useEffect(() => {
-    startedAtRef.current = Date.now();
-
     // Enable GPU acceleration for loading screen
     const container = document.querySelector('.loading-screen-map');
     if (container) {
@@ -53,47 +49,42 @@ export default function LoadingScreen({ onReady }) {
   }, []);
 
   useEffect(() => {
-    // Only wait on the map image; the shops should animate almost immediately.
+    // Start the animation as soon as the map is ready. Don't wait for every shop image.
     let mounted = true;
-    const mapImage = new Image();
-
-    const revealSoon = () => {
+    const fallbackTimer = window.setTimeout(() => {
       if (!mounted) return;
-      const elapsed = Date.now() - startedAtRef.current;
-      const remaining = Math.max(0, MIN_LOADING_SCREEN_MS - elapsed);
-
-      window.setTimeout(() => {
-        if (!mounted) return;
-        window.requestAnimationFrame(() => setAllLoaded(true));
-      }, remaining);
-    };
+      window.requestAnimationFrame(() => setAllLoaded(true));
+    }, START_ANIMATION_DELAY_MS);
 
     try {
+      const mapImage = new Image();
       mapImage.decoding = 'async';
       mapImage.loading = 'eager';
-      mapImage.onload = revealSoon;
-      mapImage.onerror = revealSoon;
-      mapImage.src = '/map.png';
+      mapImage.src = '/map.webp';
+
+      const startAnimation = () => {
+        if (!mounted) return;
+        window.clearTimeout(fallbackTimer);
+        window.requestAnimationFrame(() => setAllLoaded(true));
+      };
+
       if (mapImage.complete) {
-        revealSoon();
+        startAnimation();
+      } else {
+        mapImage.onload = startAnimation;
+        mapImage.onerror = startAnimation;
       }
     } catch (e) {
-      revealSoon();
+      window.clearTimeout(fallbackTimer);
+      if (mounted) {
+        window.requestAnimationFrame(() => setAllLoaded(true));
+      }
     }
 
-    shops.forEach((u) => {
-      try {
-        const img = new Image();
-        img.decoding = 'async';
-        img.loading = 'eager';
-        img.src = u.src;
-        // Fire-and-forget: shops should not block the animation start.
-      } catch (e) {
-        // Ignore image preload errors; the component can still animate.
-      }
-    });
-
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+      window.clearTimeout(fallbackTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -121,7 +112,7 @@ export default function LoadingScreen({ onReady }) {
         <span style={{display: 'block', color: '#ff4d4f', fontWeight: 'bold', letterSpacing: '2px', fontSize: '1.3em'}}>DOORRIING</span>
       </div>
       <div className="map-container">
-        <img src="/map.png" className="map-bg" alt="Map" loading="eager" decoding="async" fetchPriority="high" />
+        <img src="/map.webp" className="map-bg" alt="Map" loading="eager" decoding="async" fetchPriority="high" />
         {shops.map((shop, i) => (
           <motion.img
             key={shop.className}
@@ -134,7 +125,7 @@ export default function LoadingScreen({ onReady }) {
             alt={shop.label}
             loading="eager"
             decoding="async"
-            fetchPriority={i < 2 ? "high" : "auto"}
+            fetchPriority="high"
             style={{ willChange: 'transform, opacity' }}
           />
         ))}
