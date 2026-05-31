@@ -15,17 +15,9 @@ const AddressForm = ({ formData, setFormData, onSubmit, onCancel, isEditing }) =
 
         let newValue = type === 'checkbox' ? checked : value;
 
-        // Restrict phone input: allow optional leading '+' then digits, limit length
+        // Restrict phone input to digits only and cap at 10 digits.
         if (name === 'phone') {
-            const v = String(value || '').trim();
-            if (v.startsWith('+')) {
-                // keep leading + and digits only after it, max 12 digits after + (e.g., +91XXXXXXXXXX)
-                const digits = v.slice(1).replace(/\D/g, '').slice(0, 12);
-                newValue = `+${digits}`;
-            } else {
-                // digits only, allow up to 12 digits (91 + 10 or leading 0 + 10)
-                newValue = v.replace(/\D/g, '').slice(0, 12);
-            }
+            newValue = String(value || '').replace(/\D/g, '').slice(0, 10);
         }
 
         setFormData(prev => ({
@@ -37,9 +29,9 @@ const AddressForm = ({ formData, setFormData, onSubmit, onCancel, isEditing }) =
     const handleSubmit = (e) => {
         e.preventDefault();
         const phone = (formData.phone || '').trim();
-        const indianPhoneRegex = /^(\+91|91|0)?[6-9]\d{9}$/;
+        const indianPhoneRegex = /^[6-9]\d{9}$/;
         if (!indianPhoneRegex.test(phone)) {
-            alert('Please enter a valid Indian phone number (10 digits). You can optionally prefix with 0, 91 or +91.');
+            alert('Please enter a valid 10-digit Indian phone number.');
             return;
         }
         onSubmit(e);
@@ -83,7 +75,7 @@ const AddressForm = ({ formData, setFormData, onSubmit, onCancel, isEditing }) =
                         </div>
                         <div className="form-group">
                             <label className="form-label">Phone Number *</label>
-                            <input type="tel" inputMode="tel" pattern="^(\\+91|91|0)?[6-9]\\d{9}$" maxLength={13} name="phone" value={formData.phone || ''} onChange={handleInputChange} placeholder="e.g., +919876543210 or 9876543210" required />
+                            <input type="tel" inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10} name="phone" value={formData.phone || ''} onChange={handleInputChange} placeholder="e.g., 9876543210" required />
                         </div>
                     </div>
 
