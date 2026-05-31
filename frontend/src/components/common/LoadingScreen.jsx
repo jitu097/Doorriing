@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { prefersReducedMotion, enableGPUAcceleration } from "../../utils/animationOptimization";
 import "./LoadingScreen.css";
@@ -6,6 +6,8 @@ import "./LoadingScreen.css";
 // Stage 6: Optimized animation config
 // Reduced delay per item from 0.20s to 0.12s for faster load
 // Reduced stiffness for smoother animations
+const MIN_LOADING_SCREEN_MS = 1000;
+const POST_DROP_HOLD_MS = 2000;
 const drop = {
   hidden: { y: -200, opacity: 0, scale: 0.8 },
   visible: (i) => {
@@ -16,10 +18,10 @@ const drop = {
       opacity: 1,
       scale: 1,
       transition: {
-        delay: 0, // All shops drop at same time
+        delay: 0, // All shops drop at the same time
         type: "spring",
-        stiffness: reducedMotion ? 1 : 100, // Reduced from 120 to 100 for smoother
-        damping: reducedMotion ? 1 : 12, // Reduced from 10 to 12 for more damping
+        stiffness: reducedMotion ? 1 : 180,
+        damping: reducedMotion ? 1 : 10,
         duration: reducedMotion ? 0.01 : undefined,
       },
     };
@@ -35,10 +37,14 @@ const shops = [
   { src: "/shop4.webp", className: "shop cosmetic", label: "Cosmetic" },
 ];
 
-export default function LoadingScreen() {
+export default function LoadingScreen({ onReady }) {
   const [allLoaded, setAllLoaded] = useState(false);
+  const startedAtRef = useRef(Date.now());
+  const onReadyTimerRef = useRef(null);
 
   useEffect(() => {
+    startedAtRef.current = Date.now();
+
     // Enable GPU acceleration for loading screen
     const container = document.querySelector('.loading-screen-map');
     if (container) {
@@ -57,8 +63,14 @@ export default function LoadingScreen() {
       loaded += 1;
       if (!mounted) return;
       if (loaded >= urls.length) {
-        // small repaint before animations
-        window.requestAnimationFrame(() => setAllLoaded(true));
+        const elapsed = Date.now() - startedAtRef.current;
+        const remaining = Math.max(0, MIN_LOADING_SCREEN_MS - elapsed);
+
+        window.setTimeout(() => {
+          if (!mounted) return;
+          // small repaint before animations
+          window.requestAnimationFrame(() => setAllLoaded(true));
+        }, remaining);
       }
     };
 
@@ -81,6 +93,23 @@ export default function LoadingScreen() {
 
     return () => { mounted = false; };
   }, []);
+
+  useEffect(() => {
+    if (allLoaded && typeof onReady === 'function') {
+      if (onReadyTimerRef.current) {
+        clearTimeout(onReadyTimerRef.current);
+      }
+
+      onReadyTimerRef.current = window.setTimeout(() => {
+        onReady();
+      }, POST_DROP_HOLD_MS);
+    }
+    return () => {
+      if (onReadyTimerRef.current) {
+        clearTimeout(onReadyTimerRef.current);
+      }
+    };
+  }, [allLoaded, onReady]);
 
   return (
     <div className="loading-screen-map">

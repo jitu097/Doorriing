@@ -10,6 +10,8 @@ import LoadingScreen from './components/common/LoadingScreen';
 
 
 function App() {
+  const [showInitialLoading, setShowInitialLoading] = useState(true);
+
   useEffect(() => {
     // Skip Firebase redirect check when running inside Android WebView shell
     const isAndroidWrapper = typeof window !== 'undefined' && !!(window.AndroidAuth || window.Android);
@@ -96,18 +98,7 @@ function App() {
     };
   }, []);
 
-  // Show a dedicated initial loading screen only on the very first mount
-  // to avoid full-page fallbacks during later route lazy-loads.
-  const [showInitialLoading, setShowInitialLoading] = useState(true);
-
-  useEffect(() => {
-    // Keep the initial loading screen for a brief moment to allow
-    // critical chunks to load and for the first paint to finish.
-    const t = setTimeout(() => setShowInitialLoading(false), 600);
-    return () => clearTimeout(t);
-  }, []);
-
-  if (showInitialLoading) return <LoadingScreen />;
+  if (showInitialLoading) return <LoadingScreen onReady={() => setShowInitialLoading(false)} />;
 
   return <UserRoutes />;
 }

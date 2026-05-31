@@ -40,9 +40,13 @@ const Signup = () => {
       newErrors.email = 'Invalid email format';
     }
 
-    // Phone validation (optional but if provided should be valid)
-    if (formData.phone && !/^\+?[\d\s-]{10,}$/.test(formData.phone)) {
-      newErrors.phone = 'Invalid phone number';
+    // Phone validation (optional but if provided should be valid Indian number)
+    if (formData.phone) {
+      const phoneTrim = formData.phone.trim();
+      const indianPhoneRegex = /^(?:\+91|91|0)?[6-9]\d{9}$/;
+      if (!indianPhoneRegex.test(phoneTrim)) {
+        newErrors.phone = 'Invalid Indian phone number';
+      }
     }
 
     // Password validation
@@ -65,9 +69,19 @@ const Signup = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let newValue = value;
+    if (name === 'phone') {
+      const v = String(value || '').trim();
+      if (v.startsWith('+')) {
+        const digits = v.slice(1).replace(/\D/g, '').slice(0, 12);
+        newValue = `+${digits}`;
+      } else {
+        newValue = v.replace(/\D/g, '').slice(0, 12);
+      }
+    }
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: newValue
     }));
 
     // Clear error for this field when user starts typing

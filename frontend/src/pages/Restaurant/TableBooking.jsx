@@ -14,11 +14,28 @@ const TableBooking = ({ isOpen, onClose, restaurant }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    let newValue = value;
+    if (name === 'phone') {
+      const v = String(value || '').trim();
+      if (v.startsWith('+')) {
+        const digits = v.slice(1).replace(/\D/g, '').slice(0, 12);
+        newValue = `+${digits}`;
+      } else {
+        newValue = v.replace(/\D/g, '').slice(0, 12);
+      }
+    }
+    setFormData(prev => ({ ...prev, [name]: newValue }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // validate phone
+    const phone = (formData.phone || '').trim();
+    const indianPhoneRegex = /^(?:\+91|91|0)?[6-9]\d{9}$/;
+    if (!indianPhoneRegex.test(phone)) {
+      alert('Please enter a valid Indian phone number for booking (10 digits, can prefix with 0, 91, or +91).');
+      return;
+    }
     setIsSubmitting(true);
     
     try {

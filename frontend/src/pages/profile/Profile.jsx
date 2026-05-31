@@ -15,9 +15,19 @@ const Profile = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    let newValue = value;
+    if (name === 'phone') {
+      const v = String(value || '').trim();
+      if (v.startsWith('+')) {
+        const digits = v.slice(1).replace(/\D/g, '').slice(0, 12);
+        newValue = `+${digits}`;
+      } else {
+        newValue = v.replace(/\D/g, '').slice(0, 12);
+      }
+    }
     setProfileData(prev => ({
       ...prev,
-      [name]: value
+      [name]: newValue
     }));
   };
 
@@ -96,10 +106,13 @@ const Profile = () => {
                 {isEditing ? (
                   <input
                     type="tel"
-                    name="phone"
-                    value={profileData.phone}
-                    onChange={handleInputChange}
-                    placeholder="Enter your phone number"
+                      name="phone"
+                      inputMode="tel"
+                      pattern="^(?:\\+91|91|0)?[6-9]\\d{9}$"
+                      maxLength={13}
+                      value={profileData.phone}
+                      onChange={handleInputChange}
+                      placeholder="e.g., +919876543210 or 9876543210"
                   />
                 ) : (
                   <p>{profileData.phone || 'Not provided'}</p>
