@@ -5,12 +5,15 @@ import CartItem from '../../components/user/CartItem';
 import './Cart.css';
 
 const Cart = () => {
-  const { cartItems, getCartTotal, deliveryFee, convenienceFee, platformSettingsLoading } = useCart();
+  const { cartItems, getCartTotal, deliveryFee, convenienceFee, platformSettingsLoading, platformSettings } = useCart();
 
   const subtotal = getCartTotal();
   const resolvedDeliveryFee = deliveryFee ?? 0;
   const resolvedConvenienceFee = convenienceFee ?? 0;
   const grandTotal = subtotal + resolvedDeliveryFee + resolvedConvenienceFee;
+  const minimumOrderAmount = Number(platformSettings?.min_order_amount) || 0;
+  const amountToMinimum = Math.max(0, minimumOrderAmount - subtotal);
+  const isBelowMinimumOrder = subtotal < minimumOrderAmount;
 
   return (
     <div className="cart-page">
@@ -56,6 +59,12 @@ const Cart = () => {
                 <span>Grand Total</span>
                 <span>₹{grandTotal.toFixed(2)}</span>
               </div>
+              {isBelowMinimumOrder && (
+                <div className="summary-row minimum-order-note">
+                  <span>Minimum order</span>
+                  <span>₹{minimumOrderAmount.toFixed(0)} (add ₹{amountToMinimum.toFixed(0)} more)</span>
+                </div>
+              )}
               <Link to="/home" className="continue-link">
                 Continue Shopping
               </Link>

@@ -6,8 +6,8 @@ import EmptyState from '../../components/common/EmptyState';
 import { getShopsByBusinessType } from '../../services/shop.service.js';
 
 const carouselImages = [
-  '/one.png',
-  '/two.png',
+  '/one.webp',
+  '/two.webp',
   '/third.png'
 ];
 

@@ -7,6 +7,8 @@ import { logger } from '../utils/logger.js';
 import crypto from 'crypto';
 import express from 'express';
 
+const MIN_ORDER_AMOUNT_INR = 100;
+
 const parseDeadline = (deadlineStr) => {
     if (!deadlineStr) return null;
     if (typeof deadlineStr === 'string' && !deadlineStr.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(deadlineStr)) {
@@ -188,6 +190,13 @@ export const orderController = {
             });
         }
 
+        if (Number(amount) < MIN_ORDER_AMOUNT_INR) {
+            return res.status(400).json({
+                success: false,
+                message: `Minimum order value is ₹${MIN_ORDER_AMOUNT_INR}. Please add more items to continue.`
+            });
+        }
+
         try {
             const options = {
                 amount: Math.round(amount * 100),
@@ -228,6 +237,14 @@ export const orderController = {
             addressId,
             pricing,
         } = req.body;
+
+        const finalAmount = Number(pricing?.finalAmount);
+        if (Number.isFinite(finalAmount) && finalAmount < MIN_ORDER_AMOUNT_INR) {
+            return res.status(400).json({
+                success: false,
+                message: `Minimum order value is ₹${MIN_ORDER_AMOUNT_INR}. Please add more items to continue.`
+            });
+        }
 
         // ── 1. Guard: required Razorpay fields ─────────────────────────────
         if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {

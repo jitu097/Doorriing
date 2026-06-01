@@ -5,6 +5,8 @@ import paymentAuditService from './paymentAudit.service.js';
 import refundService from './refund.service.js';
 import fetch from 'node-fetch';
 
+const MIN_ORDER_AMOUNT_INR = 100;
+
 const computeFinalPrice = (basePrice, discountType, discountValue) => {
     if (basePrice === undefined || basePrice === null) return null;
     if (!discountType || discountValue === undefined || discountValue === null) {
@@ -313,6 +315,10 @@ export const orderService = {
             }
 
             const totalAmount = subtotal + deliveryCharge + handlingCharge;
+
+            if (totalAmount < MIN_ORDER_AMOUNT_INR) {
+                throw new Error(`Minimum order value is ₹${MIN_ORDER_AMOUNT_INR}. Please add more items to continue.`);
+            }
 
             // Log mismatch for fraud/telemetry; backend values are authoritative.
             const clientSubtotal = Number(clientPricing?.subtotal);
@@ -883,6 +889,10 @@ export const orderService = {
             }
 
             const totalAmount = subtotal + deliveryCharge + handlingCharge;
+
+            if (totalAmount < MIN_ORDER_AMOUNT_INR) {
+                throw new Error(`Minimum order value is ₹${MIN_ORDER_AMOUNT_INR}. Please add more items to continue.`);
+            }
 
             // ── STEP 6: Generate order number ───────────────────────────────
             const datePart = new Date().toISOString().split('T')[0].replace(/-/g, '');

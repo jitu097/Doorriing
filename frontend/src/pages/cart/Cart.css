@@ -118,6 +118,10 @@
     color: #222;
 }
 
+.minimum-order-note {
+    color: #c2410c; /* red-600 */
+    font-weight: 700;
+}
 .summary-row.total span:last-child {
     color: #0c831f;
 }

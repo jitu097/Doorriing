@@ -472,6 +472,11 @@
     transform: none;
 }
 
+.place-order-btn:disabled {
+    color: #c2410c; /* red-600 for the text */
+    font-weight: 700;
+}
+
 @media (max-width: 900px) {
     .checkout-sections {
         grid-template-columns: 1fr;
@@ -510,6 +515,12 @@
   min-height: 60vh;
   gap: 16px;
   animation: fade-in-up 0.4s ease both;
+}
+
+.checkout-minimum-order-note {
+    color: #c2410c; /* red-600 */
+    font-weight: 700;
+    margin-top: 0.5rem;
 }
 
 @keyframes fade-in-up {

@@ -3,7 +3,7 @@ import { getCategoriesByShop } from '../services/category.service.js';
 import { restoreKeys as restorePersistent } from './persistentCache';
 import { isPageVisible, runWhenIdle } from './scheduler';
 
-const MAX_PRELOAD_IMAGES = 6;
+const MAX_PRELOAD_IMAGES = 3;
 
 function idle(cb) {
   if (typeof window === 'undefined') return;
@@ -32,10 +32,11 @@ export function startPredictivePrefetch({ images = [] } = {}) {
     urls.forEach((u, index) => {
       const img = new Image();
       img.decoding = 'async';
+      img.fetchPriority = 'low';
       window.setTimeout(() => {
         img.src = u;
         img.decode?.().catch(() => {});
-      }, index * 80);
+      }, index * 140);
     });
   });
 }

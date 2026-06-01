@@ -4,7 +4,6 @@ import { getRedirectResult } from 'firebase/auth';
 import UserRoutes from './routes/UserRoutes';
 import { auth } from './config/firebase';
 import persistentCache from './utils/persistentCache';
-import prefetchManager from './utils/prefetchManager';
 import useQueryCache from './store/queryCache.store';
 import LoadingScreen from './components/common/LoadingScreen';
 
@@ -58,14 +57,17 @@ function App() {
   // first, ensuring the first paint is not delayed by non-critical background work.
   useEffect(() => {
     const deferredTasks = setTimeout(() => {
-      prefetchManager.startBackgroundRevalidate();
-      // collect banner images from restored persistent cache if any
-      try {
-        const restored = persistentCache.restoreKeys();
-        const banners = restored['dashboard:banners']?.data || [];
-        const images = Array.isArray(banners) ? banners.map(b => b.image).filter(Boolean) : [];
-        prefetchManager.startPredictivePrefetch({ images });
-      } catch (e) {}
+      import('./utils/prefetchManager').then(({ default: prefetchManager }) => {
+        prefetchManager.startBackgroundRevalidate();
+
+        // collect banner images from restored persistent cache if any
+        try {
+          const restored = persistentCache.restoreKeys();
+          const banners = restored['dashboard:banners']?.data || [];
+          const images = Array.isArray(banners) ? banners.map(b => b.image).filter(Boolean) : [];
+          prefetchManager.startPredictivePrefetch({ images });
+        } catch (e) {}
+      });
     }, 0);
 
     // Persist selected caches on visibility change to save dashboard state for reopen

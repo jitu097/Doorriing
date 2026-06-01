@@ -1,5 +1,5 @@
 // Simple image preloader with concurrency and timeout to avoid memory spikes
-export async function preloadImages(urls = [], { concurrency = 3, timeoutMs = 3000 } = {}) {
+export async function preloadImages(urls = [], { concurrency = 2, timeoutMs = 2500 } = {}) {
   const queue = [...urls];
   let active = 0;
 

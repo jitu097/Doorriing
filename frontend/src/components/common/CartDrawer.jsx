@@ -4,18 +4,23 @@ import { useCart } from '../../context/CartContext';
 import CartItem from '../user/CartItem';
 import './CartDrawer.css';
 
+const MIN_ORDER_AMOUNT_INR = 100;
+
 const CartDrawer = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-  const { cartItems, getCartTotal, deliveryFee, convenienceFee, platformSettingsLoading } = useCart();
+  const { cartItems, getCartTotal, deliveryFee, convenienceFee, platformSettingsLoading, platformSettings } = useCart();
   const [billDetailsOpen, setBillDetailsOpen] = useState(false);
 
   const subtotal = getCartTotal();
   const resolvedDeliveryFee = deliveryFee ?? 0;
   const resolvedConvenienceFee = convenienceFee ?? 0;
   const grandTotal = subtotal + resolvedDeliveryFee + resolvedConvenienceFee;
+  const minimumOrderAmount = Math.max(Number(platformSettings?.min_order_amount) || 0, MIN_ORDER_AMOUNT_INR);
+  const isBelowMinimumOrder = subtotal < minimumOrderAmount;
+  const amountToMinimum = Math.max(0, minimumOrderAmount - subtotal);
 
   const handleCheckout = () => {
-    if (cartItems.length > 0) {
+    if (cartItems.length > 0 && !isBelowMinimumOrder) {
       onClose();
       navigate('/checkout/payment');
     }
@@ -118,9 +123,14 @@ const CartDrawer = ({ isOpen, onClose }) => {
               </div>
 
               <div className="cart-drawer-footer">
-                <button className="checkout-button" onClick={handleCheckout}>
-                  Proceed to Checkout
+                <button className="checkout-button" onClick={handleCheckout} disabled={isBelowMinimumOrder}>
+                  {isBelowMinimumOrder ? `Add ₹${amountToMinimum.toFixed(0)} more` : 'Proceed to Checkout'}
                 </button>
+                {isBelowMinimumOrder && (
+                  <div className="checkout-minimum-order-note">
+                    Minimum order value is ₹{minimumOrderAmount.toFixed(0)}.
+                  </div>
+                )}
                 <div className="cancellation-policy-box">
                   <div className="cancellation-policy-title">Cancellation Policy</div>
                  <div className="cancellation-policy-text">

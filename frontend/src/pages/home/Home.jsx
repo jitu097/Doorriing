@@ -722,7 +722,7 @@ const Home = () => {
       <div className="home-page home-beauty-page">
         <div className="home-content home-beauty-content">
           <div className="home-beauty-card">
-            <img src="/pach.png" alt="Beauty essentials coming soon" className="home-beauty-image" />
+            <img src="/pach.webp" alt="Beauty essentials coming soon" className="home-beauty-image" />
             <h1 className="home-beauty-title">Coming Soon</h1>
             <p className="home-beauty-subtitle">Beauty shops and items coming soon</p>
           </div>
@@ -736,7 +736,7 @@ const Home = () => {
       <div className="home-page home-beauty-page">
         <div className="home-content home-beauty-content">
           <div className="home-beauty-card">
-            <img src="/char.png" alt="Pharmacy coming soon" className="home-beauty-image" />
+            <img src="/char.webp" alt="Pharmacy coming soon" className="home-beauty-image" />
             <h1 className="home-beauty-title">Coming Soon</h1>
             <p className="home-beauty-subtitle">Pharmacy shops and items coming soon</p>
           </div>

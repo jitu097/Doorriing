@@ -46,14 +46,14 @@ const Footer = ({ visible = true, onCartClick = noop }) => {
           onTouchStart={() => prefetchGrocery()}
           onFocus={() => prefetchGrocery()}
         >
-          <img src="/stores.png" alt="Groceries" className="footer-icon footer-destination-icon" />
+          <img src="/stores.webp" alt="Groceries" className="footer-icon footer-destination-icon" />
         </button>
         <button className="footer-btn" onClick={() => navigate('/restaurant/browse')}
           onMouseEnter={() => prefetchRestaurant()}
           onTouchStart={() => prefetchRestaurant()}
           onFocus={() => prefetchRestaurant()}
         >
-          <img src="/resto.png" alt="Restaurants" className="footer-icon footer-destination-icon" />
+          <img src="/resto.webp" alt="Restaurants" className="footer-icon footer-destination-icon" />
         </button>
         <button className="footer-btn" onClick={() => navigate('/orders')}>
           <img src="/order.webp" alt="Orders" className="footer-icon" />

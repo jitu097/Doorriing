@@ -7,13 +7,44 @@ import { orderService } from "../../services/order.service.js";
 import { api } from "../../services/api";
 import "./Checkout.css";
 
+let razorpayScriptPromise = null;
+
+const loadRazorpayScript = () => {
+  if (typeof window === 'undefined') return Promise.reject(new Error('Browser environment required'));
+
+  if (window.Razorpay) {
+    return Promise.resolve(window.Razorpay);
+  }
+
+  if (!razorpayScriptPromise) {
+    razorpayScriptPromise = new Promise((resolve, reject) => {
+      const existingScript = document.querySelector('script[data-razorpay-sdk="true"]');
+      if (existingScript) {
+        existingScript.addEventListener('load', () => resolve(window.Razorpay), { once: true });
+        existingScript.addEventListener('error', () => reject(new Error('Failed to load Razorpay SDK')), { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.dataset.razorpaySdk = 'true';
+      script.onload = () => resolve(window.Razorpay);
+      script.onerror = () => reject(new Error('Failed to load Razorpay SDK'));
+      document.head.appendChild(script);
+    });
+  }
+
+  return razorpayScriptPromise;
+};
+
 const CheckoutPayment = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { setOrderAsRecent } = useRecentOrder();
 
   const { cartItems, getCartTotal, clearCart, deliveryFee, convenienceFee, platformSettingsLoading,
-    appIsOpen, appAvailabilityLoading, appUnavailableReason } = useCart();
+    appIsOpen, appAvailabilityLoading, appUnavailableReason, platformSettings } = useCart();
   const { addresses, activeAddress } = useAddress();
 
   const [paymentMethod, setPaymentMethod] = useState("COD");
@@ -31,6 +62,9 @@ const CheckoutPayment = () => {
   const resolvedDeliveryFee = deliveryFee ?? 0;
   const resolvedConvenienceFee = convenienceFee ?? 0;
   const grandTotal = subtotal + resolvedDeliveryFee + resolvedConvenienceFee;
+  const minimumOrderAmount = Number(platformSettings?.min_order_amount) || 0;
+  const amountToMinimum = Math.max(0, minimumOrderAmount - subtotal);
+  const isBelowMinimumOrder = subtotal < minimumOrderAmount;
 
   useEffect(() => {
     if (!cartItems || cartItems.length === 0) {
@@ -199,6 +233,15 @@ const CheckoutPayment = () => {
       return;
     }
 
+    if (isBelowMinimumOrder) {
+      isProcessing.current = false;
+      setErrorMsg(
+        `Minimum order value is ₹${minimumOrderAmount.toFixed(0)}. ` +
+        `Add ₹${amountToMinimum.toFixed(0)} more to place your order.`
+      );
+      return;
+    }
+
     // -------- Razorpay Payment --------
     if (paymentMethod === "Online") {
       try {
@@ -222,6 +265,8 @@ const CheckoutPayment = () => {
           currency: order.currency,
           status: order.status,
         });
+
+        await loadRazorpayScript();
 
         // ── Android WebView path — Native SDK ──────────────────────────────
         // When running inside the Android app, hand off to the Razorpay
@@ -697,17 +742,25 @@ const CheckoutPayment = () => {
               loading ||
               isProcessing.current ||
               (platformSettingsLoading && deliveryFee === null) ||
-              appClosed
+                appClosed ||
+                isBelowMinimumOrder
             }
           >
             {loading
               ? 'Processing...'
               : appClosed
               ? 'Orders Unavailable'
+                : isBelowMinimumOrder
+                ? `Add ₹${amountToMinimum.toFixed(0)} more`
               : (platformSettingsLoading && deliveryFee === null
                 ? 'Loading charges...'
                 : 'Place Order')}
           </button>
+            {isBelowMinimumOrder && (
+              <p className="checkout-minimum-order-note">
+                Minimum order value is ₹{minimumOrderAmount.toFixed(0)}. Add ₹{amountToMinimum.toFixed(0)} more to continue.
+              </p>
+            )}
         </form>
       </div>
     </div>

@@ -9,7 +9,6 @@ import { AddressProvider } from './context/AddressContext'
 import { NotificationProvider } from './context/NotificationContext'
 import { RecentOrderProvider } from './context/RecentOrderContext'
 import { AppAvailabilityProvider } from './context/AppAvailabilityContext'
-import { startLogStream } from './utils/logStream'
 
 // Safety check for root element
 const rootElement = document.getElementById('root')
@@ -58,7 +57,7 @@ try {
 // visually ready. Prevents these side effects from adding to startup JS cost.
 window.addEventListener('load', () => {
   // Start developer log stream (debug tool, not user-facing)
-  startLogStream();
+  import('./utils/logStream').then(({ startLogStream }) => startLogStream());
 });
 
 if ('serviceWorker' in navigator) {

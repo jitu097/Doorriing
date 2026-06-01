@@ -6,7 +6,7 @@ const images = [
   '/one.webp',
  
   '/three.webp',
-  '/image.png',
+  '/image.webp',
 ];
 
 const ImageScroller = () => {

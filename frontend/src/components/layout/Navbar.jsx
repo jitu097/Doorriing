@@ -174,11 +174,11 @@ useEffect(() => {
 
   const MobileQuickIcons = ({ onClick }) => {
     const icons = [
-      { id: 'all', src: '/ek.png', alt: 'All', label: 'All' },
-      { id: 'food', src: '/do.png', alt: 'Food', label: 'Food' },
-      { id: 'mart', src: '/tin.png', alt: 'Mart', label: 'Mart' },
-      { id: 'beauty-essential', src: '/pach.png', alt: 'Beauty Essential', label: 'Beauty Essential' },
-      { id: 'pharmacy', src: '/char.png', alt: 'Pharmacy', label: 'Pharmacy' },
+      { id: 'all', src: '/ek.webp', alt: 'All', label: 'All' },
+      { id: 'food', src: '/do.webp', alt: 'Food', label: 'Food' },
+      { id: 'mart', src: '/tin.webp', alt: 'Mart', label: 'Mart' },
+      { id: 'beauty-essential', src: '/pach.webp', alt: 'Beauty Essential', label: 'Beauty Essential' },
+      { id: 'pharmacy', src: '/char.webp', alt: 'Pharmacy', label: 'Pharmacy' },
     ];
 
     return (
@@ -349,7 +349,7 @@ useEffect(() => {
                 onPointerDown={(e) => e.stopPropagation()}
               >
                 <img
-                  src="/account.png"
+                  src="/account.webp"
                   alt="account"
                 />
               </button>

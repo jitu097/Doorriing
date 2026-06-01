@@ -369,6 +369,17 @@
   cursor: not-allowed;
 }
 
+.checkout-button:disabled {
+  color: #c2410c; /* red-600 for the text */
+  font-weight: 700;
+}
+
+.checkout-minimum-order-note {
+  color: #c2410c; /* red-600 */
+  font-weight: 700;
+  margin-top: 0.5rem;
+}
+
 .cancellation-policy {
   text-align: center;
   color: #666;
