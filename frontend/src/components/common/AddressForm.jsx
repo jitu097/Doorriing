@@ -2,7 +2,7 @@ import React from 'react';
 
 const AddressForm = ({ formData, setFormData, onSubmit, onCancel, isEditing }) => {
     const addressTypes = ['Home', 'Work', 'Other'];
-    const deliveryAreas = ['Dharampur', 'Jublee Chowk', 'Thana Chowk', 'Bypass', 'Bustand', 'Mako', 'Station','Chatnahi' , 'Station road', 'Navoday', 'Mako', 'Bus Stand', 'Circuit House' , 'Block', 'charmuhan',  'shivpuri','Amwatikar','Paharpuri',  'Chandandih','Main road latehar','Bijlee ofice', ' Near Celebration','Navrang chowk','kl','Gandhi college','BS college'];
+    const deliveryAreas = ['Dharampur', 'Jublee Chowk', 'Thana Chowk', 'Bypass', 'Bustand', 'Mako', 'Station','Chatnahi' , 'Station road', 'Navoday', 'Mako', 'Bus Stand', 'Circuit House' , 'Block', 'charmuhan',  'shivpuri','Amwatikar','Paharpuri',  'Chandandih','Main road latehar','Bijlee ofice', ' Near Celebration','Navrang chowk','Gandhi college','BS college'];
     const postalCodes = ['829206', '829207'];
 
     const handleInputChange = (e) => {
