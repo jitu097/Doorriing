@@ -342,6 +342,12 @@
   background: #f5f5f5;
 }
 
+/* Logout button emphasis */
+.account-dropdown .logout-btn {
+  color: #d32f2f;
+  font-weight: 700;
+}
+
 /* LOGIN */
 
 .login-btn {

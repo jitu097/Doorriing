@@ -357,10 +357,6 @@ useEffect(() => {
               {showAccount && (
                 <div className="account-dropdown">
 
-                  <Link to="/home">
-                    Home
-                  </Link>
-
                   <Link to="/orders">
                     Orders
                   </Link>
@@ -373,7 +369,12 @@ useEffect(() => {
                     Address
                   </Link>
 
+                  <Link to="/contact">
+                    Contact Us
+                  </Link>
+
                   <button
+                    className="logout-btn"
                     onClick={handleLogout}
                   >
                     Logout
