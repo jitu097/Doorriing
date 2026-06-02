@@ -175,8 +175,8 @@ useEffect(() => {
   const MobileQuickIcons = ({ onClick }) => {
     const icons = [
       { id: 'all', src: '/ek.webp', alt: 'All', label: 'All' },
-      { id: 'food', src: '/do.webp', alt: 'Food', label: 'Food' },
       { id: 'mart', src: '/tin.webp', alt: 'Mart', label: 'Mart' },
+      { id: 'food', src: '/do.webp', alt: 'Food', label: 'Food' },
       { id: 'beauty-essential', src: '/pach.webp', alt: 'Beauty Essential', label: 'Beauty Essential' },
       { id: 'pharmacy', src: '/char.webp', alt: 'Pharmacy', label: 'Pharmacy' },
     ];
