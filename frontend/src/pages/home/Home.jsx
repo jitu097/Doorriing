@@ -724,7 +724,7 @@ const Home = () => {
           <div className="home-beauty-card">
             <img src="/pach.webp" alt="Beauty essentials coming soon" className="home-beauty-image" />
             <h1 className="home-beauty-title">Coming Soon</h1>
-            <p className="home-beauty-subtitle">Beauty shops and items coming soon</p>
+            <p className="home-beauty-subtitle"> shops and items coming soon</p>
           </div>
         </div>
       </div>
