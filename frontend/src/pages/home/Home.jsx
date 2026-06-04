@@ -14,6 +14,7 @@ import { getCachedHomeShops, getHomeShops } from '../../services/shop.service';
 import { getDashboardCategories, getDashboardCategoryItems, getCategoriesByShop } from '../../services/category.service';
 import persistentCache from '../../utils/persistentCache';
 import './Home.css';
+import '../Grocery/subcategoryitem.css';
 import { computeFinalPrice } from '../../utils/pricing';
 
 // Null fallback for the lazy OrderNotification — avoids flicker since the
@@ -129,7 +130,9 @@ const CategoriesSection = React.memo(({ categories, onCategoryClick, title }) =>
               <div className="home-category-meta">
                 <span className="home-category-name">{category.name}</span>
                 <span className="home-category-count">
-                  {category.shop_count === 1 ? '1 shop' : `${category.shop_count || 0} shops`}
+                  {category.item_count !== undefined 
+                    ? (category.item_count === 1 ? '1 item' : `${category.item_count} items`)
+                    : (category.shop_count === 1 ? '1 shop' : `${category.shop_count || 0} shops`)}
                 </span>
               </div>
             </button>
@@ -433,7 +436,7 @@ const Home = () => {
   const activeTab = (searchParams.get('tab') || 'all').toLowerCase();
   const isFoodTab = activeTab === 'food';
   const isMartTab = activeTab === 'mart';
-  const isBeautyTab = activeTab === 'beauty-essential';
+  const isElectronicsTab = activeTab === 'electronics';
   const isPharmacyTab = activeTab === 'pharmacy';
 
   // Detect reduced-motion once at mount — stored in a ref to avoid re-renders.
@@ -465,6 +468,13 @@ const Home = () => {
   const [activeCategoryItems, setActiveCategoryItems] = useState([]);
   const [activeCategoryLoading, setActiveCategoryLoading] = useState(false);
   const [activeCategoryError, setActiveCategoryError] = useState('');
+  const [electronicsItems, setElectronicsItems] = useState([]);
+  const [electronicsLoading, setElectronicsLoading] = useState(false);
+  const [electronicsError, setElectronicsError] = useState('');
+  const [pharmacyItems, setPharmacyItems] = useState([]);
+  const [pharmacyLoading, setPharmacyLoading] = useState(false);
+  const [pharmacyError, setPharmacyError] = useState('');
+  const [activeSubcategoryModalGroup, setActiveSubcategoryModalGroup] = useState(null);
   const [loading, setLoading] = useState(!hasCache);
   const [error, setError] = useState('');
   const [activeSection, setActiveSection] = useState(SECTION_CONFIG.restaurant.key);
@@ -679,6 +689,48 @@ const Home = () => {
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    if (isElectronicsTab) {
+      setElectronicsLoading(true);
+      setElectronicsError('');
+      getDashboardCategoryItems('Electronics')
+        .then((data) => {
+          if (!mounted) return;
+          setElectronicsItems(normalizeItems(data?.items || []));
+        })
+        .catch((err) => {
+          if (!mounted) return;
+          setElectronicsError(err.message || 'Failed to load electronics');
+        })
+        .finally(() => {
+          if (mounted) setElectronicsLoading(false);
+        });
+    }
+    return () => { mounted = false; };
+  }, [isElectronicsTab]);
+
+  useEffect(() => {
+    let mounted = true;
+    if (isPharmacyTab) {
+      setPharmacyLoading(true);
+      setPharmacyError('');
+      getDashboardCategoryItems('Pharmacy')
+        .then((data) => {
+          if (!mounted) return;
+          setPharmacyItems(normalizeItems(data?.items || []));
+        })
+        .catch((err) => {
+          if (!mounted) return;
+          setPharmacyError(err.message || 'Failed to load pharmacy items');
+        })
+        .finally(() => {
+          if (mounted) setPharmacyLoading(false);
+        });
+    }
+    return () => { mounted = false; };
+  }, [isPharmacyTab]);
+
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
   const combinedSearchableItems = useMemo(() => {
@@ -717,8 +769,102 @@ const Home = () => {
     setActiveSection(sectionKey);
   }, [activeSection]);
 
-  if (isBeautyTab) {
+  const electronicsGroups = useMemo(() => {
+    if (!electronicsItems || electronicsItems.length === 0) return [];
+    
+    const groupsMap = new Map();
+    electronicsItems.forEach((item) => {
+      const sub = item.subcategories || { id: null, name: 'Other Items', image_url: null };
+      const key = sub.id || 'no-subcategory';
+      
+      if (!groupsMap.has(key)) {
+        groupsMap.set(key, {
+          subcategory_id: sub.id,
+          subcategory_name: sub.name,
+          image_url: sub.image_url,
+          items: [],
+        });
+      }
+      
+      groupsMap.get(key).items.push(item);
+    });
+    
+    return Array.from(groupsMap.values()).sort((a, b) => {
+      if (a.subcategory_id === null) return 1;
+      if (b.subcategory_id === null) return -1;
+      return (a.subcategory_name || '').localeCompare(b.subcategory_name || '');
+    }).map(group => ({
+      id: group.subcategory_id || 'no-subcategory',
+      name: group.subcategory_name || 'Other Items',
+      image_url: group.image_url,
+      item_count: group.items.length,
+      items: group.items
+    }));
+  }, [electronicsItems]);
+
+  const pharmacyGroups = useMemo(() => {
+    if (!pharmacyItems || pharmacyItems.length === 0) return [];
+    
+    const groupsMap = new Map();
+    pharmacyItems.forEach((item) => {
+      const sub = item.subcategories || { id: null, name: 'Other Items', image_url: null };
+      const key = sub.id || 'no-subcategory';
+      
+      if (!groupsMap.has(key)) {
+        groupsMap.set(key, {
+          subcategory_id: sub.id,
+          subcategory_name: sub.name,
+          image_url: sub.image_url,
+          items: [],
+        });
+      }
+      
+      groupsMap.get(key).items.push(item);
+    });
+    
+    return Array.from(groupsMap.values()).sort((a, b) => {
+      if (a.subcategory_id === null) return 1;
+      if (b.subcategory_id === null) return -1;
+      return (a.subcategory_name || '').localeCompare(b.subcategory_name || '');
+    }).map(group => ({
+      id: group.subcategory_id || 'no-subcategory',
+      name: group.subcategory_name || 'Other Items',
+      image_url: group.image_url,
+      item_count: group.items.length,
+      items: group.items
+    }));
+  }, [pharmacyItems]);
+
+  if (isElectronicsTab) {
     return (
+      <div className="home-page">
+        <Suspense fallback={<NoFallback />}>
+          <OrderNotification />
+        </Suspense>
+        
+        <div className="home-content">
+          <CategoriesSection
+            categories={electronicsGroups}
+            onCategoryClick={(group) => setActiveSubcategoryModalGroup(group)}
+            title="Electronics"
+          />
+          {activeSubcategoryModalGroup && (
+            <CategoryItemsModal
+              category={activeSubcategoryModalGroup}
+              items={activeSubcategoryModalGroup.items}
+              loading={false}
+              error={''}
+              onClose={() => setActiveSubcategoryModalGroup(null)}
+            />
+          )}
+
+          <ItemsSection
+            title="All Electronics"
+            items={electronicsItems}
+            loading={electronicsLoading}
+            error={electronicsError}
+            emptyMessage="No electronics available at the moment."
+          />
       <div className="home-page home-beauty-page">
         <div className="home-content home-beauty-content">
           <div className="home-beauty-card">
@@ -733,13 +879,34 @@ const Home = () => {
 
   if (isPharmacyTab) {
     return (
-      <div className="home-page home-beauty-page">
-        <div className="home-content home-beauty-content">
-          <div className="home-beauty-card">
-            <img src="/char.webp" alt="Pharmacy coming soon" className="home-beauty-image" />
-            <h1 className="home-beauty-title">Coming Soon</h1>
-            <p className="home-beauty-subtitle">Pharmacy shops and items coming soon</p>
-          </div>
+      <div className="home-page">
+        <Suspense fallback={<NoFallback />}>
+          <OrderNotification />
+        </Suspense>
+        
+        <div className="home-content">
+          <CategoriesSection
+            categories={pharmacyGroups}
+            onCategoryClick={(group) => setActiveSubcategoryModalGroup(group)}
+            title="Pharmacy"
+          />
+          {activeSubcategoryModalGroup && (
+            <CategoryItemsModal
+              category={activeSubcategoryModalGroup}
+              items={activeSubcategoryModalGroup.items}
+              loading={false}
+              error={''}
+              onClose={() => setActiveSubcategoryModalGroup(null)}
+            />
+          )}
+
+          <ItemsSection
+            title="All Pharmacy"
+            items={pharmacyItems}
+            loading={pharmacyLoading}
+            error={pharmacyError}
+            emptyMessage="No pharmacy items available at the moment."
+          />
         </div>
       </div>
     );
