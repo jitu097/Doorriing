@@ -14,6 +14,7 @@ import { getCachedHomeShops, getHomeShops } from '../../services/shop.service';
 import { getDashboardCategories, getDashboardCategoryItems, getCategoriesByShop } from '../../services/category.service';
 import persistentCache from '../../utils/persistentCache';
 import './Home.css';
+import '../Grocery/subcategoryitem.css';
 import { computeFinalPrice } from '../../utils/pricing';
 
 // Null fallback for the lazy OrderNotification — avoids flicker since the
@@ -433,7 +434,7 @@ const Home = () => {
   const activeTab = (searchParams.get('tab') || 'all').toLowerCase();
   const isFoodTab = activeTab === 'food';
   const isMartTab = activeTab === 'mart';
-  const isBeautyTab = activeTab === 'beauty-essential';
+  const isElectronicsTab = activeTab === 'electronics';
   const isPharmacyTab = activeTab === 'pharmacy';
 
   // Detect reduced-motion once at mount — stored in a ref to avoid re-renders.
@@ -465,6 +466,10 @@ const Home = () => {
   const [activeCategoryItems, setActiveCategoryItems] = useState([]);
   const [activeCategoryLoading, setActiveCategoryLoading] = useState(false);
   const [activeCategoryError, setActiveCategoryError] = useState('');
+  const [electronicsItems, setElectronicsItems] = useState([]);
+  const [electronicsLoading, setElectronicsLoading] = useState(false);
+  const [electronicsError, setElectronicsError] = useState('');
+  const [electronicsSelectedGroupKey, setElectronicsSelectedGroupKey] = useState(null);
   const [loading, setLoading] = useState(!hasCache);
   const [error, setError] = useState('');
   const [activeSection, setActiveSection] = useState(SECTION_CONFIG.restaurant.key);
@@ -679,6 +684,27 @@ const Home = () => {
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    if (isElectronicsTab) {
+      setElectronicsLoading(true);
+      setElectronicsError('');
+      getDashboardCategoryItems('Electronics')
+        .then((data) => {
+          if (!mounted) return;
+          setElectronicsItems(normalizeItems(data?.items || []));
+        })
+        .catch((err) => {
+          if (!mounted) return;
+          setElectronicsError(err.message || 'Failed to load electronics');
+        })
+        .finally(() => {
+          if (mounted) setElectronicsLoading(false);
+        });
+    }
+    return () => { mounted = false; };
+  }, [isElectronicsTab]);
+
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
   const combinedSearchableItems = useMemo(() => {
@@ -717,14 +743,90 @@ const Home = () => {
     setActiveSection(sectionKey);
   }, [activeSection]);
 
-  if (isBeautyTab) {
+  const electronicsGroups = useMemo(() => {
+    if (!electronicsItems || electronicsItems.length === 0) return [];
+    
+    const groupsMap = new Map();
+    electronicsItems.forEach((item) => {
+      const sub = item.subcategories || { id: null, name: 'Other Items', image_url: null };
+      const key = sub.id || 'no-subcategory';
+      
+      if (!groupsMap.has(key)) {
+        groupsMap.set(key, {
+          subcategory_id: sub.id,
+          subcategory_name: sub.name,
+          image_url: sub.image_url,
+          items: [],
+        });
+      }
+      
+      groupsMap.get(key).items.push(item);
+    });
+    
+    return Array.from(groupsMap.values()).sort((a, b) => {
+      if (a.subcategory_id === null) return 1;
+      if (b.subcategory_id === null) return -1;
+      return (a.subcategory_name || '').localeCompare(b.subcategory_name || '');
+    });
+  }, [electronicsItems]);
+
+  useEffect(() => {
+    if (isElectronicsTab && electronicsGroups.length > 0 && !electronicsSelectedGroupKey) {
+      setElectronicsSelectedGroupKey(electronicsGroups[0].subcategory_id || 'no-subcategory');
+    }
+  }, [electronicsGroups, isElectronicsTab, electronicsSelectedGroupKey]);
+
+  if (isElectronicsTab) {
+    const selectedGroup = electronicsGroups.find((group) => (group.subcategory_id || 'no-subcategory') === electronicsSelectedGroupKey);
+    const displayItems = selectedGroup?.items || electronicsItems;
+    const showSidebar = electronicsGroups.length > 1 || electronicsGroups.some(g => g.subcategory_id !== null);
+
     return (
-      <div className="home-page home-beauty-page">
-        <div className="home-content home-beauty-content">
-          <div className="home-beauty-card">
-            <img src="/pach.webp" alt="Beauty essentials coming soon" className="home-beauty-image" />
-            <h1 className="home-beauty-title">Coming Soon</h1>
-            <p className="home-beauty-subtitle">Beauty shops and items coming soon</p>
+      <div className="home-page">
+        <Suspense fallback={<NoFallback />}>
+          <OrderNotification />
+        </Suspense>
+        
+        <div className="home-content subcategory-item-content">
+          {showSidebar && (
+            <div className="subcategory-item-sidebar">
+              {electronicsGroups.map((group) => {
+                const key = group.subcategory_id || 'no-subcategory';
+                const name = group.subcategory_name || 'Other Items';
+                const icon = group.subcategory_name?.charAt(0)?.toUpperCase() || '#';
+                const isActive = key === electronicsSelectedGroupKey;
+
+                return (
+                  <div
+                    key={key}
+                    className={`subcategory-item ${isActive ? 'active' : ''}`}
+                    onClick={() => setElectronicsSelectedGroupKey(key)}
+                  >
+                    {group.image_url ? (
+                      <img
+                        src={group.image_url}
+                        alt={name}
+                        loading="lazy"
+                        className="w-8 h-8 object-cover rounded"
+                      />
+                    ) : (
+                      <div className="subcategory-icon">{icon}</div>
+                    )}
+                    <span className="subcategory-name-text">{name}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          
+          <div className="items-container" style={{ flex: 1 }}>
+            <ItemsSection
+              title={selectedGroup?.subcategory_name || "Electronics"}
+              items={displayItems}
+              loading={electronicsLoading}
+              error={electronicsError}
+              emptyMessage="No electronics available at the moment."
+            />
           </div>
         </div>
       </div>

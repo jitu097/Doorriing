@@ -177,7 +177,7 @@ useEffect(() => {
       { id: 'all', src: '/ek.webp', alt: 'All', label: 'All' },
       { id: 'mart', src: '/tin.webp', alt: 'Mart', label: 'Kirana' },
       { id: 'food', src: '/do.webp', alt: 'Food', label: 'Food' },
-      { id: 'beauty-essential', src: '/pach.webp', alt: 'Beauty Essential', label: 'Electronics' },
+      { id: 'electronics', src: '/pach.webp', alt: 'Electronics', label: 'Electronics' },
       { id: 'pharmacy', src: '/char.webp', alt: 'Pharmacy', label: 'Pharmacy' },
     ];
 
@@ -199,7 +199,7 @@ useEffect(() => {
         id === 'all' ? 'all' :
         id === 'food' ? 'food' :
         id === 'mart' ? 'mart' :
-        id === 'beauty-essential' ? 'beauty-essential' :
+        id === 'electronics' ? 'electronics' :
         id === 'pharmacy' ? 'pharmacy' :
         null;
 

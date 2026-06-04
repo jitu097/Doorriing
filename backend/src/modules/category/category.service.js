@@ -235,6 +235,7 @@ class CategoryService {
           shop_id,
           category_id,
           subcategory_id,
+          subcategories(id, name, image_url),
           name,
           description,
           price,
