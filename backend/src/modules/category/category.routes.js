@@ -23,3 +23,5 @@ router.get('/:categoryId', categoryController.getCategoryWithDetails);
 router.get('/:categoryId/subcategories', categoryController.getSubcategoriesByCategory);
 
 export default router;
+
+//#Kushal
