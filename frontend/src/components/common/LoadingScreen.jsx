@@ -5,7 +5,7 @@ import "./LoadingScreen.css";
 
 // Keep the splash, but start the fall quickly once the map is ready.
 const START_ANIMATION_DELAY_MS = 60;
-const POST_DROP_HOLD_MS = 2000;
+const POST_DROP_HOLD_MS = 1000;
 const drop = {
   hidden: { y: -200, opacity: 0, scale: 0.8 },
   visible: (i) => {
