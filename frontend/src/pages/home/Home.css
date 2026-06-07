@@ -420,8 +420,7 @@
   max-width: 1300px;
   width: 90%;
   margin: 0 auto;
-  /* slightly increased top margin to move the Home section down */
-  margin-top: 2.9rem;
+  margin-top: -52px;
   padding: 1.5rem 2rem;
 }
 
@@ -530,7 +529,7 @@
 
 .items-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1rem;
   margin-top: 2rem;
 }
@@ -716,8 +715,8 @@
   color: #8a919b;
   font-weight: 500;
 }
-  
 
+@media (max-width: 600px) {
   .home-content h1 {
     font-size: 2rem;
   }
@@ -814,7 +813,7 @@
     padding: 5px 10px !important;
     font-size: 0.68rem !important;
   }
-
+}
 
 @media (max-width: 600px) {
   .items-grid {

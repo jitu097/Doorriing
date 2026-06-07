@@ -15,6 +15,12 @@ const Cart = () => {
   const amountToMinimum = Math.max(0, minimumOrderAmount - subtotal);
   const isBelowMinimumOrder = subtotal < minimumOrderAmount;
 
+  const freeDeliveryRule = platformSettings?.delivery_rules?.find(rule => Number(rule.fee) === 0);
+  const freeDeliveryThreshold = freeDeliveryRule ? Number(freeDeliveryRule.min) : null;
+  const isFreeDeliveryEligible = freeDeliveryThreshold !== null;
+  const amountToFreeDelivery = isFreeDeliveryEligible ? Math.max(0, freeDeliveryThreshold - subtotal) : 0;
+  const hasFreeDelivery = isFreeDeliveryEligible && amountToFreeDelivery === 0;
+
   return (
     <div className="cart-page">
       <div className="cart-container">
@@ -50,6 +56,15 @@ const Cart = () => {
                 <span>Delivery Fee</span>
                 <span>{platformSettingsLoading && deliveryFee === null ? 'Loading...' : `₹${resolvedDeliveryFee.toFixed(2)}`}</span>
               </div>
+              {isFreeDeliveryEligible && (
+                <div className="summary-row free-delivery-note" style={{ fontSize: '0.85rem', marginTop: '-0.5rem', marginBottom: '0.5rem', borderBottom: 'none' }}>
+                  {hasFreeDelivery ? (
+                    <span style={{ color: '#28a745', fontWeight: '500', width: '100%', textAlign: 'left' }}>Free delivery unlocked!</span>
+                  ) : (
+                    <span style={{ color: '#dc3545', fontWeight: '500', width: '100%', textAlign: 'left' }}>Add ₹{amountToFreeDelivery.toFixed(0)} more for free delivery</span>
+                  )}
+                </div>
+              )}
               <div className="summary-row">
                 <span>Convenience Fee</span>
                 <span>{platformSettingsLoading && convenienceFee === null ? 'Loading...' : `₹${resolvedConvenienceFee.toFixed(2)}`}</span>

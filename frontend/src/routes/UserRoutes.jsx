@@ -5,14 +5,14 @@ import { SuspenseFallback } from '../components/common/SuspenseFallback';
 import RouteErrorBoundary from './RouteErrorBoundary';
 
 // ── Critical startup routes (loaded with minimal delay) ──────────────────────
-const Login = lazy(() => import('../pages/auth/Login'));
-const Signup = lazy(() => import('../pages/auth/Signup'));
-const Landingpage = lazy(() => import('../pages/Landingpage/Landingpage'));
-const Home = lazy(() => import('../pages/home/Home'));
+import Login from '../pages/auth/Login';
+import Signup from '../pages/auth/Signup';
+import Landingpage from '../pages/Landingpage/Landingpage';
+import Home from '../pages/home/Home';
 
 // ── Layout & shared wrappers ──────────────────────────────────────────────────
-const ProtectedRoute = lazy(() => import('./ProtectedRoute'));
-const PageLayout = lazy(() => import('../components/layout/PageLayout'));
+import ProtectedRoute from './ProtectedRoute';
+import PageLayout from '../components/layout/PageLayout';
 
 // ── Browsing routes (public grocery & restaurant pages) ───────────────────────
 const Grocery = lazy(() => import('../pages/Grocery/Grocery'));
