@@ -870,6 +870,20 @@ const Home = () => {
     );
   }
 
+  if (activeTab === 'beauty') {
+    return (
+      <div className="home-page home-beauty-page">
+        <div className="home-content home-beauty-content">
+          <div className="home-beauty-card">
+            <img src="/pach.webp" alt="Beauty essentials coming soon" className="home-beauty-image" />
+            <h1 className="home-beauty-title">Coming Soon</h1>
+            <p className="home-beauty-subtitle"> shops and items coming soon</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (isPharmacyTab) {
     return (
       <div className="home-page">

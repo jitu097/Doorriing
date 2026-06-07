@@ -4,7 +4,7 @@ import { useCart } from '../../context/CartContext';
 import CartItem from '../user/CartItem';
 import './CartDrawer.css';
 
-const MIN_ORDER_AMOUNT_INR = 100;
+
 
 const CartDrawer = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
   const resolvedDeliveryFee = deliveryFee ?? 0;
   const resolvedConvenienceFee = convenienceFee ?? 0;
   const grandTotal = subtotal + resolvedDeliveryFee + resolvedConvenienceFee;
-  const minimumOrderAmount = Math.max(Number(platformSettings?.min_order_amount) || 0, MIN_ORDER_AMOUNT_INR);
+  const minimumOrderAmount = Number(platformSettings?.min_order_amount) || 0;
   const isBelowMinimumOrder = subtotal < minimumOrderAmount;
   const amountToMinimum = Math.max(0, minimumOrderAmount - subtotal);
 
