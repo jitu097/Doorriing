@@ -80,7 +80,7 @@ const CheckoutPayment = () => {
   // Recovery window: 30 minutes. After that the pending record is discarded
   // (Razorpay's own refund timelines make older recoveries unsafe to auto-retry).
   const PENDING_PAYMENT_KEY = 'doorriing_pending_razorpay';
-  const RECOVERY_WINDOW_MS  = 30 * 60 * 1000; // 30 minutes
+  const RECOVERY_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
 
   useEffect(() => {
     const raw = localStorage.getItem(PENDING_PAYMENT_KEY);
@@ -136,7 +136,7 @@ const CheckoutPayment = () => {
         // Non-fatal: user can still checkout normally, recovery runs again next mount
         console.error('[Recovery] Recovery check failed:', err);
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);  // ← intentionally run only on mount
   // ── End Recovery Check ───────────────────────────────────────────────────
 
@@ -285,26 +285,26 @@ const CheckoutPayment = () => {
 
           const orderPayload = JSON.stringify({
             razorpayOrderId: order.id,
-            amount:          order.amount,
-            currency:        order.currency || 'INR',
-            addressId:       selectedAddressId,
+            amount: order.amount,
+            currency: order.currency || 'INR',
+            addressId: selectedAddressId,
             pricing: {
-              subtotal:       subtotal,
-              deliveryFee:    resolvedDeliveryFee,
+              subtotal: subtotal,
+              deliveryFee: resolvedDeliveryFee,
               convenienceFee: resolvedConvenienceFee,
-              finalAmount:    grandTotal,
+              finalAmount: grandTotal,
             },
             prefill: {
-              name:    selectedAddress?.name    || 'Customer',
-              contact: selectedAddress?.phone   || '',
+              name: selectedAddress?.name || 'Customer',
+              contact: selectedAddress?.phone || '',
             },
           });
 
           // Store pending payment record for crash-safety recovery
           localStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify({
             razorpayOrderId: order.id,
-            addressId:       selectedAddressId,
-            timestamp:       Date.now(),
+            addressId: selectedAddressId,
+            timestamp: Date.now(),
           }));
 
           console.log('[Payment][Android] Calling initiateRazorpayPayment on AndroidAuth bridge');
@@ -488,12 +488,12 @@ const CheckoutPayment = () => {
             || response.error?.reason
             || "Payment failed";
           console.error("[Payment] payment.failed event", {
-            code:        response.error?.code,
+            code: response.error?.code,
             description: response.error?.description,
-            source:      response.error?.source,
-            step:        response.error?.step,
-            reason:      response.error?.reason,
-            metadata:    response.error?.metadata,
+            source: response.error?.source,
+            step: response.error?.step,
+            reason: response.error?.reason,
+            metadata: response.error?.metadata,
           });
           setLoading(false);
           isProcessing.current = false;
@@ -572,10 +572,10 @@ const CheckoutPayment = () => {
         }
       }
 
-      // Navigate to order-success screen for COD
+      // Navigate to confirmation screen (no payment=success flag for COD)
       navigate(
         orderId
-          ? `/order-success?orderId=${orderId}`
+          ? `/order-confirmation?orderId=${orderId}`
           : "/home"
       );
     } catch (error) {
@@ -742,25 +742,25 @@ const CheckoutPayment = () => {
               loading ||
               isProcessing.current ||
               (platformSettingsLoading && deliveryFee === null) ||
-                appClosed ||
-                isBelowMinimumOrder
+              appClosed ||
+              isBelowMinimumOrder
             }
           >
             {loading
               ? 'Processing...'
               : appClosed
-              ? 'Orders Unavailable'
+                ? 'Orders Unavailable'
                 : isBelowMinimumOrder
-                ? `Add ₹${amountToMinimum.toFixed(0)} more`
-              : (platformSettingsLoading && deliveryFee === null
-                ? 'Loading charges...'
-                : 'Place Order')}
+                  ? `Add ₹${amountToMinimum.toFixed(0)} more`
+                  : (platformSettingsLoading && deliveryFee === null
+                    ? 'Loading charges...'
+                    : 'Place Order')}
           </button>
-            {isBelowMinimumOrder && (
-              <p className="checkout-minimum-order-note">
-                Minimum order value is ₹{minimumOrderAmount.toFixed(0)}. Add ₹{amountToMinimum.toFixed(0)} more to continue.
-              </p>
-            )}
+          {isBelowMinimumOrder && (
+            <p className="checkout-minimum-order-note">
+              Minimum order value is ₹{minimumOrderAmount.toFixed(0)}. Add ₹{amountToMinimum.toFixed(0)} more to continue.
+            </p>
+          )}
         </form>
       </div>
     </div>
