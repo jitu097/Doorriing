@@ -6,10 +6,10 @@ import retrofit2.http.Header
 import retrofit2.http.POST
 
 interface ApiService {
-    @POST("api/v1/auth/login")
+    @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
-    @POST("api/v1/auth/signup")
+    @POST("api/auth/signup")
     suspend fun signup(@Body request: SignupRequest): Response<LoginResponse>
 
     @POST("api/notification/save-token")
@@ -24,9 +24,9 @@ interface ApiService {
 
     /**
      * Create a Razorpay order on the backend.
-     * Mirrors: POST /api/v1/user/orders/initiate-payment
+     * Mirrors: POST /api/user/orders/initiate-payment
      */
-    @POST("api/v1/user/orders/initiate-payment")
+    @POST("api/user/orders/initiate-payment")
     suspend fun initiatePayment(
         @Header("Authorization") authorization: String,
         @Body request: InitiatePaymentRequest
@@ -34,9 +34,9 @@ interface ApiService {
 
     /**
      * Verify Razorpay HMAC signature and create the DB order.
-     * Mirrors: POST /api/v1/user/orders/verify-payment
+     * Mirrors: POST /api/user/orders/verify-payment
      */
-    @POST("api/v1/user/orders/verify-payment")
+    @POST("api/user/orders/verify-payment")
     suspend fun verifyPayment(
         @Header("Authorization") authorization: String,
         @Body request: VerifyPaymentRequest

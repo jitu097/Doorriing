@@ -300,7 +300,7 @@ export const orderService = {
             let subtotal = 0;
             for (const ci of cartItems) {
                 const unitPrice = resolveEffectiveItemPrice(ci.items, ci.variant);
-                
+
                 subtotal += (ci.quantity * unitPrice);
             }
 
@@ -414,7 +414,7 @@ export const orderService = {
                 const unitPrice = resolveEffectiveItemPrice(ci.items, ci.variant);
                 const portionType = normalizePortionType(ci.variant || ci.items?.portion || ci.items?.portion_type);
                 const totalPrice = unitPrice * ci.quantity;
-                
+
                 return {
                     order_id: newOrder.id,
                     item_id: ci.items.id,
@@ -468,7 +468,7 @@ export const orderService = {
             // Trigger request-driven seller notification via Seller Backend internal webhook (non-blocking)
             const sellerBackendUrl = process.env.SELLER_BACKEND_URL || 'http://localhost:5000';
             const internalApiKey = process.env.INTERNAL_API_KEY || 'bz_internal_secret_key_2026';
-            
+
             // Asynchronously query the trigger-created notification ID and notify the seller backend
             (async () => {
                 let notificationId = null;
@@ -999,7 +999,7 @@ export const orderService = {
             // Trigger request-driven seller notification via Seller Backend internal webhook (non-blocking)
             const sellerBackendUrl = process.env.SELLER_BACKEND_URL || 'http://localhost:5000';
             const internalApiKey = process.env.INTERNAL_API_KEY || 'bz_internal_secret_key_2026';
-            
+
             // Asynchronously query the trigger-created notification ID and notify the seller backend
             (async () => {
                 let notificationId = null;
