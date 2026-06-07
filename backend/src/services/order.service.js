@@ -4,9 +4,6 @@ import pushNotificationService from './pushNotification.service.js';
 import paymentAuditService from './paymentAudit.service.js';
 import refundService from './refund.service.js';
 import fetch from 'node-fetch';
-
-const MIN_ORDER_AMOUNT_INR = 100;
-
 const computeFinalPrice = (basePrice, discountType, discountValue) => {
     if (basePrice === undefined || basePrice === null) return null;
     if (!discountType || discountValue === undefined || discountValue === null) {
@@ -142,7 +139,7 @@ export const orderService = {
         try {
             const { data, error } = await supabase
                 .from('platform_settings')
-                .select('delivery_rules, delivery_fee, free_delivery_above, convenience_fee')
+                .select('delivery_rules, delivery_fee, free_delivery_above, convenience_fee, min_order_amount')
                 .order('updated_at', { ascending: false })
                 .limit(1)
                 .maybeSingle();
@@ -154,6 +151,7 @@ export const orderService = {
                 return {
                     deliveryRules,
                     convenienceFee: Number(data?.convenience_fee) || 0,
+                    minOrderAmount: Number(data?.min_order_amount) || 0,
                     source: 'database',
                 };
             }
@@ -169,6 +167,7 @@ export const orderService = {
                     return {
                         deliveryRules: parsed,
                         convenienceFee: Number(process.env.CONVENIENCE_FEE || 0),
+                        minOrderAmount: 0,
                         source: 'env_json',
                     };
                 }
@@ -197,8 +196,18 @@ export const orderService = {
         return {
             deliveryRules: fallbackDeliveryRules,
             convenienceFee: fallbackConvenienceFee,
+            minOrderAmount: 0,
             source: 'defaults',
         };
+    },
+
+    async getMinOrderAmount() {
+        try {
+            const { minOrderAmount } = await this.getCheckoutChargeSettings();
+            return minOrderAmount || 0;
+        } catch (error) {
+            return 0;
+        }
     },
 
     /**
@@ -295,7 +304,7 @@ export const orderService = {
                 subtotal += (ci.quantity * unitPrice);
             }
 
-            const { deliveryRules, convenienceFee, source } = await this.getCheckoutChargeSettings();
+            const { deliveryRules, convenienceFee, source, minOrderAmount = 0 } = await this.getCheckoutChargeSettings();
 
             let deliveryCharge = this.calculateDeliveryFee(subtotal, deliveryRules);
             let handlingCharge = convenienceFee;
@@ -316,8 +325,8 @@ export const orderService = {
 
             const totalAmount = subtotal + deliveryCharge + handlingCharge;
 
-            if (totalAmount < MIN_ORDER_AMOUNT_INR) {
-                throw new Error(`Minimum order value is ₹${MIN_ORDER_AMOUNT_INR}. Please add more items to continue.`);
+            if (totalAmount < minOrderAmount) {
+                throw new Error(`Minimum order value is ₹${minOrderAmount}. Please add more items to continue.`);
             }
 
             // Log mismatch for fraud/telemetry; backend values are authoritative.
