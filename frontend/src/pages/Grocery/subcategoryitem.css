@@ -188,3 +188,14 @@
     font-size: 0.95rem;
   }
 }
+
+/* Desktop View Centering */
+@media (min-width: 769px) {
+  .subcategory-item-page {
+    max-width: 1300px;
+    width: 90%;
+    margin: 0 auto;
+    /* Optional: subtle shadow to distinguish the page edges if the body background matches */
+    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+  }
+}
