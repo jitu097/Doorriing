@@ -865,6 +865,13 @@ const Home = () => {
             error={electronicsError}
             emptyMessage="No electronics available at the moment."
           />
+        </div>
+      </div>
+    );
+  }
+
+  if (activeTab === 'beauty') {
+    return (
       <div className="home-page home-beauty-page">
         <div className="home-content home-beauty-content">
           <div className="home-beauty-card">
