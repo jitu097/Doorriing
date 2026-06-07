@@ -885,7 +885,7 @@ export const orderService = {
                 subtotal += ci.quantity * unitPrice;
             }
 
-            const { deliveryRules, convenienceFee, source } = await this.getCheckoutChargeSettings();
+            const { deliveryRules, convenienceFee, source, minOrderAmount = 0 } = await this.getCheckoutChargeSettings();
             let deliveryCharge = this.calculateDeliveryFee(subtotal, deliveryRules);
             let handlingCharge = convenienceFee;
 
@@ -899,8 +899,8 @@ export const orderService = {
 
             const totalAmount = subtotal + deliveryCharge + handlingCharge;
 
-            if (totalAmount < MIN_ORDER_AMOUNT_INR) {
-                throw new Error(`Minimum order value is ₹${MIN_ORDER_AMOUNT_INR}. Please add more items to continue.`);
+            if (totalAmount < minOrderAmount) {
+                throw new Error(`Minimum order value is ₹${minOrderAmount}. Please add more items to continue.`);
             }
 
             // ── STEP 6: Generate order number ───────────────────────────────
