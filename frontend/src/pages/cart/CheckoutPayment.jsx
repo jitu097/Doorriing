@@ -572,10 +572,10 @@ const CheckoutPayment = () => {
         }
       }
 
-      // Navigate to confirmation screen (no payment=success flag for COD)
+      // Navigate to order-success screen for COD
       navigate(
         orderId
-          ? `/order-confirmation?orderId=${orderId}`
+          ? `/order-success?orderId=${orderId}`
           : "/home"
       );
     } catch (error) {
